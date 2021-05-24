@@ -70,6 +70,13 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.LRI.EMR: load_standard_data,
         data_keys.LRI.CSMR: load_standard_data,
         data_keys.LRI.RESTRICTIONS: load_metadata,
+
+        data_keys.WASTING.DISTRIBUTION: load_metadata,
+        data_keys.WASTING.ALT_DISTRIBUTION: load_metadata,
+        data_keys.WASTING.CATEGORIES: load_metadata,
+        data_keys.WASTING.EXPOSURE: load_standard_data,
+        data_keys.WASTING.RELATIVE_RISK: load_standard_data,
+        data_keys.WASTING.PAF: load_standard_data,
     }
     return mapping[lookup_key](lookup_key, location)
 

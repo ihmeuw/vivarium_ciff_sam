@@ -31,8 +31,11 @@ class __Population(NamedTuple):
 POPULATION = __Population()
 
 
-# For more information see the tutorial:
-# https://vivarium-inputs.readthedocs.io/en/latest/tutorials/pulling_data.html#entity-measure-data
+##########
+# Causes #
+##########
+
+
 class __DiarrhealDiseases(NamedTuple):
 
     # Keys that will be loaded into the artifact. must have a colon type declaration
@@ -106,9 +109,40 @@ class __LowerRespiratoryInfections(NamedTuple):
 
 LRI = __LowerRespiratoryInfections()
 
+
+################
+# Risk Factors #
+################
+
+
+class __Wasting(NamedTuple):
+
+    # Keys that will be loaded into the artifact. must have a colon type declaration
+    DISTRIBUTION: TargetString = 'risk_factor.child_wasting.distribution'
+    ALT_DISTRIBUTION: TargetString = 'alternative_risk_factor.child_wasting.distribution'
+    CATEGORIES: TargetString = 'risk_factor.child_wasting.categories'
+    EXPOSURE: TargetString = 'risk_factor.child_wasting.exposure'
+    RELATIVE_RISK: TargetString = 'risk_factor.child_wasting.relative_risk'
+    PAF: TargetString = 'risk_factor.child_wasting.population_attributable_fraction'
+
+    # Useful keys not for the artifact - distinguished by not using the colon type declaration
+
+    @property
+    def name(self):
+        return 'wasting'
+
+    @property
+    def log_name(self):
+        return 'wasting'
+
+
+WASTING = __Wasting()
+
+
 MAKE_ARTIFACT_KEY_GROUPS = [
     POPULATION,
     DIARRHEA,
     MEASLES,
     LRI,
+    WASTING,
 ]

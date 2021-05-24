@@ -181,6 +181,7 @@ def build_single_location_artifact(path: Union[str, Path], location: str, log_to
     for key_group in data_keys.MAKE_ARTIFACT_KEY_GROUPS:
         logger.info(f'Loading and writing {key_group.log_name} data')
         for key in key_group:
+            logger.info(f'   - Loading and writing {key} data')
             builder.load_and_write_data(artifact, key, location)
 
     logger.info(f'**Done building -- {location}**')
