@@ -3,13 +3,13 @@
 ############################
 
 # SAM (cat_1 wasting) duration in days
-SAM_DURATION: 40
+SAM_DURATION: int = 40
 
 # MAM (cat_2 wasting) duration in days
-SAM_DURATION: 70
+MAM_DURATION: int = 70
 
 # Mild wasting (cat_3 wasting) duration in days
-MILD_WASTING_DURATION: 365
+MILD_WASTING_DURATION: int = 365
 
 
 ###################################
