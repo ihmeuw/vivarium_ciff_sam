@@ -126,14 +126,18 @@ class __Wasting(NamedTuple):
     PAF: TargetString = 'risk_factor.child_wasting.population_attributable_fraction'
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
+    TMREL = 'cat4'
+    MILD = 'cat3'
+    MAM = 'cat2'
+    SAM = 'cat1'
 
     @property
     def name(self):
-        return 'wasting'
+        return 'child_wasting'
 
     @property
     def log_name(self):
-        return 'wasting'
+        return 'child wasting'
 
 
 WASTING = __Wasting()

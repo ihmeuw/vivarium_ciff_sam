@@ -17,8 +17,9 @@ import pandas as pd
 from gbd_mapping import causes, covariates, risk_factors
 from vivarium.framework.artifact import EntityKey
 from vivarium_gbd_access import gbd
-from vivarium_inputs import globals as vi_globals, interface, utilities as vi_utils, utility_data
+from vivarium_inputs import extract as vi_extract, globals as vi_globals, interface, utilities as vi_utils, utility_data
 from vivarium_inputs.mapping_extension import alternative_risk_factors
+from vivarium_inputs.validation.sim import validate_for_simulation
 
 from vivarium_ciff_sam.constants import data_keys
 
@@ -76,7 +77,7 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.WASTING.CATEGORIES: load_metadata,
         data_keys.WASTING.EXPOSURE: load_standard_data,
         data_keys.WASTING.RELATIVE_RISK: load_standard_data,
-        data_keys.WASTING.PAF: load_standard_data,
+        data_keys.WASTING.PAF: load_child_wasting_paf,
     }
     return mapping[lookup_key](lookup_key, location)
 
@@ -88,19 +89,23 @@ def load_population_location(key: str, location: str) -> str:
     return location
 
 
+# noinspection PyUnusedLocal
 def load_population_structure(key: str, location: str) -> pd.DataFrame:
     return interface.get_population_structure(location)
 
 
+# noinspection PyUnusedLocal
 def load_age_bins(key: str, location: str) -> pd.DataFrame:
     all_age_bins = interface.get_age_bins().reset_index()
     return all_age_bins[all_age_bins.age_start < 5].set_index(['age_start', 'age_end', 'age_group_name'])
 
 
+# noinspection PyUnusedLocal
 def load_demographic_dimensions(key: str, location: str) -> pd.DataFrame:
     return interface.get_demographic_dimensions(location)
 
 
+# noinspection PyUnusedLocal
 def load_theoretical_minimum_risk_life_expectancy(key: str, location: str) -> pd.DataFrame:
     return interface.get_theoretical_minimum_risk_life_expectancy()
 
@@ -112,6 +117,7 @@ def load_standard_data(key: str, location: str) -> pd.DataFrame:
     return data
 
 
+# noinspection PyUnusedLocal
 def load_metadata(key: str, location: str):
     key = EntityKey(key)
     entity = get_entity(key)
@@ -135,6 +141,48 @@ def _load_em_from_meid(location, meid, measure):
 
 
 # TODO - add project-specific data functions here
+
+
+def load_child_wasting_paf(key: str, location: str) -> pd.DataFrame:
+    # from load_standard_data
+    key = EntityKey(key)
+    entity = get_entity(key)
+
+    # from interface.get_measure
+    # from vivarium_inputs.core.get_data
+    location_id = utility_data.get_location_id(location) if isinstance(location, str) else location
+
+    # from vivarium_inputs.core.get_population_attributable_fraction
+    causes_map = {c.gbd_id: c for c in causes}
+    data = vi_extract.extract_data(entity, 'population_attributable_fraction', location_id)
+    
+    temp = []
+    # We filter paf age groups by cause level restrictions.
+    for (c_id, measure), df in data.groupby(['cause_id', 'measure_id']):
+        cause = causes_map[c_id]
+        measure = 'yll' if measure == vi_globals.MEASURES['YLLs'] else 'yld'
+        df = vi_utils.filter_data_by_restrictions(df, cause, measure, utility_data.get_age_group_ids())
+        temp.append(df)
+    data = pd.concat(temp, ignore_index=True)
+
+    data = vi_utils.convert_affected_entity(data, 'cause_id')
+    data['affected_measure'] = 'incidence_rate'
+    data = (data.groupby(['affected_entity', 'affected_measure'])
+            .apply(vi_utils.normalize, fill_value=0)
+            .reset_index(drop=True))
+    data = data.filter(vi_globals.DEMOGRAPHIC_COLUMNS
+                       + ['affected_entity', 'affected_measure']
+                       + vi_globals.DRAW_COLUMNS)
+
+    # from vivarium_inputs.core.get_data
+    data = vi_utils.reshape(data, value_cols=vi_globals.DRAW_COLUMNS)
+
+    # from interface.get_measure
+    data = vi_utils.scrub_gbd_conventions(data, location)
+    validate_for_simulation(data, entity, key.measure, location)
+    data = vi_utils.split_interval(data, interval_column='age', split_column_prefix='age')
+    data = vi_utils.split_interval(data, interval_column='year', split_column_prefix='year')
+    return vi_utils.sort_hierarchical_data(data).droplevel('location')
 
 
 def get_entity(key: str):

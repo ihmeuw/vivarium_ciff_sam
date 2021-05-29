@@ -17,6 +17,14 @@ LOCATIONS = [
     'Ethiopia'
 ]
 
+ARTIFACT_INDEX_COLUMNS = [
+    'sex',
+    'age_start',
+    'age_end',
+    'year_start',
+    'year_end'
+]
+
 
 class __Scenarios(NamedTuple):
     baseline: str = 'baseline'
