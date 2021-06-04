@@ -21,7 +21,7 @@ from vivarium_inputs import extract as vi_extract, globals as vi_globals, interf
 from vivarium_inputs.mapping_extension import alternative_risk_factors
 from vivarium_inputs.validation.sim import validate_for_simulation
 
-from vivarium_ciff_sam.constants import data_keys
+from vivarium_ciff_sam.constants import data_keys, data_values
 
 
 def get_data(lookup_key: str, location: str) -> pd.DataFrame:
@@ -64,7 +64,7 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.MEASLES.CSMR: load_standard_data,
         data_keys.MEASLES.RESTRICTIONS: load_metadata,
 
-        data_keys.LRI.PREVALENCE: load_standard_data,
+        data_keys.LRI.PREVALENCE: load_lri_prevalence,
         data_keys.LRI.INCIDENCE_RATE: load_standard_data,
         data_keys.LRI.REMISSION_RATE: load_standard_data,
         data_keys.LRI.DISABILITY_WEIGHT: load_standard_data,
@@ -140,7 +140,27 @@ def _load_em_from_meid(location, meid, measure):
     return vi_utils.sort_hierarchical_data(data)
 
 
-# TODO - add project-specific data functions here
+def get_entity(key: str):
+    # Map of entity types to their gbd mappings.
+    type_map = {
+        'cause': causes,
+        'covariate': covariates,
+        'risk_factor': risk_factors,
+        'alternative_risk_factor': alternative_risk_factors
+    }
+    key = EntityKey(key)
+    return type_map[key.type][key.name]
+
+
+# Project-specific data functions here
+
+def load_lri_prevalence(key: str, location: str) -> pd.DataFrame:
+    if key == data_keys.LRI.PREVALENCE:
+        incidence_rate = get_data(data_keys.LRI.INCIDENCE_RATE, location)
+        prevalence = incidence_rate * data_values.LRI_DURATION / 365
+        return prevalence
+    else:
+        raise ValueError(f'Unrecognized key {key}')
 
 
 def load_child_wasting_paf(key: str, location: str) -> pd.DataFrame:
@@ -155,7 +175,7 @@ def load_child_wasting_paf(key: str, location: str) -> pd.DataFrame:
     # from vivarium_inputs.core.get_population_attributable_fraction
     causes_map = {c.gbd_id: c for c in causes}
     data = vi_extract.extract_data(entity, 'population_attributable_fraction', location_id)
-    
+
     temp = []
     # We filter paf age groups by cause level restrictions.
     for (c_id, measure), df in data.groupby(['cause_id', 'measure_id']):
@@ -183,15 +203,3 @@ def load_child_wasting_paf(key: str, location: str) -> pd.DataFrame:
     data = vi_utils.split_interval(data, interval_column='age', split_column_prefix='age')
     data = vi_utils.split_interval(data, interval_column='year', split_column_prefix='year')
     return vi_utils.sort_hierarchical_data(data).droplevel('location')
-
-
-def get_entity(key: str):
-    # Map of entity types to their gbd mappings.
-    type_map = {
-        'cause': causes,
-        'covariate': covariates,
-        'risk_factor': risk_factors,
-        'alternative_risk_factor': alternative_risk_factors
-    }
-    key = EntityKey(key)
-    return type_map[key.type][key.name]

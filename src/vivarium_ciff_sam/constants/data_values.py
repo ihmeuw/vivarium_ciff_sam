@@ -1,3 +1,11 @@
+##########################
+# Cause Model Parameters #
+##########################
+
+# LRI duration in days
+LRI_DURATION: int = 10
+
+
 ############################
 # Wasting Model Parameters #
 ############################
