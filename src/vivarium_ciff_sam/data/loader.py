@@ -12,6 +12,7 @@ for an example.
 
    No logging is done here. Logging is done in vivarium inputs itself and forwarded.
 """
+import numpy as np
 import pandas as pd
 
 from gbd_mapping import causes, covariates, risk_factors
@@ -68,7 +69,7 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.LRI.INCIDENCE_RATE: load_standard_data,
         data_keys.LRI.REMISSION_RATE: load_standard_data,
         data_keys.LRI.DISABILITY_WEIGHT: load_standard_data,
-        data_keys.LRI.EMR: load_standard_data,
+        data_keys.LRI.EMR: load_lri_excess_mortality_rate,
         data_keys.LRI.CSMR: load_standard_data,
         data_keys.LRI.RESTRICTIONS: load_metadata,
 
@@ -159,6 +160,17 @@ def load_lri_prevalence(key: str, location: str) -> pd.DataFrame:
         incidence_rate = get_data(data_keys.LRI.INCIDENCE_RATE, location)
         prevalence = incidence_rate * data_values.LRI_DURATION / 365
         return prevalence
+    else:
+        raise ValueError(f'Unrecognized key {key}')
+
+
+def load_lri_excess_mortality_rate(key: str, location: str) -> pd.DataFrame:
+    if key == data_keys.LRI.EMR:
+        csmr = get_data(data_keys.LRI.CSMR, location)
+        prevalence = get_data(data_keys.LRI.PREVALENCE, location)
+        data = (csmr / prevalence).fillna(0)
+        data = data.replace([np.inf, -np.inf], 0)
+        return data
     else:
         raise ValueError(f'Unrecognized key {key}')
 
