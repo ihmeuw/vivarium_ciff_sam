@@ -21,9 +21,12 @@ class RiskModel(DiseaseModel):
         super().__init__(risk, **kwargs)
         self.configuration_defaults = {f'{self.state_column}': Risk.configuration_defaults['risk']}
 
-    @property
-    def name(self):
-        return f"risk_model.{self.state_column}"
+    # This would be a preferable name, but the generic DiseaseObserver works with no modifications if we use the
+    # standard naming from DiseaseModel. Extending to DiseaseObserver to RiskObserver would provide no functional gain
+    # and involve copy-pasting a bunch of code
+    # @property
+    # def name(self):
+    #     return f"risk_model.{self.state_column}"
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder):

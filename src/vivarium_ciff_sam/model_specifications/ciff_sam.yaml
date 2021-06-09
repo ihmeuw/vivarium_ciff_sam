@@ -12,16 +12,16 @@ components:
             - RiskEffect('risk_factor.child_wasting', 'cause.diarrheal_diseases.incidence_rate')
             - RiskEffect('risk_factor.child_wasting', 'cause.measles.incidence_rate')
             - RiskEffect('risk_factor.child_wasting', 'cause.lower_respiratory_infections.incidence_rate')
-        metrics:
+
+    vivarium_ciff_sam:
+        components:
+            - ChildWasting()
             - DisabilityObserver()
             - MortalityObserver()
             - DiseaseObserver('diarrheal_diseases')
             - DiseaseObserver('measles')
             - DiseaseObserver('lower_respiratory_infections')
-
-    vivarium_ciff_sam:
-        components:
-            - ChildWasting()
+            - DiseaseObserver('child_wasting', 'False')
 
 configuration:
     input_data:
@@ -74,6 +74,10 @@ configuration:
             by_sex: True
             by_year: True
         lower_respiratory_infections_observer:
+            by_age: True
+            by_sex: True
+            by_year: True
+        child_wasting_observer:
             by_age: True
             by_sex: True
             by_year: True
