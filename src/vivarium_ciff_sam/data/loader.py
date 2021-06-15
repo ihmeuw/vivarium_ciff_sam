@@ -158,7 +158,11 @@ def get_entity(key: str):
 def load_lri_prevalence(key: str, location: str) -> pd.DataFrame:
     if key == data_keys.LRI.PREVALENCE:
         incidence_rate = get_data(data_keys.LRI.INCIDENCE_RATE, location)
-        prevalence = incidence_rate * data_values.LRI_DURATION / 365
+        early_neonatal_prevalence = (incidence_rate[incidence_rate.index.get_level_values('age_start') == 0.0]
+                                     * data_values.EARLY_NEONATAL_LRI_DURATION / 365)
+        all_other_prevalence = (incidence_rate[incidence_rate.index.get_level_values('age_start') != 0.0]
+                                * data_values.LRI_DURATION / 365)
+        prevalence = pd.concat([early_neonatal_prevalence, all_other_prevalence])
         return prevalence
     else:
         raise ValueError(f'Unrecognized key {key}')

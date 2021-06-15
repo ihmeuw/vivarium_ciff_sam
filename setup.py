@@ -33,7 +33,7 @@ if __name__ == "__main__":
     # use "pip install -e .[dev]" to install required components + extra components
     internal = [
         'vivarium_inputs[data]==4.0.4',
-        'vivarium_cluster_tools==1.2.4',
+        'vivarium_cluster_tools>=1.2.5',
     ]
 
     interactive = [

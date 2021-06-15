@@ -4,6 +4,8 @@
 
 # LRI duration in days
 LRI_DURATION: int = 10
+# lri_duration > bin_duration, so there is effectively no remission, and duration within the bin is bin_duration / 2
+EARLY_NEONATAL_LRI_DURATION: float = 3.5
 
 
 ############################
