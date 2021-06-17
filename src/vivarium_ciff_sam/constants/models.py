@@ -84,10 +84,6 @@ STATE_MACHINE_MAP = {
         'states': LRI_MODEL_STATES,
         'transitions': LRI_MODEL_TRANSITIONS,
     },
-    WASTING_MODEL_NAME: {
-        'states': WASTING_MODEL_STATES,
-        'transitions': WASTING_MODEL_TRANSITIONS,
-    },
 }
 
 
