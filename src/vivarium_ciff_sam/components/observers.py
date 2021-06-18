@@ -156,8 +156,8 @@ class ResultsStratifier:
             labels.
 
         """
-        stratification_label = labels[0]
-        measure_data = {f'{k}_{stratification_label}': v for k, v in measure_data.items()}
+        stratification_label = f'_{labels[0]}' if labels[0] else ''
+        measure_data = {f'{k}{stratification_label}': v for k, v in measure_data.items()}
         return measure_data
 
 
