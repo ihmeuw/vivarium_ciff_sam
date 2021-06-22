@@ -166,7 +166,7 @@ def load_mild_wasting_incidence_rate(cause: str, builder: Builder) -> pd.DataFra
               * (7 * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.SAM]
                  - 4 * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.MAM]
                  + 280 * exposures[data_keys.WASTING.MILD])
-              / data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.TMREL]).reset_index()
+              / (data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.TMREL])).reset_index()
     return i3
 
 
@@ -181,7 +181,7 @@ def load_mild_wasting_remission_rate(builder: Builder, *args) -> pd.DataFrame:
               * (7 * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.SAM]
                  - 4 * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.MAM]
                  + 280 * exposures[data_keys.WASTING.MILD])
-              / data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.MILD]).reset_index()
+              / (data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.MILD])).reset_index()
     return r4
 
 
