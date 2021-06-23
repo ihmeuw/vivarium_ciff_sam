@@ -156,13 +156,18 @@ def load_mild_wasting_exposure(cause: str, builder: Builder) -> pd.DataFrame:
 
 # noinspection PyUnusedLocal, DuplicatedCode
 def load_mild_wasting_incidence_rate(cause: str, builder: Builder) -> pd.DataFrame:
-    # i3 = 0.00357142857142857*(7.0*dur_cat3*p1 - 4.0*dur_cat3*p2 + 280.0*p3)/(dur_cat3*p4)
     exposures = load_child_wasting_exposures(builder)
-    if builder.configuration.wasting_equations.include_mortality:
+    return calculate_mild_wasting_incidence_rate(exposures, builder.configuration.wasting_equations.include_mortality)
+
+
+# noinspection DuplicatedCode
+def calculate_mild_wasting_incidence_rate(exposures: pd.DataFrame, include_mortality: bool = True) -> pd.DataFrame:
+    if include_mortality:
         # TODO
         i3 = 0
     else:
-        i3 = (0.00357142857142857   # todo should be a probably be a constant? how many sig figs is sensible?
+        # i3 = 0.00357142857142857*(7.0*dur_cat3*p1 - 4.0*dur_cat3*p2 + 280.0*p3)/(dur_cat3*p4)
+        i3 = (0.00357142857142857  # todo should be a probably be a constant? how many sig figs is sensible?
               * (7 * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.SAM]
                  - 4 * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.MAM]
                  + 280 * exposures[data_keys.WASTING.MILD])
@@ -170,13 +175,19 @@ def load_mild_wasting_incidence_rate(cause: str, builder: Builder) -> pd.DataFra
     return i3
 
 
-# noinspection PyUnusedLocal, DuplicatedCode
+# noinspection PyUnusedLocal
 def load_mild_wasting_remission_rate(builder: Builder, *args) -> pd.DataFrame:
-    # r4 = 0.00357142857142857*(7.0*dur_cat3*p1 - 4.0*dur_cat3*p2 + 280.0*p3)/(dur_cat3*p3)
     exposures = load_child_wasting_exposures(builder)
-    if builder.configuration.wasting_equations.include_mortality:
+    return calculate_mild_wasting_remission_rate(exposures, builder.configuration.wasting_equations.include_mortality)
+
+
+# noinspection DuplicatedCode
+def calculate_mild_wasting_remission_rate(exposures: pd.DataFrame, include_mortality: bool = True) -> pd.DataFrame:
+    if include_mortality:
+        # TODO
         r4 = 0
     else:
+        # r4 = 0.00357142857142857*(7.0*dur_cat3*p1 - 4.0*dur_cat3*p2 + 280.0*p3)/(dur_cat3*p3)
         r4 = (0.00357142857142857
               * (7 * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.SAM]
                  - 4 * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.MAM]
@@ -190,28 +201,36 @@ def load_mam_exposure(cause: str, builder: Builder) -> pd.DataFrame:
     return load_child_wasting_exposures(builder)[data_keys.WASTING.MAM].reset_index()
 
 
-# noinspection PyUnusedLocal, DuplicatedCode
+# noinspection PyUnusedLocal
 def load_mam_incidence_rate(builder: Builder, *args) -> pd.DataFrame:
-    # i2 = 0.00357142857142857*(-7.0*p1 + 4.0*p2)/p3
     exposures = load_child_wasting_exposures(builder)
-    if builder.configuration.wasting_equations.include_mortality:
+    return calculate_mam_incidence_rate(exposures, builder.configuration.wasting_equations.include_mortality)
+
+
+def calculate_mam_incidence_rate(exposures: pd.DataFrame, include_mortality: bool = True) -> pd.DataFrame:
+    if include_mortality:
         # TODO
         i2 = 0
     else:
+        # i2 = 0.00357142857142857*(-7.0*p1 + 4.0*p2)/p3
         i2 = (0.00357142857142857
               * (-7 * exposures[data_keys.WASTING.SAM] + 4 * exposures[data_keys.WASTING.MAM])
               / exposures[data_keys.WASTING.MILD]).reset_index()
     return i2
 
 
-# noinspection PyUnusedLocal, DuplicatedCode
-def load_mam_remission_rate(builder: Builder, *args) -> pd.DataFrame:  # noqa
-    # r3 = 0.00357142857142857*(-7.0*p1 + 4.0*p2)/p2
+# noinspection PyUnusedLocal
+def load_mam_remission_rate(builder: Builder, *args) -> pd.DataFrame:
     exposures = load_child_wasting_exposures(builder)
-    if builder.configuration.wasting_equations.include_mortality:
+    return calculate_mam_remission_rate(exposures, builder.configuration.wasting_equations.include_mortality)
+
+
+def calculate_mam_remission_rate(exposures: pd.DataFrame, include_mortality: bool = True) -> pd.DataFrame:
+    if include_mortality:
         # TODO
         r3 = 0
     else:
+        # r3 = 0.00357142857142857*(-7.0*p1 + 4.0*p2)/p2
         r3 = (0.00357142857142857
               * (-7 * exposures[data_keys.WASTING.SAM] + 4 * exposures[data_keys.WASTING.MAM])
               / exposures[data_keys.WASTING.MAM]).reset_index()
@@ -225,23 +244,31 @@ def load_sam_exposure(cause: str, builder: Builder) -> pd.DataFrame:
 
 # noinspection PyUnusedLocal
 def load_sam_incidence_rate(builder: Builder, *args) -> pd.DataFrame:
-    # i1 = 0.025*p1/p2
     exposures = load_child_wasting_exposures(builder)
-    if builder.configuration.wasting_equations.include_mortality:
+    return calculate_sam_incidence_rate(exposures, builder.configuration.wasting_equations.include_mortality)
+
+
+def calculate_sam_incidence_rate(exposures: pd.DataFrame, include_mortality: bool = True) -> pd.DataFrame:
+    if include_mortality:
         # TODO
         i1 = 0
     else:
+        # i1 = 0.025*p1/p2
         i1 = (0.025 * exposures[data_keys.WASTING.SAM] / exposures[data_keys.WASTING.MAM]).reset_index()
     return i1
 
 
 # noinspection PyUnusedLocal
 def load_sam_remission_rate(builder: Builder, *args) -> pd.DataFrame:
-    # r2 = 0.025
     exposures = load_child_wasting_exposures(builder)
-    if builder.configuration.wasting_equations.include_mortality:
+    return calculate_sam_remission_rate(builder.configuration.wasting_equations.include_mortality)
+
+
+def calculate_sam_remission_rate(include_mortality: bool = True) -> pd.DataFrame:
+    if include_mortality:
         # TODO
         r2 = 0
     else:
+        # r2 = 0.025
         r2 = 0.025
     return r2
