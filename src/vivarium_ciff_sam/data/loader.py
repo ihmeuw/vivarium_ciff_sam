@@ -73,6 +73,11 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.LRI.CSMR: load_standard_data,
         data_keys.LRI.RESTRICTIONS: load_metadata,
 
+        data_keys.PEM.DISABILITY_WEIGHT: load_standard_data,
+        data_keys.PEM.EMR: load_standard_data,
+        data_keys.PEM.CSMR: load_standard_data,
+        data_keys.PEM.RESTRICTIONS: load_metadata,
+
         data_keys.WASTING.DISTRIBUTION: load_metadata,
         data_keys.WASTING.ALT_DISTRIBUTION: load_metadata,
         data_keys.WASTING.CATEGORIES: load_metadata,
