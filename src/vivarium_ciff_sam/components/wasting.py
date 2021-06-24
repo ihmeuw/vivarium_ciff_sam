@@ -11,8 +11,10 @@ from vivarium_ciff_sam.constants import data_keys, data_values, metadata, models
 class RiskState(DiseaseState):
 
     def load_excess_mortality_rate_data(self, builder):
-        # TODO update this when we add PEM
-        return 0
+        if 'excess_mortality_rate' in self._get_data_functions:
+            return self._get_data_functions['excess_mortality_rate'](self.cause, builder)
+        else:
+            return builder.data.load(f'{self.cause_type}.{self.cause}.excess_mortality_rate')
 
 
 class RiskModel(DiseaseModel):
@@ -62,8 +64,8 @@ def ChildWasting():
         cause_type='sequela',
         get_data_functions={
             'prevalence': load_mam_exposure,
-            'disability_weight': lambda *_: 0,
-            'excess_mortality_rate': lambda *_: 0,
+            'disability_weight': load_pem_disability_weight,
+            'excess_mortality_rate': load_pem_excess_mortality_rate,
         }
     )
     severe = RiskState(
@@ -71,8 +73,8 @@ def ChildWasting():
         cause_type='sequela',
         get_data_functions={
             'prevalence': load_sam_exposure,
-            'disability_weight': lambda *_: 0,
-            'excess_mortality_rate': lambda *_: 0,
+            'disability_weight': load_pem_disability_weight,
+            'excess_mortality_rate': load_pem_excess_mortality_rate,
         }
     )
 
@@ -135,6 +137,20 @@ def ChildWasting():
         get_data_functions={'cause_specific_mortality_rate': lambda *_: 0},
         states=[tmrel, mild, moderate, severe]
     )
+
+
+# noinspection PyUnusedLocal
+def load_pem_disability_weight(cause: str, builder: Builder) -> pd.DataFrame:
+    dw = builder.data.load(data_keys.PEM.DISABILITY_WEIGHT).reset_index()
+    dw = dw.rename(columns={'value': 0}).set_index('index')
+    return dw
+
+
+# noinspection PyUnusedLocal
+def load_pem_excess_mortality_rate(cause: str, builder: Builder) -> pd.DataFrame:
+    emr = builder.data.load(data_keys.PEM.EMR).reset_index()
+    emr = emr.rename(columns={'value': 0}).set_index('index')
+    return emr
 
 
 def load_child_wasting_exposures(builder: Builder) -> pd.DataFrame:
