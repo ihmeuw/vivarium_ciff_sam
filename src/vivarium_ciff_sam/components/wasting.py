@@ -166,12 +166,12 @@ def calculate_mild_wasting_incidence_rate(exposures: pd.DataFrame, include_morta
         # TODO
         i3 = 0
     else:
-        # i3 = 0.00357142857142857*(7.0*dur_cat3*p1 - 4.0*dur_cat3*p2 + 280.0*p3)/(dur_cat3*p4)
-        i3 = (0.00357142857142857  # todo should be a probably be a constant? how many sig figs is sensible?
-              * (7 * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.SAM]
-                 - 4 * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.MAM]
-                 + 280 * exposures[data_keys.WASTING.MILD])
-              / (data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.TMREL])).reset_index()
+        # i3: (dur_cat1*dur_cat2*p3 - dur_cat1*dur_cat3*p2 + dur_cat2*dur_cat3*p1)/(dur_cat1*dur_cat2*dur_cat3*p4)
+        i3 = ((data_values.SAM_DURATION * data_values.MAM_DURATION * exposures[data_keys.WASTING.MILD]
+               - data_values.SAM_DURATION * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.MAM]
+               + data_values.MAM_DURATION * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.SAM])
+              / (data_values.SAM_DURATION * data_values.MAM_DURATION * data_values.MILD_WASTING_DURATION
+                 * exposures[data_keys.WASTING.TMREL])).reset_index()
     return i3
 
 
@@ -187,12 +187,12 @@ def calculate_mild_wasting_remission_rate(exposures: pd.DataFrame, include_morta
         # TODO
         r4 = 0
     else:
-        # r4 = 0.00357142857142857*(7.0*dur_cat3*p1 - 4.0*dur_cat3*p2 + 280.0*p3)/(dur_cat3*p3)
-        r4 = (0.00357142857142857
-              * (7 * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.SAM]
-                 - 4 * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.MAM]
-                 + 280 * exposures[data_keys.WASTING.MILD])
-              / (data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.MILD])).reset_index()
+        # r4: (dur_cat1*dur_cat2*p3 - dur_cat1*dur_cat3*p2 + dur_cat2*dur_cat3*p1)/(dur_cat1*dur_cat2*dur_cat3*p3)
+        r4 = ((data_values.SAM_DURATION * data_values.MAM_DURATION * exposures[data_keys.WASTING.MILD]
+               - data_values.SAM_DURATION * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.MAM]
+               + data_values.MAM_DURATION * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.SAM])
+              / (data_values.SAM_DURATION * data_values.MAM_DURATION * data_values.MILD_WASTING_DURATION
+                 * exposures[data_keys.WASTING.MILD])).reset_index()
     return r4
 
 
@@ -207,15 +207,17 @@ def load_mam_incidence_rate(builder: Builder, *args) -> pd.DataFrame:
     return calculate_mam_incidence_rate(exposures, builder.configuration.wasting_equations.include_mortality)
 
 
+# noinspection DuplicatedCode
 def calculate_mam_incidence_rate(exposures: pd.DataFrame, include_mortality: bool = True) -> pd.DataFrame:
     if include_mortality:
         # TODO
         i2 = 0
     else:
-        # i2 = 0.00357142857142857*(-7.0*p1 + 4.0*p2)/p3
-        i2 = (0.00357142857142857
-              * (-7 * exposures[data_keys.WASTING.SAM] + 4 * exposures[data_keys.WASTING.MAM])
-              / exposures[data_keys.WASTING.MILD]).reset_index()
+        # i2: (dur_cat1*p2 - dur_cat2*p1)/(dur_cat1*dur_cat2*p3)
+        i2 = ((data_values.SAM_DURATION * exposures[data_keys.WASTING.MAM])
+              - (data_values.MAM_DURATION * exposures[data_keys.WASTING.SAM])
+              / (data_values.SAM_DURATION * data_values.MAM_DURATION * exposures[data_keys.WASTING.MILD])
+              ).reset_index()
     return i2
 
 
@@ -225,15 +227,17 @@ def load_mam_remission_rate(builder: Builder, *args) -> pd.DataFrame:
     return calculate_mam_remission_rate(exposures, builder.configuration.wasting_equations.include_mortality)
 
 
+# noinspection DuplicatedCode
 def calculate_mam_remission_rate(exposures: pd.DataFrame, include_mortality: bool = True) -> pd.DataFrame:
     if include_mortality:
         # TODO
         r3 = 0
     else:
-        # r3 = 0.00357142857142857*(-7.0*p1 + 4.0*p2)/p2
-        r3 = (0.00357142857142857
-              * (-7 * exposures[data_keys.WASTING.SAM] + 4 * exposures[data_keys.WASTING.MAM])
-              / exposures[data_keys.WASTING.MAM]).reset_index()
+        # r3: (dur_cat1*p2 - dur_cat2*p1)/(dur_cat1*dur_cat2*p2)
+        r3 = ((data_values.SAM_DURATION * exposures[data_keys.WASTING.MAM])
+              - (data_values.MAM_DURATION * exposures[data_keys.WASTING.SAM])
+              / (data_values.SAM_DURATION * data_values.MAM_DURATION * exposures[data_keys.WASTING.MAM])
+              ).reset_index()
     return r3
 
 
@@ -253,8 +257,9 @@ def calculate_sam_incidence_rate(exposures: pd.DataFrame, include_mortality: boo
         # TODO
         i1 = 0
     else:
-        # i1 = 0.025*p1/p2
-        i1 = (0.025 * exposures[data_keys.WASTING.SAM] / exposures[data_keys.WASTING.MAM]).reset_index()
+        # i1: p1/(dur_cat1*p2)
+        i1 = (exposures[data_keys.WASTING.SAM]
+              / (data_values.SAM_DURATION * exposures[data_keys.WASTING.MAM])).reset_index()
     return i1
 
 
@@ -269,6 +274,6 @@ def calculate_sam_remission_rate(include_mortality: bool = True) -> pd.DataFrame
         # TODO
         r2 = 0
     else:
-        # r2 = 0.025
-        r2 = 0.025
+        # r2: 1/dur_cat1
+        r2 = 1 / data_values.SAM_DURATION
     return r2
