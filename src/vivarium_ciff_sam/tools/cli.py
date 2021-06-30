@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import click
 from loguru import logger
 from vivarium.framework.utilities import handle_exceptions
@@ -22,16 +24,20 @@ from vivarium_ciff_sam.tools import build_artifacts, build_results, configure_lo
 @click.option('-a', '--append',
               is_flag=True,
               help='Append to the artifact instead of overwriting.')
+@click.option('-r', '--replace-keys',
+              multiple=True,
+              help='Specify keys to overwrite')
 @click.option('-v', 'verbose',
               count=True,
               help='Configure logging verbosity.')
 @click.option('--pdb', 'with_debugger',
               is_flag=True,
               help='Drop into python debugger if an error occurs.')
-def make_artifacts(location: str, output_dir: str, append: bool, verbose: int, with_debugger: bool) -> None:
+def make_artifacts(location: str, output_dir: str, append: bool, replace_keys: Tuple[str, ...],
+                   verbose: int, with_debugger: bool) -> None:
     configure_logging_to_terminal(verbose)
     main = handle_exceptions(build_artifacts, logger, with_debugger=with_debugger)
-    main(location, output_dir, append, verbose)
+    main(location, output_dir, append, replace_keys, verbose)
 
 
 @click.command()

@@ -12,7 +12,7 @@ import time
 import click
 
 from pathlib import Path
-from typing import Union
+from typing import Tuple, Union
 from loguru import logger
 
 import vivarium_cluster_tools as vct
@@ -31,29 +31,32 @@ def running_from_cluster() -> bool:
     return on_cluster
 
 
-def check_for_existing(output_dir: Path, location: str, append: bool):
+def check_for_existing(output_dir: Path, location: str, append: bool, replace_keys: Tuple):
     existing_artifacts = set([item.stem for item in output_dir.iterdir()
                               if item.is_file() and item.suffix == '.hdf'])
     locations = set([sanitize_location(loc) for loc in metadata.LOCATIONS])
     existing = locations.intersection(existing_artifacts)
 
-    if existing and not append:
+    if existing:
         if location != 'all':
             existing = [sanitize_location(location)]
-        click.confirm(f'Existing artifacts found for {existing}. Do you want to delete and rebuild?',
-                      abort=True)
-        for loc in existing:
-            path = output_dir / f'{loc}.hdf'
-            logger.info(f'Deleting artifact at {str(path)}.')
-            path.unlink()
+        if not append:
+            click.confirm(f'Existing artifacts found for {existing}. Do you want to delete and rebuild?', abort=True)
+            for loc in existing:
+                path = output_dir / f'{loc}.hdf'
+                logger.info(f'Deleting artifact at {str(path)}.')
+                path.unlink()
+        elif replace_keys:
+            click.confirm(f'Existing artifacts found for {existing}. If the listed keys {replace_keys} exist, they will'
+                          f' be deleted and regenerated. Do you want to delete and regenerate them?', abort=True)
 
 
-def build_single(location: str, output_dir: str, append: bool):
+def build_single(location: str, output_dir: str, replace_keys: Tuple):
     path = Path(output_dir) / f'{sanitize_location(location)}.hdf'
-    build_single_location_artifact(path, location)
+    build_single_location_artifact(path, location, replace_keys)
 
 
-def build_artifacts(location: str, output_dir: str, append: bool, verbose: int):
+def build_artifacts(location: str, output_dir: str, append: bool, replace_keys: Tuple, verbose: int):
     """Main application function for building artifacts.
     Parameters
     ----------
@@ -68,16 +71,19 @@ def build_artifacts(location: str, output_dir: str, append: bool, verbose: int):
     append
         Whether we should append to existing artifacts at the given output
         directory.  Has no effect if artifacts are not found.
+    replace_keys
+        A list of keys to replace in the artifact. Is ignored if append is
+        False or if there is no existing artifact at the output location
     verbose
         How noisy the logger should be.
     """
     output_dir = Path(output_dir)
     vct.mkdir(output_dir, parents=True, exists_ok=True)
 
-    check_for_existing(output_dir, location, append)
+    check_for_existing(output_dir, location, append, replace_keys)
 
     if location in metadata.LOCATIONS:
-        build_single(location, output_dir, append)
+        build_single(location, output_dir, replace_keys)
     elif location == 'all':
         if running_from_cluster():
             # parallel build when on cluster
@@ -85,7 +91,7 @@ def build_artifacts(location: str, output_dir: str, append: bool, verbose: int):
         else:
             # serial build when not on cluster
             for loc in metadata.LOCATIONS:
-                build_single(loc, output_dir, append)
+                build_single(loc, output_dir, replace_keys)
     else:
         raise ValueError(f'Location must be one of {metadata.LOCATIONS} or the string "all". '
                          f'You specified {location}.')
@@ -147,7 +153,8 @@ def build_all_artifacts(output_dir: Path, verbose: int):
     logger.info('**Done**')
 
 
-def build_single_location_artifact(path: Union[str, Path], location: str, log_to_file: bool = False):
+def build_single_location_artifact(path: Union[str, Path], location: str, replace_keys: Tuple = (),
+                                   log_to_file: bool = False):
     """Builds an artifact for a single location.
     Parameters
     ----------
@@ -156,6 +163,8 @@ def build_single_location_artifact(path: Union[str, Path], location: str, log_to
     location
         The location to build the artifact for.  Must be one of the locations
         specified in the project globals.
+    replace_keys
+        A list of artifact keys to replace
     log_to_file
         Whether we should write the application logs to a file.
     Note
@@ -182,7 +191,7 @@ def build_single_location_artifact(path: Union[str, Path], location: str, log_to
         logger.info(f'Loading and writing {key_group.log_name} data')
         for key in key_group:
             logger.info(f'   - Loading and writing {key} data')
-            builder.load_and_write_data(artifact, key, location)
+            builder.load_and_write_data(artifact, key, location, key in replace_keys)
 
     logger.info(f'**Done building -- {location}**')
 
