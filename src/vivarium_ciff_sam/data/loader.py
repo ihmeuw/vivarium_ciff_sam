@@ -17,12 +17,18 @@ import pandas as pd
 
 from gbd_mapping import causes, covariates, risk_factors
 from vivarium.framework.artifact import EntityKey
-from vivarium_gbd_access import gbd
+from vivarium_gbd_access import constants as gbd_constants, gbd
+from vivarium_gbd_access.gbd import get_age_group_id
+from vivarium_gbd_access.utilities import get_draws
 from vivarium_inputs import extract as vi_extract, globals as vi_globals, interface, utilities as vi_utils, utility_data
 from vivarium_inputs.mapping_extension import alternative_risk_factors
+from vivarium_inputs.validation.raw import check_metadata
 from vivarium_inputs.validation.sim import validate_for_simulation
 
 from vivarium_ciff_sam.constants import data_keys, data_values
+
+
+GBD_2020 = 7
 
 
 def get_data(lookup_key: str, location: str) -> pd.DataFrame:
@@ -81,7 +87,7 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.WASTING.DISTRIBUTION: load_metadata,
         data_keys.WASTING.ALT_DISTRIBUTION: load_metadata,
         data_keys.WASTING.CATEGORIES: load_metadata,
-        data_keys.WASTING.EXPOSURE: load_standard_data,
+        data_keys.WASTING.EXPOSURE: load_gbd_2020_exposure,
         data_keys.WASTING.RELATIVE_RISK: load_standard_data,
         data_keys.WASTING.PAF: load_child_wasting_paf,
     }
@@ -184,6 +190,42 @@ def load_lri_excess_mortality_rate(key: str, location: str) -> pd.DataFrame:
         raise ValueError(f'Unrecognized key {key}')
 
 
+def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
+    data, entity, key = get_child_wasting_data(key, location, gbd_constants.SOURCES.EXPOSURE)
+    data['rei_id'] = entity.gbd_id
+
+    # from vivarium_inputs.extract.extract_exposure
+    allowable_measures = [vi_globals.MEASURES['Proportion'], vi_globals.MEASURES['Continuous'],
+                          vi_globals.MEASURES['Prevalence']]
+    proper_measure_id = set(data.measure_id).intersection(allowable_measures)
+    if len(proper_measure_id) != 1:
+        raise vi_globals.DataAbnormalError(f'Exposure data have {len(proper_measure_id)} measure id(s). '
+                                           f'Data should have exactly one id out of {allowable_measures} '
+                                           f'but came back with {proper_measure_id}.')
+    data = data[data.measure_id == proper_measure_id.pop()]
+
+    # from vivarium_inputs.core.get_exposure
+    data = data.drop('modelable_entity_id', 'columns')
+    data = vi_utils.filter_data_by_restrictions(data, entity, 'outer', utility_data.get_age_group_ids())
+    tmrel_cat = utility_data.get_tmrel_category(entity)
+    exposed = data[data.parameter != tmrel_cat]
+    unexposed = data[data.parameter == tmrel_cat]
+    #  FIXME: We fill 1 as exposure of tmrel category, which is not correct.
+    data = pd.concat([vi_utils.normalize(exposed, fill_value=0), vi_utils.normalize(unexposed, fill_value=1)],
+                     ignore_index=True)
+
+    # normalize so all categories sum to 1
+    cols = list(set(data.columns).difference(vi_globals.DRAW_COLUMNS + ['parameter']))
+    sums = data.groupby(cols)[vi_globals.DRAW_COLUMNS].sum()
+    data = (data.groupby('parameter')
+            .apply(lambda df: df.set_index(cols).loc[:, vi_globals.DRAW_COLUMNS].divide(sums))
+            .reset_index())
+    data = data.filter(vi_globals.DEMOGRAPHIC_COLUMNS + vi_globals.DRAW_COLUMNS + ['parameter'])
+
+    data = validate_and_reshape_child_wasting_data(data, entity, key, location)
+    return data
+
+
 def load_child_wasting_paf(key: str, location: str) -> pd.DataFrame:
     # from load_standard_data
     key = EntityKey(key)
@@ -215,6 +257,38 @@ def load_child_wasting_paf(key: str, location: str) -> pd.DataFrame:
                        + ['affected_entity', 'affected_measure']
                        + vi_globals.DRAW_COLUMNS)
 
+    data = validate_and_reshape_child_wasting_data(data, entity, key, location)
+    return data
+
+
+def get_child_wasting_data(key, location, source):
+    # from load_standard_data
+    key = EntityKey(key)
+    entity = get_entity(key)
+
+    # from interface.get_measure
+    # from vivarium_inputs.core.get_data
+    location_id = utility_data.get_location_id(location) if isinstance(location, str) else location
+
+    # from vivarium_inputs.core.get_{measure}
+    # from vivarium_inputs.extract.extract_data
+    check_metadata(entity, key.measure)
+
+    # from vivarium_inputs.extract.extract_{measure}
+    # from vivarium_gbd_access.gbd.get_{measure}
+    data = get_draws(gbd_id_type='rei_id',
+                     gbd_id=entity.gbd_id,
+                     source=source,
+                     location_id=location_id,
+                     sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
+                     age_group_id=get_age_group_id(),
+                     gbd_round_id=GBD_2020,
+                     decomp_step='iterative',
+                     status='best')
+    return data, entity, key
+
+
+def validate_and_reshape_child_wasting_data(data, entity, key, location):
     # from vivarium_inputs.core.get_data
     data = vi_utils.reshape(data, value_cols=vi_globals.DRAW_COLUMNS)
 
