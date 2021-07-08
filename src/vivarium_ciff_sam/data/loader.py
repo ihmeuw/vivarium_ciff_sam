@@ -15,20 +15,14 @@ for an example.
 import numpy as np
 import pandas as pd
 
-from gbd_mapping import causes, covariates, risk_factors
+from gbd_mapping import causes
 from vivarium.framework.artifact import EntityKey
-from vivarium_gbd_access import constants as gbd_constants, gbd
-from vivarium_gbd_access.gbd import get_age_group_id
-from vivarium_gbd_access.utilities import get_draws
+from vivarium_gbd_access import constants as gbd_constants
 from vivarium_inputs import extract as vi_extract, globals as vi_globals, interface, utilities as vi_utils, utility_data
-from vivarium_inputs.mapping_extension import alternative_risk_factors
-from vivarium_inputs.validation.raw import check_metadata
-from vivarium_inputs.validation.sim import validate_for_simulation
 
 from vivarium_ciff_sam.constants import data_keys, data_values
-
-
-GBD_2020 = 7
+from vivarium_ciff_sam.data.utilities import (get_child_wasting_data, get_entity, get_gbd_2020_entity,
+                                              normalize_gbd_2020, validate_and_reshape_child_wasting_data)
 
 
 def get_data(lookup_key: str, location: str) -> pd.DataFrame:
@@ -139,31 +133,6 @@ def load_metadata(key: str, location: str):
     return entity_metadata
 
 
-def _load_em_from_meid(location, meid, measure):
-    location_id = utility_data.get_location_id(location)
-    data = gbd.get_modelable_entity_draws(meid, location_id)
-    data = data[data.measure_id == vi_globals.MEASURES[measure]]
-    data = vi_utils.normalize(data, fill_value=0)
-    data = data.filter(vi_globals.DEMOGRAPHIC_COLUMNS + vi_globals.DRAW_COLUMNS)
-    data = vi_utils.reshape(data)
-    data = vi_utils.scrub_gbd_conventions(data, location)
-    data = vi_utils.split_interval(data, interval_column='age', split_column_prefix='age')
-    data = vi_utils.split_interval(data, interval_column='year', split_column_prefix='year')
-    return vi_utils.sort_hierarchical_data(data)
-
-
-def get_entity(key: str):
-    # Map of entity types to their gbd mappings.
-    type_map = {
-        'cause': causes,
-        'covariate': covariates,
-        'risk_factor': risk_factors,
-        'alternative_risk_factor': alternative_risk_factors
-    }
-    key = EntityKey(key)
-    return type_map[key.type][key.name]
-
-
 # Project-specific data functions here
 
 def load_lri_prevalence(key: str, location: str) -> pd.DataFrame:
@@ -191,7 +160,9 @@ def load_lri_excess_mortality_rate(key: str, location: str) -> pd.DataFrame:
 
 
 def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
-    data, entity, key = get_child_wasting_data(key, location, gbd_constants.SOURCES.EXPOSURE)
+    key, entity = get_gbd_2020_entity(key)
+
+    data = get_child_wasting_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE)
     data['rei_id'] = entity.gbd_id
 
     # from vivarium_inputs.extract.extract_exposure
@@ -206,22 +177,25 @@ def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
 
     # from vivarium_inputs.core.get_exposure
     data = data.drop('modelable_entity_id', 'columns')
-    data = vi_utils.filter_data_by_restrictions(data, entity, 'outer', utility_data.get_age_group_ids())
     tmrel_cat = utility_data.get_tmrel_category(entity)
-    exposed = data[data.parameter != tmrel_cat]
     unexposed = data[data.parameter == tmrel_cat]
+    exposed = [data[data.parameter == cat] for cat in [data_keys.WASTING.MILD, data_keys.WASTING.MAM,
+                                                       data_keys.WASTING.SAM]]
     #  FIXME: We fill 1 as exposure of tmrel category, which is not correct.
-    data = pd.concat([vi_utils.normalize(exposed, fill_value=0), vi_utils.normalize(unexposed, fill_value=1)],
+    data = pd.concat([normalize_gbd_2020(cat, fill_value=0) for cat in exposed]
+                     + [normalize_gbd_2020(unexposed, fill_value=1)],
                      ignore_index=True)
 
     # normalize so all categories sum to 1
     cols = list(set(data.columns).difference(vi_globals.DRAW_COLUMNS + ['parameter']))
-    sums = data.groupby(cols)[vi_globals.DRAW_COLUMNS].sum()
-    data = (data.groupby('parameter')
-            .apply(lambda df: df.set_index(cols).loc[:, vi_globals.DRAW_COLUMNS].divide(sums))
-            .reset_index())
-    data = data.filter(vi_globals.DEMOGRAPHIC_COLUMNS + vi_globals.DRAW_COLUMNS + ['parameter'])
+    data = data.set_index(cols + ['parameter'])
+    sums = (
+        data.groupby(cols)[vi_globals.DRAW_COLUMNS].sum()
+            .reindex(index=data.index)
+    )
+    data = data.divide(sums).reset_index()
 
+    data = data.filter(vi_globals.DEMOGRAPHIC_COLUMNS + vi_globals.DRAW_COLUMNS + ['parameter'])
     data = validate_and_reshape_child_wasting_data(data, entity, key, location)
     return data
 
@@ -259,42 +233,3 @@ def load_child_wasting_paf(key: str, location: str) -> pd.DataFrame:
 
     data = validate_and_reshape_child_wasting_data(data, entity, key, location)
     return data
-
-
-def get_child_wasting_data(key, location, source):
-    # from load_standard_data
-    key = EntityKey(key)
-    entity = get_entity(key)
-
-    # from interface.get_measure
-    # from vivarium_inputs.core.get_data
-    location_id = utility_data.get_location_id(location) if isinstance(location, str) else location
-
-    # from vivarium_inputs.core.get_{measure}
-    # from vivarium_inputs.extract.extract_data
-    check_metadata(entity, key.measure)
-
-    # from vivarium_inputs.extract.extract_{measure}
-    # from vivarium_gbd_access.gbd.get_{measure}
-    data = get_draws(gbd_id_type='rei_id',
-                     gbd_id=entity.gbd_id,
-                     source=source,
-                     location_id=location_id,
-                     sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
-                     age_group_id=get_age_group_id(),
-                     gbd_round_id=GBD_2020,
-                     decomp_step='iterative',
-                     status='best')
-    return data, entity, key
-
-
-def validate_and_reshape_child_wasting_data(data, entity, key, location):
-    # from vivarium_inputs.core.get_data
-    data = vi_utils.reshape(data, value_cols=vi_globals.DRAW_COLUMNS)
-
-    # from interface.get_measure
-    data = vi_utils.scrub_gbd_conventions(data, location)
-    validate_for_simulation(data, entity, key.measure, location)
-    data = vi_utils.split_interval(data, interval_column='age', split_column_prefix='age')
-    data = vi_utils.split_interval(data, interval_column='year', split_column_prefix='year')
-    return vi_utils.sort_hierarchical_data(data).droplevel('location')
