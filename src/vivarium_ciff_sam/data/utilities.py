@@ -1,10 +1,11 @@
+from itertools import product
 from numbers import Real
-from typing import List, Tuple
+from typing import List
 import warnings
 
 import pandas as pd
 
-from gbd_mapping import causes, covariates, risk_factors, ModelableEntity, RiskFactor
+from gbd_mapping import causes, covariates, risk_factors, Cause, ModelableEntity, RiskFactor
 from vivarium.framework.artifact import EntityKey
 from vivarium_gbd_access import constants as gbd_constants, gbd
 from vivarium_gbd_access.utilities import get_draws, query
@@ -40,12 +41,11 @@ def get_entity(key: EntityKey) -> ModelableEntity:
     return type_map[key.type][key.name]
 
 
-def get_gbd_2020_entity(key: str) -> Tuple[EntityKey, ModelableEntity]:
+def get_gbd_2020_entity(key: str) -> ModelableEntity:
     # from load_standard_data
-    key = EntityKey(key)
     entity = get_entity(key)
 
-    if isinstance(entity, RiskFactor):
+    if isinstance(entity, RiskFactor) or isinstance(entity, Cause):
         # Set risk factor age restrictions for GBD 2020
         if 'yll_age_group_id_start' in entity.restrictions:
             entity.restrictions.yll_age_group_id_start = min(GBD_2020_AGE_GROUPS)
@@ -56,7 +56,7 @@ def get_gbd_2020_entity(key: str) -> Tuple[EntityKey, ModelableEntity]:
         if 'yld_age_group_id_end' in entity.restrictions:
             entity.restrictions.yld_age_group_id_end = max(GBD_2020_AGE_GROUPS)
 
-    return key, entity
+    return entity
 
 
 def get_child_wasting_data(key: EntityKey, entity: ModelableEntity, location: str, source: str) -> pd.DataFrame:
@@ -84,9 +84,6 @@ def get_child_wasting_data(key: EntityKey, entity: ModelableEntity, location: st
 
 def validate_and_reshape_child_wasting_data(data: pd.DataFrame, entity: ModelableEntity, key: EntityKey,
                                             location: str) -> pd.DataFrame:
-    # drop all older (and unused) rows to pass validation
-    # data = data[data.year_id >= 2019]
-
     # from vivarium_inputs.core.get_data
     data = vi_utils.reshape(data, value_cols=vi_globals.DRAW_COLUMNS)
 
@@ -178,3 +175,25 @@ def _get_gbd_2020_age_bins() -> pd.DataFrame:
         .rename(columns={'age_group_years_start': 'age_start', 'age_group_years_end': 'age_end'})
     )
     return age_bins
+
+
+def filter_relative_risk_to_cause_restrictions(data: pd.DataFrame) -> pd.DataFrame:
+    """ It applies age restrictions according to affected causes
+    and affected measures. If affected measure is incidence_rate,
+    it applies the yld_age_restrictions. If affected measure is
+    excess_mortality_rate, it applies the yll_age_restrictions to filter
+    the relative_risk data"""
+
+    temp = []
+    affected_entities = set(data.affected_entity)
+    affected_measures = set(data.affected_measure)
+    for cause, measure in product(affected_entities, affected_measures):
+        df = data[(data.affected_entity == cause) & (data.affected_measure == measure)]
+        cause = get_gbd_2020_entity(EntityKey(f'cause.{cause}.{measure}'))
+        if measure == 'excess_mortality_rate':
+            start, end = vi_utils.get_age_group_ids_by_restriction(cause, 'yll')
+        else:  # incidence_rate
+            start, end = vi_utils.get_age_group_ids_by_restriction(cause, 'yld')
+        temp.append(df[df.age_group_id.isin(range(start, end + 1))])
+    data = pd.concat(temp)
+    return data

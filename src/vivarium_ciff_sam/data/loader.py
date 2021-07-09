@@ -21,8 +21,9 @@ from vivarium_gbd_access import constants as gbd_constants
 from vivarium_inputs import extract as vi_extract, globals as vi_globals, interface, utilities as vi_utils, utility_data
 
 from vivarium_ciff_sam.constants import data_keys, data_values
-from vivarium_ciff_sam.data.utilities import (get_child_wasting_data, get_entity, get_gbd_2020_entity,
-                                              normalize_gbd_2020, validate_and_reshape_child_wasting_data)
+from vivarium_ciff_sam.data.utilities import (filter_relative_risk_to_cause_restrictions, get_child_wasting_data,
+                                              get_entity, get_gbd_2020_entity, normalize_gbd_2020,
+                                              validate_and_reshape_child_wasting_data)
 
 
 def get_data(lookup_key: str, location: str) -> pd.DataFrame:
@@ -82,7 +83,7 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.WASTING.ALT_DISTRIBUTION: load_metadata,
         data_keys.WASTING.CATEGORIES: load_metadata,
         data_keys.WASTING.EXPOSURE: load_gbd_2020_exposure,
-        data_keys.WASTING.RELATIVE_RISK: load_standard_data,
+        data_keys.WASTING.RELATIVE_RISK: load_gbd_2020_rr,
         data_keys.WASTING.PAF: load_child_wasting_paf,
     }
     return mapping[lookup_key](lookup_key, location)
@@ -160,7 +161,8 @@ def load_lri_excess_mortality_rate(key: str, location: str) -> pd.DataFrame:
 
 
 def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
-    key, entity = get_gbd_2020_entity(key)
+    key = EntityKey(key)
+    entity = get_gbd_2020_entity(key)
 
     data = get_child_wasting_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE)
     data['rei_id'] = entity.gbd_id
@@ -196,6 +198,41 @@ def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
     data = data.divide(sums).reset_index()
 
     data = data.filter(vi_globals.DEMOGRAPHIC_COLUMNS + vi_globals.DRAW_COLUMNS + ['parameter'])
+    data = validate_and_reshape_child_wasting_data(data, entity, key, location)
+    return data
+
+
+def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
+    key = EntityKey(key)
+    entity = get_gbd_2020_entity(key)
+
+    data = get_child_wasting_data(key, entity, location, gbd_constants.SOURCES.RR)
+    data['rei_id'] = entity.gbd_id
+
+    # from vivarium_inputs.extract.extract_relative_risk
+    data = vi_utils.filter_to_most_detailed_causes(data)
+
+    # from vivarium_inputs.core.get_relative_risk
+    data = vi_utils.convert_affected_entity(data, 'cause_id')
+    morbidity = data.morbidity == 1
+    mortality = data.mortality == 1
+    data.loc[morbidity & mortality, 'affected_measure'] = 'incidence_rate'
+    data.loc[morbidity & ~mortality, 'affected_measure'] = 'incidence_rate'
+    data.loc[~morbidity & mortality, 'affected_measure'] = 'excess_mortality_rate'
+    data = filter_relative_risk_to_cause_restrictions(data)
+
+    data = data.filter(vi_globals.DEMOGRAPHIC_COLUMNS + ['affected_entity', 'affected_measure', 'parameter']
+                       + vi_globals.DRAW_COLUMNS)
+    data = (data.groupby(['affected_entity', 'parameter'])
+            .apply(normalize_gbd_2020, fill_value=1)
+            .reset_index(drop=True))
+
+    tmrel_cat = utility_data.get_tmrel_category(entity)
+    tmrel_mask = data.parameter == tmrel_cat
+    data.loc[tmrel_mask, vi_globals.DRAW_COLUMNS] = (data.loc[tmrel_mask, vi_globals.DRAW_COLUMNS]
+                                                     .mask(np.isclose(data.loc[tmrel_mask, vi_globals.DRAW_COLUMNS],
+                                                                      1.0), 1.0))
+
     data = validate_and_reshape_child_wasting_data(data, entity, key, location)
     return data
 
