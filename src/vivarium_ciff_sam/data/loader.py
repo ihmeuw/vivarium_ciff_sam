@@ -15,10 +15,9 @@ for an example.
 import numpy as np
 import pandas as pd
 
-from gbd_mapping import causes
 from vivarium.framework.artifact import EntityKey
 from vivarium_gbd_access import constants as gbd_constants
-from vivarium_inputs import extract as vi_extract, globals as vi_globals, interface, utilities as vi_utils, utility_data
+from vivarium_inputs import globals as vi_globals, interface, utilities as vi_utils, utility_data
 
 from vivarium_ciff_sam.constants import data_keys, data_values
 from vivarium_ciff_sam.data.utilities import (filter_relative_risk_to_cause_restrictions, get_child_wasting_data,
@@ -238,35 +237,18 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
 
 
 def load_child_wasting_paf(key: str, location: str) -> pd.DataFrame:
-    # from load_standard_data
-    key = EntityKey(key)
-    entity = get_entity(key)
+    if key == data_keys.WASTING.PAF:
+        exp = get_data(data_keys.WASTING.EXPOSURE, location)
+        rr = get_data(data_keys.WASTING.RELATIVE_RISK, location)
 
-    # from interface.get_measure
-    # from vivarium_inputs.core.get_data
-    location_id = utility_data.get_location_id(location) if isinstance(location, str) else location
-
-    # from vivarium_inputs.core.get_population_attributable_fraction
-    causes_map = {c.gbd_id: c for c in causes}
-    data = vi_extract.extract_data(entity, 'population_attributable_fraction', location_id)
-
-    temp = []
-    # We filter paf age groups by cause level restrictions.
-    for (c_id, measure), df in data.groupby(['cause_id', 'measure_id']):
-        cause = causes_map[c_id]
-        measure = 'yll' if measure == vi_globals.MEASURES['YLLs'] else 'yld'
-        df = vi_utils.filter_data_by_restrictions(df, cause, measure, utility_data.get_age_group_ids())
-        temp.append(df)
-    data = pd.concat(temp, ignore_index=True)
-
-    data = vi_utils.convert_affected_entity(data, 'cause_id')
-    data['affected_measure'] = 'incidence_rate'
-    data = (data.groupby(['affected_entity', 'affected_measure'])
-            .apply(vi_utils.normalize, fill_value=0)
-            .reset_index(drop=True))
-    data = data.filter(vi_globals.DEMOGRAPHIC_COLUMNS
-                       + ['affected_entity', 'affected_measure']
-                       + vi_globals.DRAW_COLUMNS)
-
-    data = validate_and_reshape_child_wasting_data(data, entity, key, location)
-    return data
+        # paf = (sum_categories(exp * rr) - 1) / sum_categories(exp * rr)
+        sum_exp_x_rr = (
+            (exp * rr)
+            .groupby(list(set(rr.index.names) - {'parameter'})).sum()
+            .reset_index()
+            .set_index(rr.index.names[:-1])
+        )
+        paf = (sum_exp_x_rr - 1) / sum_exp_x_rr
+        return paf
+    else:
+        raise ValueError(f'Unrecognized key {key}')
