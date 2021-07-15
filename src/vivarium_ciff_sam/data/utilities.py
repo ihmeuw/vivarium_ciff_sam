@@ -14,7 +14,7 @@ from vivarium_inputs.mapping_extension import alternative_risk_factors
 from vivarium_inputs.validation.raw import check_metadata
 from vivarium_inputs.validation.sim import validate_for_simulation
 
-from vivarium_ciff_sam.constants.metadata import GBD_2020_AGE_GROUPS, GBD_2020_ROUND_ID
+from vivarium_ciff_sam.constants.metadata import ARTIFACT_INDEX_COLUMNS, GBD_2020_AGE_GROUPS, GBD_2020_ROUND_ID
 
 
 def _load_em_from_meid(location, meid, measure):
@@ -127,6 +127,32 @@ def normalize_gbd_2020(data: pd.DataFrame, fill_value: Real = None,
     data = data[data.year_id.isin(years['annual'])]
 
     data = vi_utils.normalize_age(data, fill_value, cols_to_fill)
+    return data
+
+
+def get_gbd_2020_artifact_index() -> pd.Index:
+    estimation_years = _get_gbd_2020_estimation_years()
+    year_starts = range(estimation_years[0], estimation_years[-1] + 1)
+    age_bins = _get_gbd_2020_age_bins()
+
+    unique_index_data = (pd.DataFrame(product(['Female', 'Male'], age_bins.age_start, year_starts))
+                         .rename(columns={0: 'sex', 1: 'age_start', 2: 'year_start'}))
+
+    index_data = apply_artifact_index(unique_index_data)
+    return index_data.index
+
+
+def apply_artifact_index(data: pd.DataFrame) -> pd.DataFrame:
+    """Sets data frame index to match artifact format.
+     Populates year_end and age_end columns if they are missing"""
+    age_bins = _get_gbd_2020_age_bins()
+
+    if 'year_end' not in data.columns:
+        data['year_end'] = data['year_start'] + 1
+    if 'age_end' not in data.columns:
+        data['age_end'] = data['age_start'].apply(lambda x: {start: end for start, end
+                                                             in zip(age_bins.age_start, age_bins.age_end)}[x])
+    data = data.set_index(ARTIFACT_INDEX_COLUMNS)
     return data
 
 
