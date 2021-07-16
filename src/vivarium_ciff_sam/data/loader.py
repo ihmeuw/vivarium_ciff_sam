@@ -278,6 +278,11 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
                                                                       1.0), 1.0))
 
     data = utilities.validate_and_reshape_child_wasting_data(data, entity, key, location)
+
+    # Remove neonatal wasting relative risks
+    neonatal_age_ends = data.index.get_level_values('age_end').unique()[:2]
+    data.loc[data.index.get_level_values('age_end').isin(neonatal_age_ends)] = 1.0
+
     return data
 
 
