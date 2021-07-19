@@ -184,7 +184,7 @@ def load_lri_prevalence(key: str, location: str) -> pd.DataFrame:
     if key == data_keys.LRI.PREVALENCE:
         incidence_rate = get_data(data_keys.LRI.INCIDENCE_RATE, location)
         early_neonatal_prevalence = (incidence_rate[incidence_rate.index.get_level_values('age_start') == 0.0]
-                                     * data_values.EARLY_NEONATAL_LRI_DURATION / 365)
+                                     * data_values.EARLY_NEONATAL_CAUSE_DURATION / 365)
         all_other_prevalence = (incidence_rate[incidence_rate.index.get_level_values('age_start') != 0.0]
                                 * data_values.LRI_DURATION / 365)
         prevalence = pd.concat([early_neonatal_prevalence, all_other_prevalence])
@@ -225,8 +225,8 @@ def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
     data = data.drop('modelable_entity_id', 'columns')
     tmrel_cat = utility_data.get_tmrel_category(entity)
     unexposed = data[data.parameter == tmrel_cat]
-    exposed = [data[data.parameter == cat] for cat in [data_keys.WASTING.MILD, data_keys.WASTING.MAM,
-                                                       data_keys.WASTING.SAM]]
+    exposed = [data[data.parameter == cat] for cat in [data_keys.WASTING.CAT3, data_keys.WASTING.CAT2,
+                                                       data_keys.WASTING.CAT1]]
     #  FIXME: We fill 1 as exposure of tmrel category, which is not correct.
     data = pd.concat([utilities.normalize_gbd_2020(cat, fill_value=0) for cat in exposed]
                      + [utilities.normalize_gbd_2020(unexposed, fill_value=1)],

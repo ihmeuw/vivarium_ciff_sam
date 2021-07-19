@@ -64,10 +64,10 @@ WASTING_MODEL_TRANSITIONS = (
 
 def get_risk_category(state_name: str) -> str:
     return {
-        WASTING_SUSCEPTIBLE_STATE_NAME: data_keys.WASTING.TMREL,
-        MILD_WASTING_STATE_NAME: data_keys.WASTING.MILD,
-        MODERATE_WASTING_STATE_NAME: data_keys.WASTING.MAM,
-        SEVERE_WASTING_STATE_NAME: data_keys.WASTING.SAM,
+        WASTING_SUSCEPTIBLE_STATE_NAME: data_keys.WASTING.CAT4,
+        MILD_WASTING_STATE_NAME: data_keys.WASTING.CAT3,
+        MODERATE_WASTING_STATE_NAME: data_keys.WASTING.CAT2,
+        SEVERE_WASTING_STATE_NAME: data_keys.WASTING.CAT1,
     }[state_name]
 
 

@@ -1,3 +1,6 @@
+from typing import Union
+
+import numpy as np
 import pandas as pd
 from vivarium.framework.engine import Builder
 from vivarium_public_health.risks import Risk
@@ -6,6 +9,7 @@ from vivarium_public_health.disease import DiseaseModel, DiseaseState, Susceptib
 from vivarium_public_health.utilities import EntityString
 
 from vivarium_ciff_sam.constants import data_keys, data_values, metadata, models
+from vivarium_ciff_sam.constants.data_keys import WASTING
 
 
 class RiskState(DiseaseState):
@@ -101,7 +105,7 @@ def ChildWasting():
         tmrel,
         source_data_type='rate',
         get_data_functions={
-            'transition_rate': load_mild_wasting_remission_rate,
+            'remission_rate': load_mild_wasting_remission_rate,
         }
     )
 
@@ -131,6 +135,13 @@ def ChildWasting():
             'transition_rate': load_sam_remission_rate,
         }
     )
+    severe.add_transition(
+        mild,
+        source_data_type='rate',
+        get_data_functions={
+            'transition_rate': load_sam_treated_remission_rate,
+        }
+    )
 
     return RiskModel(
         models.WASTING_MODEL_NAME,
@@ -141,155 +152,290 @@ def ChildWasting():
 
 # noinspection PyUnusedLocal
 def load_pem_disability_weight(cause: str, builder: Builder) -> pd.DataFrame:
-    dw = builder.data.load(data_keys.PEM.DISABILITY_WEIGHT).reset_index()
-    dw = dw.rename(columns={'value': 0}).set_index('index')
+    # todo add back pem dw
+    # dw = builder.data.load(data_keys.PEM.DISABILITY_WEIGHT).reset_index()
+    # dw = dw.rename(columns={'value': 0}).set_index('index')
+    dw = 0
     return dw
 
 
 # noinspection PyUnusedLocal
 def load_pem_excess_mortality_rate(cause: str, builder: Builder) -> pd.DataFrame:
-    emr = builder.data.load(data_keys.PEM.EMR).reset_index()
-    emr = emr.rename(columns={'value': 0}).set_index('index')
+    # todo add back pem emr
+    # emr = builder.data.load(data_keys.PEM.EMR).reset_index()
+    # emr = emr.rename(columns={'value': 0}).set_index('index')
+    emr = 0
     return emr
-
-
-def load_child_wasting_exposures(builder: Builder) -> pd.DataFrame:
-    exposures = (
-        builder.data.load(data_keys.WASTING.EXPOSURE)
-        .set_index(metadata.ARTIFACT_INDEX_COLUMNS)
-        .pivot(columns='parameter')
-    )
-
-    exposures.columns = exposures.columns.droplevel(0)
-
-    return exposures
 
 
 # noinspection PyUnusedLocal
 def load_mild_wasting_exposure(cause: str, builder: Builder) -> pd.DataFrame:
-    return load_child_wasting_exposures(builder)[data_keys.WASTING.MILD].reset_index()
+    return load_child_wasting_exposures(builder)[WASTING.CAT3].reset_index()
 
 
 # noinspection PyUnusedLocal, DuplicatedCode
 def load_mild_wasting_incidence_rate(cause: str, builder: Builder) -> pd.DataFrame:
     exposures = load_child_wasting_exposures(builder)
-    return calculate_mild_wasting_incidence_rate(exposures, builder.configuration.wasting_equations.include_mortality)
+    adjustment = load_acmr_adjustment(builder)
+    mortality_probs = load_daily_mortality_probabilities(builder)
+
+    daily_probability = get_daily_mild_incidence_probability(exposures, adjustment, mortality_probs)
+    incidence_rate = _convert_daily_probability_to_annual_rate(daily_probability)
+    return incidence_rate.reset_index()
 
 
 # noinspection DuplicatedCode
-def calculate_mild_wasting_incidence_rate(exposures: pd.DataFrame, include_mortality: bool = True) -> pd.DataFrame:
-    if include_mortality:
-        # TODO
-        i3 = 0
-    else:
-        # i3: (dur_cat1*dur_cat2*p3 - dur_cat1*dur_cat3*p2 + dur_cat2*dur_cat3*p1)/(dur_cat1*dur_cat2*dur_cat3*p4)
-        i3 = ((data_values.SAM_DURATION * data_values.MAM_DURATION * exposures[data_keys.WASTING.MILD]
-               - data_values.SAM_DURATION * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.MAM]
-               + data_values.MAM_DURATION * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.SAM])
-              / (data_values.SAM_DURATION * data_values.MAM_DURATION * data_values.MILD_WASTING_DURATION
-                 * exposures[data_keys.WASTING.TMREL])).reset_index()
+def get_daily_mild_incidence_probability(exposures: pd.DataFrame, adjustment: pd.Series,
+                                         mortality_probs: pd.DataFrame) -> pd.Series:
+    adj_exposures = adjust_exposure(exposures, adjustment)
+    mild_remission_prob = get_mild_wasting_remission_probability()
+
+    # i3: ap0*f4/ap4 + ap3*r4/ap4 - d4
+    i3 = (
+            adjustment * exposures[WASTING.CAT4] / adj_exposures[WASTING.CAT4]
+            + adj_exposures[WASTING.CAT3] * mild_remission_prob / adj_exposures[WASTING.CAT4]
+            - mortality_probs[WASTING.CAT4]
+    )
     return i3
 
 
 # noinspection PyUnusedLocal
-def load_mild_wasting_remission_rate(builder: Builder, *args) -> pd.DataFrame:
-    exposures = load_child_wasting_exposures(builder)
-    return calculate_mild_wasting_remission_rate(exposures, builder.configuration.wasting_equations.include_mortality)
+def load_mild_wasting_remission_rate(builder: Builder, *args) -> float:
+    daily_probability = get_mild_wasting_remission_probability()
+    incidence_rate = _convert_daily_probability_to_annual_rate(daily_probability)
+    return incidence_rate
 
 
 # noinspection DuplicatedCode
-def calculate_mild_wasting_remission_rate(exposures: pd.DataFrame, include_mortality: bool = True) -> pd.DataFrame:
-    if include_mortality:
-        # TODO
-        r4 = 0
-    else:
-        # r4: (dur_cat1*dur_cat2*p3 - dur_cat1*dur_cat3*p2 + dur_cat2*dur_cat3*p1)/(dur_cat1*dur_cat2*dur_cat3*p3)
-        r4 = ((data_values.SAM_DURATION * data_values.MAM_DURATION * exposures[data_keys.WASTING.MILD]
-               - data_values.SAM_DURATION * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.MAM]
-               + data_values.MAM_DURATION * data_values.MILD_WASTING_DURATION * exposures[data_keys.WASTING.SAM])
-              / (data_values.SAM_DURATION * data_values.MAM_DURATION * data_values.MILD_WASTING_DURATION
-                 * exposures[data_keys.WASTING.MILD])).reset_index()
-    return r4
+def get_mild_wasting_remission_probability() -> float:
+    return 1 / data_values.MILD_WASTING_UX_RECOVERY_TIME
 
 
 # noinspection PyUnusedLocal
 def load_mam_exposure(cause: str, builder: Builder) -> pd.DataFrame:
-    return load_child_wasting_exposures(builder)[data_keys.WASTING.MAM].reset_index()
+    return load_child_wasting_exposures(builder)[WASTING.CAT2].reset_index()
 
 
 # noinspection PyUnusedLocal
 def load_mam_incidence_rate(builder: Builder, *args) -> pd.DataFrame:
     exposures = load_child_wasting_exposures(builder)
-    return calculate_mam_incidence_rate(exposures, builder.configuration.wasting_equations.include_mortality)
+    adjustment = load_acmr_adjustment(builder)
+    mortality_probs = load_daily_mortality_probabilities(builder)
+
+    daily_probability = get_daily_mam_incidence_probability(exposures, adjustment, mortality_probs)
+    incidence_rate = _convert_daily_probability_to_annual_rate(daily_probability)
+    return incidence_rate.reset_index()
 
 
 # noinspection DuplicatedCode
-def calculate_mam_incidence_rate(exposures: pd.DataFrame, include_mortality: bool = True) -> pd.DataFrame:
-    if include_mortality:
-        # TODO
-        i2 = 0
-    else:
-        # i2: (dur_cat1*p2 - dur_cat2*p1)/(dur_cat1*dur_cat2*p3)
-        i2 = ((data_values.SAM_DURATION * exposures[data_keys.WASTING.MAM])
-              - (data_values.MAM_DURATION * exposures[data_keys.WASTING.SAM])
-              / (data_values.SAM_DURATION * data_values.MAM_DURATION * exposures[data_keys.WASTING.MILD])
-              ).reset_index()
+def get_daily_mam_incidence_probability(exposures: pd.DataFrame, adjustment: pd.Series,
+                                        mortality_probs: pd.DataFrame) -> pd.Series:
+    adj_exposures = adjust_exposure(exposures, adjustment)
+    treated_sam_remission_prob = get_daily_sam_treated_remission_probability()
+    mam_remission_prob = get_daily_mam_remission_probability()
+
+    # i2: ap0*f3/ap3 + ap0*f4/ap3 + ap1*t1/ap3 + ap2*r3/ap3 - d3 - ap4*d4/ap3
+    i2 = (
+            adjustment * exposures[WASTING.CAT3] / adj_exposures[WASTING.CAT3]
+            + adjustment * exposures[WASTING.CAT4] / adj_exposures[WASTING.CAT3]
+            + adj_exposures[WASTING.CAT1] * treated_sam_remission_prob / adj_exposures[WASTING.CAT3]
+            + adj_exposures[WASTING.CAT2] * mam_remission_prob / adj_exposures[WASTING.CAT3]
+            - mortality_probs[WASTING.CAT3]
+            - adj_exposures[WASTING.CAT4] * mortality_probs[WASTING.CAT4] / adj_exposures[WASTING.CAT3]
+    )
     return i2
 
 
 # noinspection PyUnusedLocal
-def load_mam_remission_rate(builder: Builder, *args) -> pd.DataFrame:
-    exposures = load_child_wasting_exposures(builder)
-    return calculate_mam_remission_rate(exposures, builder.configuration.wasting_equations.include_mortality)
+def load_mam_remission_rate(builder: Builder, *args) -> float:
+    daily_probability = get_daily_mam_remission_probability()
+    incidence_rate = _convert_daily_probability_to_annual_rate(daily_probability)
+    return incidence_rate
 
 
-# noinspection DuplicatedCode
-def calculate_mam_remission_rate(exposures: pd.DataFrame, include_mortality: bool = True) -> pd.DataFrame:
-    if include_mortality:
-        # TODO
-        r3 = 0
-    else:
-        # r3: (dur_cat1*p2 - dur_cat2*p1)/(dur_cat1*dur_cat2*p2)
-        r3 = ((data_values.SAM_DURATION * exposures[data_keys.WASTING.MAM])
-              - (data_values.MAM_DURATION * exposures[data_keys.WASTING.SAM])
-              / (data_values.SAM_DURATION * data_values.MAM_DURATION * exposures[data_keys.WASTING.MAM])
-              ).reset_index()
+def get_daily_mam_remission_probability() -> float:
+    # r3: mam_tx_coverage * 1/time_to_mam_tx_recovery + (1-mam_tx_coverage)*(1/time_to_mam_ux_recovery)
+    r3 = (
+        data_values.MAM_TX_COVERAGE / data_values.MAM_TX_RECOVERY_TIME
+        + (1 - data_values.MAM_TX_COVERAGE) / data_values.MAM_UX_RECOVERY_TIME
+    )
     return r3
 
 
 # noinspection PyUnusedLocal
 def load_sam_exposure(cause: str, builder: Builder) -> pd.DataFrame:
-    return load_child_wasting_exposures(builder)[data_keys.WASTING.SAM].reset_index()
+    return load_child_wasting_exposures(builder)[WASTING.CAT1].reset_index()
 
 
 # noinspection PyUnusedLocal
 def load_sam_incidence_rate(builder: Builder, *args) -> pd.DataFrame:
     exposures = load_child_wasting_exposures(builder)
-    return calculate_sam_incidence_rate(exposures, builder.configuration.wasting_equations.include_mortality)
+    adjustment = load_acmr_adjustment(builder)
+    mortality_probs = load_daily_mortality_probabilities(builder)
+
+    daily_probability = get_daily_sam_incidence_probability(exposures, adjustment, mortality_probs)
+    incidence_rate = _convert_daily_probability_to_annual_rate(daily_probability)
+    return incidence_rate.reset_index()
 
 
-def calculate_sam_incidence_rate(exposures: pd.DataFrame, include_mortality: bool = True) -> pd.DataFrame:
-    if include_mortality:
-        # TODO
-        i1 = 0
-    else:
-        # i1: p1/(dur_cat1*p2)
-        i1 = (exposures[data_keys.WASTING.SAM]
-              / (data_values.SAM_DURATION * exposures[data_keys.WASTING.MAM])).reset_index()
+def get_daily_sam_incidence_probability(exposures: pd.DataFrame, adjustment: pd.Series,
+                                        mortality_probs: pd.DataFrame) -> pd.Series:
+    adj_exposures = adjust_exposure(exposures, adjustment)
+    treated_sam_remission_prob = get_daily_sam_treated_remission_probability()
+    untreated_sam_remission_prob = get_daily_sam_untreated_remission_probability()
+
+    # i1: ap0*f2/ap2 + ap0*f3/ap2 + ap0*f4/ap2 + ap1*r2/ap2 + ap1*t1/ap2 - d2 - ap3*d3/ap2 - ap4*d4/ap2
+    i1 = (
+            adjustment * exposures[WASTING.CAT2] / adj_exposures[WASTING.CAT2]
+            + adjustment * exposures[WASTING.CAT3] / adj_exposures[WASTING.CAT2]
+            + adjustment * exposures[WASTING.CAT4] / adj_exposures[WASTING.CAT2]
+            + adj_exposures[WASTING.CAT1] * untreated_sam_remission_prob / adj_exposures[WASTING.CAT2]
+            + adj_exposures[WASTING.CAT1] * treated_sam_remission_prob / adj_exposures[WASTING.CAT2]
+            - mortality_probs[WASTING.CAT2]
+            - adj_exposures[WASTING.CAT3] * mortality_probs[WASTING.CAT3] / adj_exposures[WASTING.CAT2]
+            - adj_exposures[WASTING.CAT4] * mortality_probs[WASTING.CAT4] / adj_exposures[WASTING.CAT2]
+    )
     return i1
 
 
 # noinspection PyUnusedLocal
-def load_sam_remission_rate(builder: Builder, *args) -> pd.DataFrame:
-    exposures = load_child_wasting_exposures(builder)
-    return calculate_sam_remission_rate(builder.configuration.wasting_equations.include_mortality)
+def load_sam_remission_rate(builder: Builder, *args) -> float:
+    daily_probability = get_daily_sam_untreated_remission_probability()
+    incidence_rate = _convert_daily_probability_to_annual_rate(daily_probability)
+    return incidence_rate
 
 
-def calculate_sam_remission_rate(include_mortality: bool = True) -> pd.DataFrame:
-    if include_mortality:
-        # TODO
-        r2 = 0
-    else:
-        # r2: 1/dur_cat1
-        r2 = 1 / data_values.SAM_DURATION
+def get_daily_sam_untreated_remission_probability() -> float:
+    # r2: (1-sam_tx_coverage)*(1/time_to_sam_ux_recovery)
+    r2 = (1 - data_values.SAM_TX_COVERAGE) / data_values.SAM_UX_RECOVERY_TIME
     return r2
+
+
+# noinspection PyUnusedLocal
+def load_sam_treated_remission_rate(builder: Builder, *args) -> float:
+    daily_probability = get_daily_sam_treated_remission_probability()
+    incidence_rate = _convert_daily_probability_to_annual_rate(daily_probability)
+    return incidence_rate
+
+
+def get_daily_sam_treated_remission_probability() -> float:
+    # t1: sam_tx_coverage * (1/time_to_sam_tx_recovery)
+    t1 = data_values.SAM_TX_COVERAGE / data_values.SAM_TX_RECOVERY_TIME
+    return t1
+
+
+# Sub-loader functions
+
+def load_child_wasting_exposures(builder: Builder) -> pd.DataFrame:
+    exposures = (
+        builder.data.load(WASTING.EXPOSURE)
+        .set_index(metadata.ARTIFACT_INDEX_COLUMNS)
+        .pivot(columns='parameter')
+    )
+
+    exposures.columns = exposures.columns.droplevel(0)
+    return exposures
+
+
+def load_acmr_adjustment(builder: Builder) -> pd.Series:
+    acmr = (
+        builder.data.load(data_keys.POPULATION.ACMR)
+        .set_index(metadata.ARTIFACT_INDEX_COLUMNS)
+    )['value']
+
+    adjustment = _convert_annual_rate_to_daily_probability(acmr)
+    return adjustment
+
+
+def load_daily_mortality_probabilities(builder: Builder) -> pd.DataFrame:
+    """"
+    Returns a DataFrame with daily mortality probabilities for each wasting state
+
+    DataFrame has the standard artifact index, and columns for each wasting state
+    """
+
+    # ---------- Load mortality rate input data ---------- #
+    causes = [
+        data_keys.DIARRHEA,
+        data_keys.MEASLES,
+        data_keys.LRI,
+        # data_keys.PEM,
+    ]
+
+    # acmr
+    # index = [ 'sex', 'age_start', 'age_end', 'year_start', 'year_end' ]
+    acmr = builder.data.load(data_keys.POPULATION.ACMR).set_index(metadata.ARTIFACT_INDEX_COLUMNS)['value']
+
+    # emr_c
+    # index = [ 'sex', 'age_start', 'age_end', 'year_start', 'year_end', 'affected_entity' ]
+    emr_c = pd.concat(
+        [builder.data.load(c.EMR).set_index(metadata.ARTIFACT_INDEX_COLUMNS).rename(columns={'value': c.name})
+         for c in causes], axis=1
+    )
+    emr_c.columns.name = 'affected_entity'
+    emr_c = emr_c.stack()
+
+    # csmr_c
+    # index = [ 'sex', 'age_start', 'age_end', 'year_start', 'year_end', 'affected_entity' ]
+    csmr_c = pd.concat(
+        [builder.data.load(c.CSMR).set_index(metadata.ARTIFACT_INDEX_COLUMNS).rename(columns={'value': c.name})
+         for c in causes], axis=1
+    )
+    csmr_c.columns.name = 'affected_entity'
+    csmr_c = csmr_c.stack()
+
+    # incidence_c
+    # index = [ 'sex', 'age_start', 'age_end', 'year_start', 'year_end', 'affected_entity' ]
+    incidence_c = pd.concat(
+        [builder.data.load(c.INCIDENCE_RATE).set_index(metadata.ARTIFACT_INDEX_COLUMNS)
+         .rename(columns={'value': c.name}) for c in causes], axis=1
+    )
+    incidence_c.columns.name = 'affected_entity'
+    incidence_c = incidence_c.stack()
+
+    # paf_c
+    # index = [ 'sex', 'age_start', 'age_end', 'year_start', 'year_end', 'affected_entity' ]
+    paf_c = (builder.data.load(WASTING.PAF)
+             .set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['affected_entity'])['value'])
+
+    # rr_ci
+    # index = [ 'sex', 'age_start', 'age_end', 'year_start', 'year_end', 'affected_entity', 'parameter ]
+    rr_ci = (builder.data.load(WASTING.RELATIVE_RISK)
+             .set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['affected_entity', 'parameter'])['value'])
+
+    # duration_c
+    # index = [ 'sex', 'age_start', 'age_end', 'year_start', 'year_end', 'affected_entity', 'parameter ]
+    duration_c = pd.Series(
+        [data_values.DIARRHEA_DURATION, data_values.MEASLES_DURATION, data_values.LRI_DURATION],
+        index=pd.Index([data_keys.DIARRHEA.name, data_keys.MEASLES.name, data_keys.LRI.name], name='affected_entity')
+    ).reindex(index=rr_ci.index, level='affected_entity')
+    duration_c.loc[duration_c.index.get_level_values('age_start') == 0.0] = data_values.EARLY_NEONATAL_CAUSE_DURATION
+    duration_c = duration_c / 365   # convert to duration in years
+
+    # ------------ Calculate mortality rates ------------ #
+
+    # mr_i = acmr + sum_c(emr_c * prevalence_ci - csmr_c)
+    # prevalence_ci = incidence_ci * duration_c
+    # incidence_ci = incidence_c * (1 - paf_c) * rr_ci
+
+    incidence_ci = rr_ci * incidence_c * (1 - paf_c)
+    prevalence_ci = incidence_ci * duration_c
+    prevalence_ci * emr_c - csmr_c
+    mr_i = acmr + (prevalence_ci * emr_c - csmr_c).groupby(metadata.ARTIFACT_INDEX_COLUMNS + ['parameter']).sum()
+    mr_i = mr_i.unstack()
+
+    # Convert annual mortality rates to daily mortality probabilities
+    daily_mortality_probability = _convert_annual_rate_to_daily_probability(mr_i)
+    return daily_mortality_probability
+
+
+def adjust_exposure(exposures: pd.DataFrame, adjustment: pd.Series) -> pd.DataFrame:
+    return exposures.div(1 + adjustment, axis='index')
+
+
+def _convert_annual_rate_to_daily_probability(rate: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:
+    return 1 - np.exp(-rate / 365)
+
+
+def _convert_daily_probability_to_annual_rate(probability: Union[pd.Series, float]) -> Union[pd.Series, float]:
+    return -np.log(1 - probability) * 365
