@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 from vivarium_ciff_sam.constants import data_keys
 
 
@@ -10,82 +12,69 @@ class TransitionString(str):
         return obj
 
 
+# noinspection PyPep8Naming
+class __SIModel:
+    def __init__(self, model_name: str):
+        self.MODEL_NAME = model_name
+        self.SUSCEPTIBLE_STATE_NAME: str = f'susceptible_to_{self.MODEL_NAME}'
+        self.STATE_NAME: str = self.MODEL_NAME
+        self.STATES: Tuple[str, ...] = (self.SUSCEPTIBLE_STATE_NAME, self.STATE_NAME)
+        self.TRANSITIONS: Tuple[TransitionString, ...] = (
+            TransitionString(f'{self.SUSCEPTIBLE_STATE_NAME}_TO_{self.STATE_NAME}'),
+            TransitionString(f'{self.STATE_NAME}_TO_{self.SUSCEPTIBLE_STATE_NAME}'),
+        )
+
+
+# noinspection PyPep8Naming
+class __WastingModel:
+
+    MODEL_NAME: str = data_keys.WASTING.name
+    SUSCEPTIBLE_STATE_NAME: str = f'susceptible_to_{MODEL_NAME}'
+    MILD_STATE_NAME: str = f'mild_{MODEL_NAME}'
+    MODERATE_STATE_NAME = 'moderate_acute_malnutrition'
+    SEVERE_STATE_NAME = 'severe_acute_malnutrition'
+    STATES: Tuple[str, ...] = (
+        SUSCEPTIBLE_STATE_NAME,
+        MILD_STATE_NAME,
+        MODERATE_STATE_NAME,
+        SEVERE_STATE_NAME,
+    )
+    TRANSITIONS: Tuple[TransitionString, ...] = (
+        TransitionString(f'{SUSCEPTIBLE_STATE_NAME}_TO_{MILD_STATE_NAME}'),
+        TransitionString(f'{MILD_STATE_NAME}_TO_{MODERATE_STATE_NAME}'),
+        TransitionString(f'{MODERATE_STATE_NAME}_TO_{SEVERE_STATE_NAME}'),
+        TransitionString(f'{SEVERE_STATE_NAME}_TO_{MODERATE_STATE_NAME}'),
+        TransitionString(f'{SEVERE_STATE_NAME}_TO_{MILD_STATE_NAME}'),
+        TransitionString(f'{MODERATE_STATE_NAME}_TO_{MILD_STATE_NAME}'),
+        TransitionString(f'{MILD_STATE_NAME}_TO_{SUSCEPTIBLE_STATE_NAME}'),
+    )
+
+
 ###########################
 # Disease Model variables #
 ###########################
 
-DIARRHEA_MODEL_NAME = data_keys.DIARRHEA.name
-DIARRHEA_SUSCEPTIBLE_STATE_NAME = f'susceptible_to_{DIARRHEA_MODEL_NAME}'
-DIARRHEA_STATE_NAME = DIARRHEA_MODEL_NAME
-DIARRHEA_MODEL_STATES = (DIARRHEA_SUSCEPTIBLE_STATE_NAME, DIARRHEA_STATE_NAME)
-DIARRHEA_MODEL_TRANSITIONS = (
-    TransitionString(f'{DIARRHEA_SUSCEPTIBLE_STATE_NAME}_TO_{DIARRHEA_STATE_NAME}'),
-    TransitionString(f'{DIARRHEA_STATE_NAME}_TO_{DIARRHEA_SUSCEPTIBLE_STATE_NAME}'),
-)
 
-MEASLES_MODEL_NAME = data_keys.MEASLES.name
-MEASLES_SUSCEPTIBLE_STATE_NAME = f'susceptible_to_{MEASLES_MODEL_NAME}'
-MEASLES_STATE_NAME = MEASLES_MODEL_NAME
-MEASLES_MODEL_STATES = (MEASLES_SUSCEPTIBLE_STATE_NAME, MEASLES_STATE_NAME)
-MEASLES_MODEL_TRANSITIONS = (
-    TransitionString(f'{MEASLES_SUSCEPTIBLE_STATE_NAME}_TO_{MEASLES_STATE_NAME}'),
-    TransitionString(f'{MEASLES_STATE_NAME}_TO_{MEASLES_SUSCEPTIBLE_STATE_NAME}'),
-)
+DIARRHEA = __SIModel(data_keys.DIARRHEA.name)
+LRI = __SIModel(data_keys.LRI.name)
+MEASLES = __SIModel(data_keys.MEASLES.name)
+WASTING = __WastingModel()
 
-LRI_MODEL_NAME = data_keys.LRI.name
-LRI_SUSCEPTIBLE_STATE_NAME = f'susceptible_to_{LRI_MODEL_NAME}'
-LRI_STATE_NAME = LRI_MODEL_NAME
-LRI_MODEL_STATES = (LRI_SUSCEPTIBLE_STATE_NAME, LRI_STATE_NAME)
-LRI_MODEL_TRANSITIONS = (
-    TransitionString(f'{LRI_SUSCEPTIBLE_STATE_NAME}_TO_{LRI_STATE_NAME}'),
-    TransitionString(f'{LRI_STATE_NAME}_TO_{LRI_SUSCEPTIBLE_STATE_NAME}'),
-)
-
-WASTING_MODEL_NAME = data_keys.WASTING.name
-WASTING_SUSCEPTIBLE_STATE_NAME = f'susceptible_to_{WASTING_MODEL_NAME}'
-MILD_WASTING_STATE_NAME = f'mild_{WASTING_MODEL_NAME}'
-MODERATE_WASTING_STATE_NAME = 'moderate_acute_malnutrition'
-SEVERE_WASTING_STATE_NAME = 'severe_acute_malnutrition'
-WASTING_MODEL_STATES = (
-    WASTING_SUSCEPTIBLE_STATE_NAME,
-    MILD_WASTING_STATE_NAME,
-    MODERATE_WASTING_STATE_NAME,
-    SEVERE_WASTING_STATE_NAME
-)
-WASTING_MODEL_TRANSITIONS = (
-    TransitionString(f'{WASTING_SUSCEPTIBLE_STATE_NAME}_TO_{MILD_WASTING_STATE_NAME}'),
-    TransitionString(f'{MILD_WASTING_STATE_NAME}_TO_{MODERATE_WASTING_STATE_NAME}'),
-    TransitionString(f'{MODERATE_WASTING_STATE_NAME}_TO_{SEVERE_WASTING_STATE_NAME}'),
-    TransitionString(f'{SEVERE_WASTING_STATE_NAME}_TO_{MODERATE_WASTING_STATE_NAME}'),
-    TransitionString(f'{MODERATE_WASTING_STATE_NAME}_TO_{MILD_WASTING_STATE_NAME}'),
-    TransitionString(f'{MILD_WASTING_STATE_NAME}_TO_{WASTING_SUSCEPTIBLE_STATE_NAME}'),
-)
+CAUSE_MODELS: List[__SIModel] = [
+    DIARRHEA,
+    LRI,
+    MEASLES,
+]
 
 
 def get_risk_category(state_name: str) -> str:
     return {
-        WASTING_SUSCEPTIBLE_STATE_NAME: data_keys.WASTING.CAT4,
-        MILD_WASTING_STATE_NAME: data_keys.WASTING.CAT3,
-        MODERATE_WASTING_STATE_NAME: data_keys.WASTING.CAT2,
-        SEVERE_WASTING_STATE_NAME: data_keys.WASTING.CAT1,
+        WASTING.SUSCEPTIBLE_STATE_NAME: data_keys.WASTING.CAT4,
+        WASTING.MILD_STATE_NAME: data_keys.WASTING.CAT3,
+        WASTING.MODERATE_STATE_NAME: data_keys.WASTING.CAT2,
+        WASTING.SEVERE_STATE_NAME: data_keys.WASTING.CAT1,
     }[state_name]
 
 
-STATE_MACHINE_MAP = {
-    DIARRHEA_MODEL_NAME: {
-        'states': DIARRHEA_MODEL_STATES,
-        'transitions': DIARRHEA_MODEL_TRANSITIONS,
-    },
-    MEASLES_MODEL_NAME: {
-        'states': MEASLES_MODEL_STATES,
-        'transitions': MEASLES_MODEL_TRANSITIONS,
-    },
-    LRI_MODEL_NAME: {
-        'states': LRI_MODEL_STATES,
-        'transitions': LRI_MODEL_TRANSITIONS,
-    },
-}
-
-
-STATES = tuple(state for model in STATE_MACHINE_MAP.values() for state in model['states'])
-TRANSITIONS = tuple(state for model in STATE_MACHINE_MAP.values() for state in model['transitions'])
+DISEASE_STATES = tuple(state for model in CAUSE_MODELS for state in model.STATES)
+DISEASE_TRANSITIONS = tuple(state for model in CAUSE_MODELS for state in model.TRANSITIONS)
