@@ -15,6 +15,7 @@ for an example.
 import numpy as np
 import pandas as pd
 
+from gbd_mapping import sequelae
 from vivarium.framework.artifact import EntityKey
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_inputs import globals as vi_globals, interface, utilities as vi_utils, utility_data
@@ -71,9 +72,10 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.LRI.CSMR: load_standard_gbd_2019_data_as_gbd_2020_data,
         data_keys.LRI.RESTRICTIONS: load_metadata,
 
-        data_keys.PEM.DISABILITY_WEIGHT: load_standard_data,
-        data_keys.PEM.EMR: load_standard_data,
-        data_keys.PEM.CSMR: load_standard_data,
+        data_keys.PEM.MAM_DISABILITY_WEIGHT: load_pem_disability_weight,
+        data_keys.PEM.SAM_DISABILITY_WEIGHT: load_pem_disability_weight,
+        data_keys.PEM.EMR: load_standard_gbd_2019_data_as_gbd_2020_data,
+        data_keys.PEM.CSMR: load_standard_gbd_2019_data_as_gbd_2020_data,
         data_keys.PEM.RESTRICTIONS: load_metadata,
 
         data_keys.WASTING.DISTRIBUTION: load_metadata,
@@ -138,50 +140,8 @@ def load_metadata(key: str, location: str):
 # Project-specific data functions here
 
 def load_standard_gbd_2019_data_as_gbd_2020_data(key: str, location: str) -> pd.DataFrame:
-    # Load standard GBD 2019 data
     gbd_2019_data = load_standard_data(key, location)
-
-    # Get target output index
-    full_gbd_2020_idx = utilities.get_gbd_2020_artifact_index()
-
-    # Get target index subset to GBD 2019 estimation years
-    subset_gbd_2019_years_idx = (
-        full_gbd_2020_idx[full_gbd_2020_idx.get_level_values('year_start') < 2020]
-        .droplevel('age_end')
-        .reorder_levels(['year_start', 'year_end', 'sex', 'age_start'])
-    )
-
-    # Reindex data with GBD 2020 age bins across GBD 2019 estimation years and fill forward NAs
-    gbd_2019_years_gbd_2020_age_bins_data = (
-        gbd_2019_data
-        .droplevel('age_end')
-        .reorder_levels(['year_start', 'year_end', 'sex', 'age_start'])
-        .reindex(index=subset_gbd_2019_years_idx)
-        .sort_index()
-        .ffill()
-    )
-
-    # Get full target index excluding year end and age end columns
-    full_gbd_2020_idx_without_end_columns = (
-        full_gbd_2020_idx
-        .droplevel(['year_end', 'age_end'])
-        .reorder_levels(['sex', 'age_start', 'year_start'])
-    )
-
-    # Reindex data with GBD 2020 estimation years and fill forward NAs
-    full_data_without_end_columns = (
-        gbd_2019_years_gbd_2020_age_bins_data
-        .droplevel('year_end')
-        .reorder_levels(['sex', 'age_start', 'year_start'])
-        .reindex(index=full_gbd_2020_idx_without_end_columns)
-        .sort_index()
-        .ffill()
-        .reset_index()
-    )
-
-    # Repopulate year_end and age_end columns and set index
-    full_data = utilities.apply_artifact_index(full_data_without_end_columns)
-    return full_data
+    return utilities.reshape_gbd_2019_data_as_gbd_2020_data(gbd_2019_data)
 
 
 def load_lri_prevalence(key: str, location: str) -> pd.DataFrame:
@@ -212,7 +172,7 @@ def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
     key = EntityKey(key)
     entity = utilities.get_gbd_2020_entity(key)
 
-    data = utilities.get_child_wasting_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE)
+    data = utilities.get_gbd_2020_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE, 'rei_id')
     data['rei_id'] = entity.gbd_id
 
     # from vivarium_inputs.extract.extract_exposure
@@ -254,7 +214,7 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
     key = EntityKey(key)
     entity = utilities.get_gbd_2020_entity(key)
 
-    data = utilities.get_child_wasting_data(key, entity, location, gbd_constants.SOURCES.RR)
+    data = utilities.get_gbd_2020_data(key, entity, location, gbd_constants.SOURCES.RR, 'rei_id')
     data['rei_id'] = entity.gbd_id
 
     # from vivarium_inputs.extract.extract_relative_risk
@@ -304,5 +264,34 @@ def load_child_wasting_paf(key: str, location: str) -> pd.DataFrame:
         )
         paf = (sum_exp_x_rr - 1) / sum_exp_x_rr
         return paf
+    else:
+        raise ValueError(f'Unrecognized key {key}')
+
+
+def load_pem_disability_weight(key: str, location: str) -> pd.DataFrame:
+    if key in [data_keys.PEM.MAM_DISABILITY_WEIGHT, data_keys.PEM.SAM_DISABILITY_WEIGHT]:
+        key_sequelae_map = {
+            data_keys.PEM.MAM_DISABILITY_WEIGHT: [sequelae.moderate_wasting_with_edema,
+                                                  sequelae.moderate_wasting_without_edema],
+            data_keys.PEM.SAM_DISABILITY_WEIGHT: [sequelae.severe_wasting_with_edema,
+                                                  sequelae.severe_wasting_without_edema],
+        }
+
+        prevalence_disability_weight = []
+        state_prevalence = []
+        for s in key_sequelae_map[key]:
+            sequela_prevalence = interface.get_measure(s, 'prevalence', location)
+            sequela_disability_weight = interface.get_measure(s, 'disability_weight', location)
+
+            prevalence_disability_weight += [sequela_prevalence * sequela_disability_weight]
+            state_prevalence += [sequela_prevalence]
+
+        gbd_2019_disability_weight = (
+            (sum(prevalence_disability_weight) / sum(state_prevalence))
+            .fillna(0)
+            .droplevel('location')
+        )
+        disability_weight = utilities.reshape_gbd_2019_data_as_gbd_2020_data(gbd_2019_disability_weight)
+        return disability_weight
     else:
         raise ValueError(f'Unrecognized key {key}')

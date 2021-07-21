@@ -41,6 +41,50 @@ def get_entity(key: EntityKey) -> ModelableEntity:
     return type_map[key.type][key.name]
 
 
+def reshape_gbd_2019_data_as_gbd_2020_data(gbd_2019_data: pd.DataFrame) -> pd.DataFrame:
+    # Get target output index
+    full_gbd_2020_idx = _get_gbd_2020_artifact_index()
+
+    # Get target index subset to GBD 2019 estimation years
+    subset_gbd_2019_years_idx = (
+        full_gbd_2020_idx[full_gbd_2020_idx.get_level_values('year_start') < 2020]
+        .droplevel('age_end')
+        .reorder_levels(['year_start', 'year_end', 'sex', 'age_start'])
+    )
+
+    # Reindex data with GBD 2020 age bins across GBD 2019 estimation years and fill forward NAs
+    gbd_2019_years_gbd_2020_age_bins_data = (
+        gbd_2019_data
+        .droplevel('age_end')
+        .reorder_levels(['year_start', 'year_end', 'sex', 'age_start'])
+        .reindex(index=subset_gbd_2019_years_idx)
+        .sort_index()
+        .ffill()
+    )
+
+    # Get full target index excluding year end and age end columns
+    full_gbd_2020_idx_without_end_columns = (
+        full_gbd_2020_idx
+        .droplevel(['year_end', 'age_end'])
+        .reorder_levels(['sex', 'age_start', 'year_start'])
+    )
+
+    # Reindex data with GBD 2020 estimation years and fill forward NAs
+    full_data_without_end_columns = (
+        gbd_2019_years_gbd_2020_age_bins_data
+        .droplevel('year_end')
+        .reorder_levels(['sex', 'age_start', 'year_start'])
+        .reindex(index=full_gbd_2020_idx_without_end_columns)
+        .sort_index()
+        .ffill()
+        .reset_index()
+    )
+
+    # Repopulate year_end and age_end columns and set index
+    full_data = _apply_artifact_index(full_data_without_end_columns)
+    return full_data
+
+
 def get_gbd_2020_entity(key: str) -> ModelableEntity:
     # from load_standard_data
     entity = get_entity(key)
@@ -59,7 +103,8 @@ def get_gbd_2020_entity(key: str) -> ModelableEntity:
     return entity
 
 
-def get_child_wasting_data(key: EntityKey, entity: ModelableEntity, location: str, source: str) -> pd.DataFrame:
+def get_gbd_2020_data(key: EntityKey, entity: ModelableEntity, location: str, source: str,
+                      gbd_id_type: str) -> pd.DataFrame:
     # from interface.get_measure
     # from vivarium_inputs.core.get_data
     location_id = utility_data.get_location_id(location) if isinstance(location, str) else location
@@ -70,7 +115,7 @@ def get_child_wasting_data(key: EntityKey, entity: ModelableEntity, location: st
 
     # from vivarium_inputs.extract.extract_{measure}
     # from vivarium_gbd_access.gbd.get_{measure}
-    data = get_draws(gbd_id_type='rei_id',
+    data = get_draws(gbd_id_type=gbd_id_type,
                      gbd_id=entity.gbd_id,
                      source=source,
                      location_id=location_id,
@@ -130,7 +175,7 @@ def normalize_gbd_2020(data: pd.DataFrame, fill_value: Real = None,
     return data
 
 
-def get_gbd_2020_artifact_index() -> pd.Index:
+def _get_gbd_2020_artifact_index() -> pd.Index:
     estimation_years = _get_gbd_2020_estimation_years()
     year_starts = range(estimation_years[0], estimation_years[-1] + 1)
     age_bins = get_gbd_2020_age_bins()
@@ -138,11 +183,11 @@ def get_gbd_2020_artifact_index() -> pd.Index:
     unique_index_data = (pd.DataFrame(product(['Female', 'Male'], age_bins.age_start, year_starts))
                          .rename(columns={0: 'sex', 1: 'age_start', 2: 'year_start'}))
 
-    index_data = apply_artifact_index(unique_index_data)
+    index_data = _apply_artifact_index(unique_index_data)
     return index_data.index
 
 
-def apply_artifact_index(data: pd.DataFrame) -> pd.DataFrame:
+def _apply_artifact_index(data: pd.DataFrame) -> pd.DataFrame:
     """Sets data frame index to match artifact format.
      Populates year_end and age_end columns if they are missing"""
     age_bins = get_gbd_2020_age_bins()
