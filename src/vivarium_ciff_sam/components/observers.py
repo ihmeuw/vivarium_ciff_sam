@@ -47,7 +47,7 @@ class ResultsStratifier:
         if self.by_wasting:
             self.stratification_levels['wasting_state'] = {
                 wasting_state: get_wasting_state_function(wasting_state)
-                for wasting_state in models.WASTING_MODEL_STATES
+                for wasting_state in models.WASTING.STATES
             }
 
         self.population_view = builder.population.get_view(columns_required)

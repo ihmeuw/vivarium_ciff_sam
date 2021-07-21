@@ -100,8 +100,12 @@ def load_population_structure(key: str, location: str) -> pd.DataFrame:
 
 # noinspection PyUnusedLocal
 def load_age_bins(key: str, location: str) -> pd.DataFrame:
-    all_age_bins = interface.get_age_bins().reset_index()
-    return all_age_bins[all_age_bins.age_start < 5].set_index(['age_start', 'age_end', 'age_group_name'])
+    all_age_bins = (
+        utilities.get_gbd_2020_age_bins()
+        .set_index(['age_start', 'age_end', 'age_group_name'])
+        .sort_index()
+    )
+    return all_age_bins
 
 
 # noinspection PyUnusedLocal

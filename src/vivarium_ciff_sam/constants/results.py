@@ -25,8 +25,8 @@ TOTAL_POPULATION_COLUMN_TEMPLATE = 'total_population_{POP_STATE}'
 DEATH_COLUMN_TEMPLATE = 'death_due_to_{CAUSE_OF_DEATH}_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
 YLLS_COLUMN_TEMPLATE = 'ylls_due_to_{CAUSE_OF_DEATH}_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
 YLDS_COLUMN_TEMPLATE = 'ylds_due_to_{CAUSE_OF_DISABILITY}_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
-DISEASE_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{STATE}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
-DISEASE_TRANSITION_COUNT_COLUMN_TEMPLATE = '{TRANSITION}_event_count_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
+DISEASE_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{DISEASE_STATE}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
+DISEASE_TRANSITION_COUNT_COLUMN_TEMPLATE = '{DISEASE_TRANSITION}_event_count_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
 WASTING_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{WASTING_STATE}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}'
 WASTING_TRANSITION_COUNT_COLUMN_TEMPLATE = '{WASTING_TRANSITION}_event_count_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}'
 
@@ -47,17 +47,17 @@ NON_COUNT_TEMPLATES = [
 POP_STATES = ('living', 'dead', 'tracked', 'untracked')
 SEXES = ('male', 'female')
 YEARS = tuple(range(2022, 2027))
-AGE_GROUPS = ('early_neonatal', 'late_neonatal', 'post_neonatal', '1_to_4')
+AGE_GROUPS = ('early_neonatal', 'late_neonatal', '1-5_months', '6-11_months', '12_to_23_months', '2_to_4')
 CAUSES_OF_DEATH = (
     'other_causes',
-    models.DIARRHEA_STATE_NAME,
-    models.MEASLES_STATE_NAME,
-    models.LRI_STATE_NAME,
+    models.DIARRHEA.STATE_NAME,
+    models.MEASLES.STATE_NAME,
+    models.LRI.STATE_NAME,
 )
 CAUSES_OF_DISABILITY = (
-    models.DIARRHEA_STATE_NAME,
-    models.MEASLES_STATE_NAME,
-    models.LRI_STATE_NAME,
+    models.DIARRHEA.STATE_NAME,
+    models.MEASLES.STATE_NAME,
+    models.LRI.STATE_NAME,
 )
 
 TEMPLATE_FIELD_MAP = {
@@ -67,10 +67,10 @@ TEMPLATE_FIELD_MAP = {
     'AGE_GROUP': AGE_GROUPS,
     'CAUSE_OF_DEATH': CAUSES_OF_DEATH,
     'CAUSE_OF_DISABILITY': CAUSES_OF_DISABILITY,
-    'STATE': models.STATES,
-    'TRANSITION': models.TRANSITIONS,
-    'WASTING_STATE': models.WASTING_MODEL_STATES,
-    'WASTING_TRANSITION': models.WASTING_MODEL_TRANSITIONS
+    'DISEASE_STATE': models.DISEASE_STATES,
+    'DISEASE_TRANSITION': models.DISEASE_TRANSITIONS,
+    'WASTING_STATE': models.WASTING.STATES,
+    'WASTING_TRANSITION': models.WASTING.TRANSITIONS
 }
 
 

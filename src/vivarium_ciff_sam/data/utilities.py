@@ -95,7 +95,7 @@ def validate_and_reshape_child_wasting_data(data: pd.DataFrame, entity: Modelabl
     validation_years['year_end'] = validation_years['year_start'] + 1
 
     validate_for_simulation(data, entity, key.measure, location, years=validation_years,
-                            age_bins=_get_gbd_2020_age_bins())
+                            age_bins=get_gbd_2020_age_bins())
     data = vi_utils.split_interval(data, interval_column='age', split_column_prefix='age')
     data = vi_utils.split_interval(data, interval_column='year', split_column_prefix='year')
     data = vi_utils.sort_hierarchical_data(data).droplevel('location')
@@ -133,7 +133,7 @@ def normalize_gbd_2020(data: pd.DataFrame, fill_value: Real = None,
 def get_gbd_2020_artifact_index() -> pd.Index:
     estimation_years = _get_gbd_2020_estimation_years()
     year_starts = range(estimation_years[0], estimation_years[-1] + 1)
-    age_bins = _get_gbd_2020_age_bins()
+    age_bins = get_gbd_2020_age_bins()
 
     unique_index_data = (pd.DataFrame(product(['Female', 'Male'], age_bins.age_start, year_starts))
                          .rename(columns={0: 'sex', 1: 'age_start', 2: 'year_start'}))
@@ -145,7 +145,7 @@ def get_gbd_2020_artifact_index() -> pd.Index:
 def apply_artifact_index(data: pd.DataFrame) -> pd.DataFrame:
     """Sets data frame index to match artifact format.
      Populates year_end and age_end columns if they are missing"""
-    age_bins = _get_gbd_2020_age_bins()
+    age_bins = get_gbd_2020_age_bins()
 
     if 'year_end' not in data.columns:
         data['year_end'] = data['year_start'] + 1
@@ -175,7 +175,7 @@ def _scrub_gbd_2020_conventions(data: pd.DataFrame, location: str) -> pd.DataFra
 
 def _scrub_gbd_2020_age(data: pd.DataFrame) -> pd.DataFrame:
     if 'age_group_id' in data.index.names:
-        age_bins = _get_gbd_2020_age_bins().set_index('age_group_id')
+        age_bins = get_gbd_2020_age_bins().set_index('age_group_id')
         id_levels = data.index.levels[data.index.names.index('age_group_id')]
         interval_levels = [pd.Interval(age_bins.age_start[age_id], age_bins.age_end[age_id], closed='left')
                            for age_id in id_levels]
@@ -183,7 +183,7 @@ def _scrub_gbd_2020_age(data: pd.DataFrame) -> pd.DataFrame:
     return data
 
 
-def _get_gbd_2020_age_bins() -> pd.DataFrame:
+def get_gbd_2020_age_bins() -> pd.DataFrame:
     # from gbd.get_age_bins()
     q = f"""
                 SELECT age_group_id,

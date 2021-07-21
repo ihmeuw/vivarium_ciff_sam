@@ -53,9 +53,9 @@ class RiskModel(DiseaseModel):
 
 # noinspection PyPep8Naming
 def ChildWasting():
-    tmrel = SusceptibleState(models.WASTING_MODEL_NAME)
+    tmrel = SusceptibleState(models.WASTING.MODEL_NAME)
     mild = RiskState(
-        models.MILD_WASTING_STATE_NAME,
+        models.WASTING.MILD_STATE_NAME,
         cause_type='sequela',
         get_data_functions={
             'prevalence': load_mild_wasting_exposure,
@@ -64,7 +64,7 @@ def ChildWasting():
         }
     )
     moderate = RiskState(
-        models.MODERATE_WASTING_STATE_NAME,
+        models.WASTING.MODERATE_STATE_NAME,
         cause_type='sequela',
         get_data_functions={
             'prevalence': load_mam_exposure,
@@ -73,7 +73,7 @@ def ChildWasting():
         }
     )
     severe = RiskState(
-        models.SEVERE_WASTING_STATE_NAME,
+        models.WASTING.SEVERE_STATE_NAME,
         cause_type='sequela',
         get_data_functions={
             'prevalence': load_sam_exposure,
@@ -144,7 +144,7 @@ def ChildWasting():
     )
 
     return RiskModel(
-        models.WASTING_MODEL_NAME,
+        models.WASTING.MODEL_NAME,
         get_data_functions={'cause_specific_mortality_rate': lambda *_: 0},
         states=[tmrel, mild, moderate, severe]
     )
