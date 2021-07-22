@@ -68,7 +68,6 @@ def ChildWasting():
         cause_type='sequela',
         get_data_functions={
             'prevalence': load_mam_exposure,
-            'disability_weight': load_pem_disability_weight,
             'excess_mortality_rate': load_pem_excess_mortality_rate,
         }
     )
@@ -77,7 +76,6 @@ def ChildWasting():
         cause_type='sequela',
         get_data_functions={
             'prevalence': load_sam_exposure,
-            'disability_weight': load_pem_disability_weight,
             'excess_mortality_rate': load_pem_excess_mortality_rate,
         }
     )
@@ -151,21 +149,8 @@ def ChildWasting():
 
 
 # noinspection PyUnusedLocal
-def load_pem_disability_weight(cause: str, builder: Builder) -> pd.DataFrame:
-    # todo add back pem dw
-    # dw = builder.data.load(data_keys.PEM.DISABILITY_WEIGHT).reset_index()
-    # dw = dw.rename(columns={'value': 0}).set_index('index')
-    dw = 0
-    return dw
-
-
-# noinspection PyUnusedLocal
 def load_pem_excess_mortality_rate(cause: str, builder: Builder) -> pd.DataFrame:
-    # todo add back pem emr
-    # emr = builder.data.load(data_keys.PEM.EMR).reset_index()
-    # emr = emr.rename(columns={'value': 0}).set_index('index')
-    emr = 0
-    return emr
+    return builder.data.load(data_keys.PEM.EMR)
 
 
 # noinspection PyUnusedLocal
@@ -359,7 +344,7 @@ def load_daily_mortality_probabilities(builder: Builder) -> pd.DataFrame:
         data_keys.DIARRHEA,
         data_keys.MEASLES,
         data_keys.LRI,
-        # data_keys.PEM,
+        data_keys.PEM,
     ]
 
     # acmr
@@ -388,7 +373,7 @@ def load_daily_mortality_probabilities(builder: Builder) -> pd.DataFrame:
     # index = [ 'sex', 'age_start', 'age_end', 'year_start', 'year_end', 'affected_entity' ]
     incidence_c = pd.concat(
         [builder.data.load(c.INCIDENCE_RATE).set_index(metadata.ARTIFACT_INDEX_COLUMNS)
-         .rename(columns={'value': c.name}) for c in causes], axis=1
+         .rename(columns={'value': c.name}) for c in causes if c != data_keys.PEM], axis=1
     )
     incidence_c.columns.name = 'affected_entity'
     incidence_c = incidence_c.stack()
@@ -412,15 +397,31 @@ def load_daily_mortality_probabilities(builder: Builder) -> pd.DataFrame:
     duration_c.loc[duration_c.index.get_level_values('age_start') == 0.0] = data_values.EARLY_NEONATAL_CAUSE_DURATION
     duration_c = duration_c / 365   # convert to duration in years
 
+    # prevalence_pem_i
+    # index = [ 'sex', 'age_start', 'age_end', 'year_start', 'year_end', 'affected_entity', 'parameter ]
+    prevalence_pem_i = pd.DataFrame({'value': [1.0, 1.0, 0.0, 0.0], 'affected_entity': [data_keys.PEM.name]},
+                                    index=pd.Index([f'cat{i}' for i in range(1, 5)], name='parameter'))
+    prevalence_pem_i = (
+        prevalence_pem_i.reindex(
+            index=rr_ci.index.droplevel('affected_entity').drop_duplicates(),
+            level='parameter'
+        ).set_index('affected_entity', append=True)
+        .reorder_levels(rr_ci.index.names)
+    )['value']
+
     # ------------ Calculate mortality rates ------------ #
 
     # mr_i = acmr + sum_c(emr_c * prevalence_ci - csmr_c)
     # prevalence_ci = incidence_ci * duration_c
     # incidence_ci = incidence_c * (1 - paf_c) * rr_ci
 
+    # Get wasting state incidence and prevalence for non-PEM causes
     incidence_ci = rr_ci * incidence_c * (1 - paf_c)
     prevalence_ci = incidence_ci * duration_c
-    prevalence_ci * emr_c - csmr_c
+
+    # add pem prevalence to prevalence_ci
+    prevalence_ci = pd.concat([prevalence_ci, prevalence_pem_i])
+
     mr_i = acmr + (prevalence_ci * emr_c - csmr_c).groupby(metadata.ARTIFACT_INDEX_COLUMNS + ['parameter']).sum()
     mr_i = mr_i.unstack()
 

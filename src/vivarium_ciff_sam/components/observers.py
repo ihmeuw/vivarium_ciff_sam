@@ -188,6 +188,8 @@ class MortalityObserver(MortalityObserver_):
                 measure_data = self.stratifier.update_labels(measure_data, labels)
                 metrics.update(measure_data)
 
+        # TODO remove stratification by wasting state of deaths/ylls due to PEM?
+
         the_living = pop[(pop.alive == 'alive') & pop.tracked]
         the_dead = pop[pop.alive == 'dead']
         metrics[results.TOTAL_YLLS_COLUMN] = self.life_expectancy(the_dead.index).sum()
@@ -220,6 +222,8 @@ class DisabilityObserver(DisabilityObserver_):
                          self.disability_weight_pipelines, self.causes)
             measure_data = self.stratifier.update_labels(get_years_lived_with_disability(*base_args), labels)
             self.years_lived_with_disability.update(measure_data)
+
+        # TODO remove stratification by wasting state of ylds due to PEM?
 
 
 class DiseaseObserver(DiseaseObserver_):
