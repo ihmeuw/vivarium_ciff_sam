@@ -61,6 +61,7 @@ def ChildWasting():
             'prevalence': load_mild_wasting_exposure,
             'disability_weight': lambda *_: 0,
             'excess_mortality_rate': lambda *_: 0,
+            'birth_prevalence': load_mild_wasting_birth_prevalence,
         }
     )
     moderate = RiskState(
@@ -69,6 +70,7 @@ def ChildWasting():
         get_data_functions={
             'prevalence': load_mam_exposure,
             'excess_mortality_rate': load_pem_excess_mortality_rate,
+            'birth_prevalence': load_mam_birth_prevalence,
         }
     )
     severe = RiskState(
@@ -77,6 +79,7 @@ def ChildWasting():
         get_data_functions={
             'prevalence': load_sam_exposure,
             'excess_mortality_rate': load_pem_excess_mortality_rate,
+            'birth_prevalence': load_sam_birth_prevalence,
         }
     )
 
@@ -154,6 +157,11 @@ def load_pem_excess_mortality_rate(cause: str, builder: Builder) -> pd.DataFrame
 
 
 # noinspection PyUnusedLocal
+def load_mild_wasting_birth_prevalence(cause: str, builder: Builder) -> pd.DataFrame:
+    return load_child_wasting_birth_prevalence(builder, WASTING.CAT3)
+
+
+# noinspection PyUnusedLocal
 def load_mild_wasting_exposure(cause: str, builder: Builder) -> pd.DataFrame:
     return load_child_wasting_exposures(builder)[WASTING.CAT3].reset_index()
 
@@ -194,6 +202,11 @@ def load_mild_wasting_remission_rate(builder: Builder, *args) -> float:
 # noinspection DuplicatedCode
 def get_mild_wasting_remission_probability() -> float:
     return 1 / data_values.MILD_WASTING_UX_RECOVERY_TIME
+
+
+# noinspection PyUnusedLocal
+def load_mam_birth_prevalence(cause: str, builder: Builder) -> pd.DataFrame:
+    return load_child_wasting_birth_prevalence(builder, WASTING.CAT2)
 
 
 # noinspection PyUnusedLocal
@@ -245,6 +258,11 @@ def get_daily_mam_remission_probability() -> float:
         + (1 - data_values.MAM_TX_COVERAGE) / data_values.MAM_UX_RECOVERY_TIME
     )
     return r3
+
+
+# noinspection PyUnusedLocal
+def load_sam_birth_prevalence(cause: str, builder: Builder) -> pd.DataFrame:
+    return load_child_wasting_birth_prevalence(builder, WASTING.CAT1)
 
 
 # noinspection PyUnusedLocal
@@ -320,6 +338,16 @@ def load_child_wasting_exposures(builder: Builder) -> pd.DataFrame:
 
     exposures.columns = exposures.columns.droplevel(0)
     return exposures
+
+
+def load_child_wasting_birth_prevalence(builder: Builder, wasting_category: str) -> pd.DataFrame:
+    exposure = load_child_wasting_exposures(builder)[wasting_category]
+    birth_prevalence = (
+        exposure[exposure.index.get_level_values('age_start') == 0.0]
+        .droplevel(['age_start', 'age_end'])
+        .reset_index()
+    )
+    return birth_prevalence
 
 
 def load_acmr_adjustment(builder: Builder) -> pd.Series:
