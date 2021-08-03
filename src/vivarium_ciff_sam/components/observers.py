@@ -4,7 +4,6 @@ from typing import Callable, Dict, Iterable, List, Tuple
 import pandas as pd
 from vivarium.framework.engine import Builder
 from vivarium.framework.event import Event
-from vivarium.framework.population import SimulantData
 from vivarium_public_health.metrics import (MortalityObserver as MortalityObserver_,
                                             DisabilityObserver as DisabilityObserver_,
                                             DiseaseObserver as DiseaseObserver_)
@@ -34,13 +33,10 @@ class ResultsStratifier:
         """Perform this component's setup."""
         # The only thing you should request here are resources necessary for results stratification.
         self.pipelines = {}
-        columns_required = [
-            'age',
-            data_keys.WASTING.name,
-        ]
+        columns_required = ['tracked']
 
-        def get_wasting_state_function(wasting_state):
-            return lambda: self.population_values[data_keys.WASTING.name] == wasting_state
+        def get_wasting_state_function(wasting_state: str) -> Callable:
+            return lambda pop: pop[data_keys.WASTING.name] == wasting_state
 
         self.stratification_levels = {}
 
@@ -49,25 +45,14 @@ class ResultsStratifier:
                 wasting_state: get_wasting_state_function(wasting_state)
                 for wasting_state in models.WASTING.STATES
             }
+            columns_required.append(data_keys.WASTING.name)
 
         self.population_view = builder.population.get_view(columns_required)
-        self.pipeline_values = {pipeline: None for pipeline in self.pipelines}
-        self.population_values = None
-        self.stratification_groups = None
 
-        builder.population.initializes_simulants(self.on_initialize_simulants,
-                                                 requires_columns=columns_required,
-                                                 requires_values=list(self.pipelines.keys()))
+    def get_stratification_groups(self, index: pd.Index):
+        #  add required pipelines to pop
+        pop = pd.concat([self.population_view.get(index)] + [pipeline(index) for pipeline in self.pipelines])
 
-        builder.event.register_listener('time_step__cleanup', self.on_timestep_cleanup)
-
-    # noinspection PyAttributeOutsideInit
-    def on_initialize_simulants(self, pop_data: SimulantData):
-        self.pipeline_values = {name: pipeline(pop_data.index) for name, pipeline in self.pipelines.items()}
-        self.population_values = self.population_view.get(pop_data.index)
-        self.stratification_groups = self.get_stratification_groups(pop_data.index)
-
-    def get_stratification_groups(self, index):
         stratification_groups = pd.Series('', index=index)
         all_stratifications = self.get_all_stratifications()
         for stratification in all_stratifications:
@@ -75,15 +60,9 @@ class ResultsStratifier:
                                                   for metric in stratification])
             mask = pd.Series(True, index=index)
             for metric in stratification:
-                mask &= self.stratification_levels[metric['metric']][metric['category']]()
+                mask &= self.stratification_levels[metric['metric']][metric['category']](pop)
             stratification_groups.loc[mask] = stratification_group_name
         return stratification_groups
-
-    # noinspection PyAttributeOutsideInit
-    def on_timestep_cleanup(self, event: Event):
-        self.pipeline_values = {name: pipeline(event.index) for name, pipeline in self.pipelines.items()}
-        self.population_values = self.population_view.get(event.index)
-        self.stratification_groups = self.get_stratification_groups(event.index)
 
     def get_all_stratifications(self) -> List[Tuple[Dict[str, str], ...]]:
         """
@@ -119,7 +98,7 @@ class ResultsStratifier:
             corresponding to those labels.
 
         """
-        stratification_groups = self.stratification_groups.loc[pop.index]
+        stratification_groups = self.get_stratification_groups(pop.index)
         stratifications = self.get_all_stratifications()
         for stratification in stratifications:
             stratification_key = self.get_stratification_key(stratification)
