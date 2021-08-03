@@ -59,7 +59,7 @@ class ResultsStratifier:
                                                  requires_columns=columns_required,
                                                  requires_values=list(self.pipelines.keys()))
 
-        builder.event.register_listener('time_step__prepare', self.on_timestep_prepare)
+        builder.event.register_listener('time_step__cleanup', self.on_timestep_cleanup)
 
     # noinspection PyAttributeOutsideInit
     def on_initialize_simulants(self, pop_data: SimulantData):
@@ -79,15 +79,8 @@ class ResultsStratifier:
             stratification_groups.loc[mask] = stratification_group_name
         return stratification_groups
 
-    def append_new_entrants(self, existing_data: pd.Series, new_index: pd.Index, getter: Callable):
-        intersection = existing_data.loc[new_index.intersection(existing_data.index)]
-
-        new_entrants_index = new_index.difference(self.stratification_groups.index)
-        new_entrants_stratifications = getter(new_entrants_index)
-        return intersection.append(new_entrants_stratifications)
-
     # noinspection PyAttributeOutsideInit
-    def on_timestep_prepare(self, event: Event):
+    def on_timestep_cleanup(self, event: Event):
         self.pipeline_values = {name: pipeline(event.index) for name, pipeline in self.pipelines.items()}
         self.population_values = self.population_view.get(event.index)
         self.stratification_groups = self.get_stratification_groups(event.index)
@@ -126,8 +119,7 @@ class ResultsStratifier:
             corresponding to those labels.
 
         """
-        stratification_groups = self.append_new_entrants(self.stratification_groups, pop.index,
-                                                         self.get_stratification_groups)
+        stratification_groups = self.stratification_groups.loc[pop.index]
         stratifications = self.get_all_stratifications()
         for stratification in stratifications:
             stratification_key = self.get_stratification_key(stratification)
