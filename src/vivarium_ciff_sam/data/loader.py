@@ -219,6 +219,8 @@ def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
         # Remove neonatal exposure
         neonatal_age_ends = data.index.get_level_values('age_end').unique()[:2]
         data.loc[data.index.get_level_values('age_end').isin(neonatal_age_ends)] = 0.0
+        data.loc[data.index.get_level_values('age_end').isin(neonatal_age_ends)
+                 & (data.index.get_level_values('parameter') == data_keys.STUNTING.CAT4)] = 1.0
     return data
 
 
