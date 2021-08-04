@@ -214,6 +214,11 @@ def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
 
     data = data.filter(vi_globals.DEMOGRAPHIC_COLUMNS + vi_globals.DRAW_COLUMNS + ['parameter'])
     data = utilities.validate_and_reshape_child_wasting_data(data, entity, key, location)
+
+    if key == data_keys.STUNTING.RELATIVE_RISK:
+        # Remove neonatal exposure
+        neonatal_age_ends = data.index.get_level_values('age_end').unique()[:2]
+        data.loc[data.index.get_level_values('age_end').isin(neonatal_age_ends)] = 0.0
     return data
 
 
@@ -250,9 +255,10 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
 
     data = utilities.validate_and_reshape_child_wasting_data(data, entity, key, location)
 
-    # Remove neonatal wasting relative risks
-    neonatal_age_ends = data.index.get_level_values('age_end').unique()[:2]
-    data.loc[data.index.get_level_values('age_end').isin(neonatal_age_ends)] = 1.0
+    if key in [data_keys.WASTING.RELATIVE_RISK, data_keys.STUNTING.RELATIVE_RISK]:
+        # Remove neonatal relative risks
+        neonatal_age_ends = data.index.get_level_values('age_end').unique()[:2]
+        data.loc[data.index.get_level_values('age_end').isin(neonatal_age_ends)] = 1.0
 
     return data
 
