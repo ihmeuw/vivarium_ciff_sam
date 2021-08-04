@@ -166,6 +166,34 @@ class __Wasting(NamedTuple):
 WASTING = __Wasting()
 
 
+class __Stunting(NamedTuple):
+
+    # Keys that will be loaded into the artifact. must have a colon type declaration
+    DISTRIBUTION: TargetString = 'risk_factor.child_stunting.distribution'
+    ALT_DISTRIBUTION: TargetString = 'alternative_risk_factor.child_stunting.distribution'
+    CATEGORIES: TargetString = 'risk_factor.child_stunting.categories'
+    EXPOSURE: TargetString = 'risk_factor.child_stunting.exposure'
+    RELATIVE_RISK: TargetString = 'risk_factor.child_stunting.relative_risk'
+    PAF: TargetString = 'risk_factor.child_stunting.population_attributable_fraction'
+
+    # Useful keys not for the artifact - distinguished by not using the colon type declaration
+    CAT4 = 'cat4'
+    CAT3 = 'cat3'
+    CAT2 = 'cat2'
+    CAT1 = 'cat1'
+
+    @property
+    def name(self):
+        return 'child_stunting'
+
+    @property
+    def log_name(self):
+        return 'child stunting'
+
+
+STUNTING = __Stunting()
+
+
 MAKE_ARTIFACT_KEY_GROUPS = [
     POPULATION,
     DIARRHEA,
@@ -173,4 +201,5 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     LRI,
     PEM,
     WASTING,
+    STUNTING,
 ]
