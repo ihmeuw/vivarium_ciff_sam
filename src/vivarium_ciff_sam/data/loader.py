@@ -215,7 +215,7 @@ def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
     data = data.filter(vi_globals.DEMOGRAPHIC_COLUMNS + vi_globals.DRAW_COLUMNS + ['parameter'])
     data = utilities.validate_and_reshape_child_wasting_data(data, entity, key, location)
 
-    if key == data_keys.STUNTING.RELATIVE_RISK:
+    if key == data_keys.STUNTING.EXPOSURE:
         # Remove neonatal exposure
         neonatal_age_ends = data.index.get_level_values('age_end').unique()[:2]
         data.loc[data.index.get_level_values('age_end').isin(neonatal_age_ends)] = 0.0
