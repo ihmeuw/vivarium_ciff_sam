@@ -24,9 +24,10 @@ class ResultsStratifier:
 
     """
 
-    def __init__(self, observer_name: str, by_wasting: bool = True):
+    def __init__(self, observer_name: str, by_wasting: bool = True, by_stunting: bool = False):
         self.name = f'{observer_name}_results_stratifier'
         self.by_wasting = by_wasting
+        self.by_stunting = by_stunting
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
@@ -35,26 +36,45 @@ class ResultsStratifier:
         self.pipelines = {}
         columns_required = ['tracked']
 
-        def get_wasting_state_function(wasting_state: str) -> Callable:
-            return lambda pop: pop[data_keys.WASTING.name] == wasting_state
+        def get_state_function(column_name: str, state_name: str) -> Callable:
+            return lambda pop: pop[column_name] == state_name
 
         self.stratification_levels = {}
 
         if self.by_wasting:
             self.stratification_levels['wasting_state'] = {
-                wasting_state: get_wasting_state_function(wasting_state)
+                wasting_state: get_state_function(data_keys.WASTING.name, wasting_state)
                 for wasting_state in models.WASTING.STATES
             }
             columns_required.append(data_keys.WASTING.name)
 
+        if self.by_stunting:
+            self.stratification_levels['stunting_state'] = {
+                f'cat{i}': get_state_function(data_keys.STUNTING.name, f'cat{i}')
+                for i in range(4, 0, -1)
+            }
+            self.pipelines[data_keys.STUNTING.name] = builder.value.get_value('child_stunting.exposure')
+
         self.population_view = builder.population.get_view(columns_required)
+        self.stratification_groups: pd.Series = None
+
+        # Ensure that the stratifier updates before its observer
+        builder.event.register_listener('time_step__prepare', self.on_timestep_prepare, priority=0)
+
+    # noinspection PyAttributeOutsideInit
+    def on_timestep_prepare(self, event: Event):
+        # cache stratification groups at the beginning of the time-step for use later when stratifying
+        self.stratification_groups = self.get_stratification_groups(event.index)
 
     def get_stratification_groups(self, index: pd.Index):
-        #  add required pipelines to pop
-        pop = pd.concat([self.population_view.get(index)] + [pipeline(index) for pipeline in self.pipelines])
+        #  get values required for stratification from population view and pipelines
+        pop_list = [self.population_view.get(index)] + [pd.Series(pipeline(index), name=name)
+                                                        for name, pipeline in self.pipelines.items()]
+        pop = pd.concat(pop_list, axis=1)
 
         stratification_groups = pd.Series('', index=index)
         all_stratifications = self.get_all_stratifications()
+        # todo do this without requiring the doubly nested loop by concatting strings
         for stratification in all_stratifications:
             stratification_group_name = '_'.join([f'{metric["metric"]}_{metric["category"]}'
                                                   for metric in stratification])
@@ -98,7 +118,10 @@ class ResultsStratifier:
             corresponding to those labels.
 
         """
-        stratification_groups = self.get_stratification_groups(pop.index)
+        index = pop.index.intersection(self.stratification_groups.index)
+        pop = pop.loc[index]
+        stratification_groups = self.stratification_groups.loc[index]
+
         stratifications = self.get_all_stratifications()
         for stratification in stratifications:
             stratification_key = self.get_stratification_key(stratification)
@@ -199,9 +222,9 @@ class DisabilityObserver(DisabilityObserver_):
 
 class DiseaseObserver(DiseaseObserver_):
 
-    def __init__(self, disease: str, stratify_by_wasting: str = 'True'):
+    def __init__(self, disease: str, stratify_by_wasting: str = 'True', stratify_by_stunting: str = 'False'):
         super().__init__(disease)
-        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting == 'True')
+        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting == 'True', stratify_by_stunting == 'True')
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:

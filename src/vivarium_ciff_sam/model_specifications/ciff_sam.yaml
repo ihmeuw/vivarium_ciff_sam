@@ -22,9 +22,9 @@ components:
             - ChildWasting()
             - DisabilityObserver()
             - MortalityObserver()
-            - DiseaseObserver('diarrheal_diseases')
-            - DiseaseObserver('measles')
-            - DiseaseObserver('lower_respiratory_infections')
+            - DiseaseObserver('diarrheal_diseases', 'False', 'True')
+            - DiseaseObserver('measles', 'False', 'True')
+            - DiseaseObserver('lower_respiratory_infections', 'False', 'True')
             - DiseaseObserver('child_wasting', 'False')
 
 configuration:
