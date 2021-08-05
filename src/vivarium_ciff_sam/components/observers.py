@@ -157,9 +157,9 @@ class ResultsStratifier:
 
 class MortalityObserver(MortalityObserver_):
 
-    def __init__(self):
+    def __init__(self, stratify_by_wasting: str = 'True', stratify_by_stunting: str = 'False'):
         super().__init__()
-        self.stratifier = ResultsStratifier(self.name)
+        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting == 'True', stratify_by_stunting == 'True')
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:
@@ -195,9 +195,9 @@ class MortalityObserver(MortalityObserver_):
 
 class DisabilityObserver(DisabilityObserver_):
 
-    def __init__(self):
+    def __init__(self, stratify_by_wasting: str = 'True', stratify_by_stunting: str = 'False'):
         super().__init__()
-        self.stratifier = ResultsStratifier(self.name)
+        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting == 'True', stratify_by_stunting == 'True')
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:

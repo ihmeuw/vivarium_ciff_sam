@@ -20,8 +20,8 @@ components:
     vivarium_ciff_sam:
         components:
             - ChildWasting()
-            - DisabilityObserver()
-            - MortalityObserver()
+            - DisabilityObserver('False', 'True')
+            - MortalityObserver('False', 'True')
             - DiseaseObserver('diarrheal_diseases', 'False', 'True')
             - DiseaseObserver('measles', 'False', 'True')
             - DiseaseObserver('lower_respiratory_infections', 'False', 'True')
