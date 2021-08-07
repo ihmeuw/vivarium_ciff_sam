@@ -1,0 +1,66 @@
+"""Prevention and treatment models"""
+import pandas as pd
+from vivarium.framework.engine import Builder
+
+from vivarium_ciff_sam.constants import data_keys, data_values, models, scenarios
+
+
+class SQLNSTreatment:
+    """Manages SQ-LNS prevention"""
+
+    @property
+    def name(self) -> str:
+        """The name of this component."""
+        return 'prevention_algorithm'
+
+    # noinspection PyAttributeOutsideInit
+    def setup(self, builder: Builder):
+        self.randomness = builder.randomness.get_stream('initial_sq_lns_propensity')
+
+        propensity_col = 'sq_lns_propensity'
+        required_columns = [
+            'age',
+            propensity_col,
+        ]
+
+
+        self.propensity = builder.value.register_value_producer(
+            data_keys.SQ_LNS.PROPENSITY,
+            source=lambda index: self.population_view.get(index)[propensity_col],
+            requires_columns=[propensity_col]
+        )
+
+        self.coverage = builder.value.register_value_producer(
+            data_keys.SQ_LNS.COVERAGE,
+            source=self.get_current_coverage,
+            requires_columns=['age'],
+            requires_values=[data_keys.SQ_LNS.PROPENSITY],
+        )
+
+        builder.value.register_value_modifier(
+            f'{models.WASTING.MILD_STATE_NAME}_to_{models.WASTING.MODERATE_STATE_NAME}.transition_rate',
+            modifier=self.apply_treatment,
+            requires_values=[data_keys.SQ_LNS.COVERAGE]
+        )
+
+        self.population_view = builder.population.get_view(required_columns)
+        builder.population.initializes_simulants(self.on_initialize_simulants, creates_columns=[propensity_col],
+                                                 requires_streams=['initial_sq_lns_propensity'])
+
+    def on_initialize_simulants(self, pop_data):
+        self.population_view.update(pd.Series(self.randomness.get_draw(pop_data.index), name='sq_lns_propensity'))
+
+    def get_current_coverage(self, index: pd.Index) -> pd.Series:
+        age = self.population_view.get(index)['age']
+        propensity = self.propensity(index)
+
+        coverage = ((propensity < data_values.SQ_LNS.COVERAGE_BASELINE)
+                    & (data_values.SQ_LNS.COVERAGE_START_AGE <= age))
+
+        return coverage
+
+    def apply_treatment(self, index: pd.Index, target: pd.Series) -> pd.Series:
+        covered = self.coverage(index)
+        target[covered] = target[covered] * (1 - data_values.SQ_LNS.EFFICACY)
+
+        return target

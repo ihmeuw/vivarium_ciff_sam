@@ -2,5 +2,6 @@ input_draw_count: 12
 random_seed_count: 100
 
 branches:
-  - intervention:
-      scenario: ['baseline']
+  - treatment:
+#      todo add treatment only scenario
+      scenario: ['baseline', 'treatment_and_prevention']

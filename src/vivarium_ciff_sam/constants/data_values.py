@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import NamedTuple
+
 ##########################
 # Cause Model Parameters #
 ##########################
@@ -39,6 +42,21 @@ SAM_TX_RECOVERY_TIME: float = 48.3
 MAM_TX_RECOVERY_TIME: float = 41.3
 
 
+######################################
+# Treatment and Prevention Constants #
+######################################
+class __SQLNS(NamedTuple):
+    COVERAGE_START_AGE: float = 0.5
+    COVERAGE_BASELINE: float = 0.0
+    COVERAGE_RAMP_UP: float = 0.9
+    EFFICACY: float = 0.18
+
+
+SQ_LNS = __SQLNS()
+
+
 ###################################
 # Scale-up Intervention Constants #
 ###################################
+
+SCALE_UP_START_DT = datetime(2023, 1, 1)

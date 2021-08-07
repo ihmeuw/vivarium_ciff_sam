@@ -20,6 +20,8 @@ components:
     vivarium_ciff_sam:
         components:
             - ChildWasting()
+            - SQLNSTreatment()
+            - Intervention()
             - DisabilityObserver('False', 'True')
             - MortalityObserver('False', 'True')
             - DiseaseObserver('diarrheal_diseases', 'False', 'True')
@@ -58,8 +60,8 @@ configuration:
     wasting_equations:
         include_mortality: False
 
-#    screening_algorithm:
-#        scenario: 'baseline'
+    treatment:
+        scenario: 'baseline'
 
     metrics:
         disability:

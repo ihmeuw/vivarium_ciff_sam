@@ -194,6 +194,22 @@ class __Stunting(NamedTuple):
 STUNTING = __Stunting()
 
 
+class __SQLNS(NamedTuple):
+    COVERAGE = 'sq_lns.coverage'
+    PROPENSITY = 'sq_lns.propensity'
+
+    @property
+    def name(self):
+        return 'sq_lns'
+
+    @property
+    def log_name(self):
+        return 'sq-lns'
+
+
+SQ_LNS = __SQLNS()
+
+
 MAKE_ARTIFACT_KEY_GROUPS = [
     POPULATION,
     DIARRHEA,
@@ -202,4 +218,5 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     PEM,
     WASTING,
     STUNTING,
+    SQ_LNS,
 ]
