@@ -39,7 +39,13 @@ class SQLNSTreatment:
 
         builder.value.register_value_modifier(
             f'{models.WASTING.MILD_STATE_NAME}_to_{models.WASTING.MODERATE_STATE_NAME}.transition_rate',
-            modifier=self.apply_treatment,
+            modifier=self.apply_wasting_treatment,
+            requires_values=[data_keys.SQ_LNS.COVERAGE]
+        )
+
+        builder.value.register_value_modifier(
+            'risk_factor.child_stunting.exposure_parameters',
+            modifier=self.apply_stunting_treatment,
             requires_values=[data_keys.SQ_LNS.COVERAGE]
         )
 
@@ -59,8 +65,19 @@ class SQLNSTreatment:
 
         return coverage
 
-    def apply_treatment(self, index: pd.Index, target: pd.Series) -> pd.Series:
+    def apply_wasting_treatment(self, index: pd.Index, target: pd.Series) -> pd.Series:
         covered = self.coverage(index)
-        target[covered] = target[covered] * (1 - data_values.SQ_LNS.EFFICACY)
+        target[covered] = target[covered] * (1 - data_values.SQ_LNS.EFFICACY_WASTING)
 
+        return target
+
+    def apply_stunting_treatment(self, index: pd.Index, target: pd.DataFrame) -> pd.Series:
+        cat1_decrease = target.loc[:, 'cat1'] * data_values.SQ_LNS.EFFICACY_STUNTING_SEVERE
+        cat2_decrease = target.loc[:, 'cat2'] * data_values.SQ_LNS.EFFICACY_STUNTING_MODERATE
+
+        covered = self.coverage(index)
+        target.loc[covered, 'cat1'] = target.loc[covered, 'cat1'] - cat1_decrease.loc[covered]
+        target.loc[covered, 'cat2'] = target.loc[covered, 'cat2'] - cat2_decrease.loc[covered]
+        target.loc[covered, 'cat3'] = (target.loc[covered, 'cat3']
+                                       + cat1_decrease.loc[covered] + cat2_decrease.loc[covered])
         return target

@@ -49,7 +49,9 @@ class __SQLNS(NamedTuple):
     COVERAGE_START_AGE: float = 0.5
     COVERAGE_BASELINE: float = 0.0
     COVERAGE_RAMP_UP: float = 0.9
-    EFFICACY: float = 0.18
+    EFFICACY_WASTING: float = 0.18
+    EFFICACY_STUNTING_SEVERE: float = 0.15
+    EFFICACY_STUNTING_MODERATE: float = 0.07
 
 
 SQ_LNS = __SQLNS()
