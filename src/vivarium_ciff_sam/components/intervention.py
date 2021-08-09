@@ -8,7 +8,7 @@ from vivarium_ciff_sam.constants import data_keys, data_values, scenarios
 class Intervention:
 
     configuration_defaults = {
-        'treatment': {
+        'intervention': {
             'scenario': scenarios.SCENARIOS.BASELINE
         }
     }
@@ -19,7 +19,7 @@ class Intervention:
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: 'Builder'):
         """Perform this component's setup."""
-        self.scenario = builder.configuration.treatment.scenario
+        self.scenario = builder.configuration.intervention.scenario
         self.clock = builder.time.clock()
 
         required_columns = [

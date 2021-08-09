@@ -25,13 +25,5 @@ ARTIFACT_INDEX_COLUMNS = [
     'year_end'
 ]
 
-
-class __Scenarios(NamedTuple):
-    baseline: str = 'baseline'
-    # TODO - add scenarios here
-
-
-SCENARIOS = __Scenarios()
-
 GBD_2020_ROUND_ID = 7
 GBD_2020_AGE_GROUPS = [2, 3, 388, 389, 238, 34]

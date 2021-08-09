@@ -60,7 +60,7 @@ configuration:
     wasting_equations:
         include_mortality: False
 
-    treatment:
+    intervention:
         scenario: 'baseline'
 
     metrics:
