@@ -264,3 +264,49 @@ class DiseaseObserver(DiseaseObserver_):
 
     def __repr__(self) -> str:
         return f"DiseaseObserver({self.disease})"
+
+
+class DiseaseObserver(DiseaseObserver_):
+
+    def __init__(self, disease: str, stratify_by_wasting: str = 'True', stratify_by_stunting: str = 'False'):
+        super().__init__(disease)
+        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting == 'True', stratify_by_stunting == 'True')
+
+    @property
+    def sub_components(self) -> List[ResultsStratifier]:
+        return [self.stratifier]
+
+    @property
+    def name(self):
+        return f'{self.disease}_disease_observer'
+
+    def on_time_step_prepare(self, event: Event):
+        pop = self.population_view.get(event.index)
+        # Ignoring the edge case where the step spans a new year.
+        # Accrue all counts and time to the current year.
+        for labels, pop_in_group in self.stratifier.group(pop):
+            for state in self.states:
+                # noinspection PyTypeChecker
+                state_person_time_this_step = get_state_person_time(pop_in_group, self.config, self.disease, state,
+                                                                    self.clock().year, event.step_size, self.age_bins)
+                state_person_time_this_step = self.stratifier.update_labels(state_person_time_this_step, labels)
+                self.person_time.update(state_person_time_this_step)
+
+        # This enables tracking of transitions between states
+        prior_state_pop = self.population_view.get(event.index)
+        prior_state_pop[self.previous_state_column] = prior_state_pop[self.disease]
+        self.population_view.update(prior_state_pop)
+
+    def on_collect_metrics(self, event: Event):
+        pop = self.population_view.get(event.index)
+        for labels, pop_in_group in self.stratifier.group(pop):
+            for transition in self.transitions:
+                transition = TransitionString(transition)
+                # noinspection PyTypeChecker
+                transition_counts_this_step = get_transition_count(pop_in_group, self.config, self.disease, transition,
+                                                                   event.time, self.age_bins)
+                transition_counts_this_step = self.stratifier.update_labels(transition_counts_this_step, labels)
+                self.counts.update(transition_counts_this_step)
+
+    def __repr__(self) -> str:
+        return f"DiseaseObserver({self.disease})"
