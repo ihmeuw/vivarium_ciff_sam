@@ -26,13 +26,14 @@ OUTPUT_COLUMN_SORT_ORDER = [
 def make_measure_data(data):
     measure_data = MeasureData(
         population=get_population_data(data),
-        ylls=get_by_cause_measure_data(data, 'ylls', False, True),
-        ylds=get_by_cause_measure_data(data, 'ylds', False, True),
-        deaths=get_by_cause_measure_data(data, 'deaths', False, True),
-        disease_state_person_time=get_state_person_time_measure_data(data, 'disease_state_person_time', False, True),
-        disease_transition_count=get_transition_count_measure_data(data, 'disease_transition_count', False, True),
-        wasting_state_person_time=get_state_person_time_measure_data(data, 'wasting_state_person_time', False),
-        wasting_transition_count=get_transition_count_measure_data(data, 'wasting_transition_count', False),
+        ylls=get_by_cause_measure_data(data, 'ylls'),
+        ylds=get_by_cause_measure_data(data, 'ylds'),
+        deaths=get_by_cause_measure_data(data, 'deaths'),
+        disease_state_person_time=get_state_person_time_measure_data(data, 'disease_state_person_time'),
+        disease_transition_count=get_transition_count_measure_data(data, 'disease_transition_count'),
+        wasting_state_person_time=get_state_person_time_measure_data(data, 'wasting_state_person_time', False, True),
+        wasting_transition_count=get_transition_count_measure_data(data, 'wasting_transition_count', False, True),
+        stunting_state_person_time=get_state_person_time_measure_data(data, 'stunting_state_person_time', False, True)
     )
     return measure_data
 
@@ -46,6 +47,7 @@ class MeasureData(NamedTuple):
     disease_transition_count: pd.DataFrame
     wasting_state_person_time: pd.DataFrame
     wasting_transition_count: pd.DataFrame
+    stunting_state_person_time: pd.DataFrame
 
     def dump(self, output_dir: Path):
         for key, df in self._asdict().items():
@@ -119,9 +121,12 @@ def sort_data(data):
     return data.reset_index(drop=True)
 
 
-def split_processing_column(data, has_wasting_stratification: bool = True, has_stunting_stratification: bool = False):
+def split_processing_column(data, has_wasting_stratification: bool = True, has_sqlns_stratification: bool = False,
+                            has_stunting_stratification: bool = False):
     if has_stunting_stratification:
         data['process'], data['stunting_state'] = data.process.str.split(f'_stunting_state_').str
+    if has_sqlns_stratification:
+        data['process'], data['sq_lns'] = data.process.str.split(f'_sq_lns_').str
     if has_wasting_stratification:
         data['process'], data['wasting_state'] = data.process.str.split(f'_wasting_state_').str
     data['process'], data['age'] = data.process.str.split('_in_age_group_').str
@@ -139,29 +144,34 @@ def get_population_data(data):
     return sort_data(total_pop)
 
 
-def get_measure_data(data, measure, has_wasting_stratification: bool = True, has_stunting_stratification: bool = False):
+def get_measure_data(data, measure, has_wasting_stratification: bool = True, has_sqlns_stratification: bool = False,
+                     has_stunting_stratification: bool = False):
     data = pivot_data(data[results.RESULT_COLUMNS(measure) + GROUPBY_COLUMNS])
-    data = split_processing_column(data, has_wasting_stratification, has_stunting_stratification)
+    data = split_processing_column(data, has_wasting_stratification, has_sqlns_stratification, has_stunting_stratification)
     return sort_data(data)
 
 
 def get_by_cause_measure_data(data, measure, has_wasting_stratification: bool = True,
-                              has_stunting_stratification: bool = False):
-    data = get_measure_data(data, measure, has_wasting_stratification, has_stunting_stratification)
+                              has_sqlns_stratification: bool = False, has_stunting_stratification: bool = False):
+    data = get_measure_data(data, measure, has_wasting_stratification, has_sqlns_stratification,
+                            has_stunting_stratification)
     data['measure'], data['cause'] = data.measure.str.split('_due_to_').str
     return sort_data(data)
 
 
 def get_state_person_time_measure_data(data, measure, has_wasting_stratification: bool = True,
+                                       has_sqlns_stratification: bool = False,
                                        has_stunting_stratification: bool = False):
-    data = get_measure_data(data, measure, has_wasting_stratification, has_stunting_stratification)
+    data = get_measure_data(data, measure, has_wasting_stratification, has_sqlns_stratification,
+                            has_stunting_stratification)
     data['measure'], data['cause'] = 'state_person_time', data.measure.str.split('_person_time').str[0]
     return sort_data(data)
 
 
 def get_transition_count_measure_data(data, measure, has_wasting_stratification: bool = True,
+                                      has_sqlns_stratification: bool = False,
                                       has_stunting_stratification: bool = False):
     # Oops, edge case.
     data = data.drop(columns=[c for c in data.columns if 'event_count' in c and '2027' in c])
-    data = get_measure_data(data, measure, has_wasting_stratification, has_stunting_stratification)
+    data = get_measure_data(data, measure, has_wasting_stratification, has_sqlns_stratification, has_stunting_stratification)
     return sort_data(data)
