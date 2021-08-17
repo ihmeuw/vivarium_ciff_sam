@@ -1,15 +1,17 @@
 import itertools
-from typing import Callable, Dict, Iterable, List, Tuple
+from typing import Callable, Dict, Iterable, List, Tuple, Union
 
 import pandas as pd
 from vivarium.framework.engine import Builder
 from vivarium.framework.event import Event
 from vivarium_public_health.metrics import (MortalityObserver as MortalityObserver_,
                                             DisabilityObserver as DisabilityObserver_,
-                                            DiseaseObserver as DiseaseObserver_)
-from vivarium_public_health.metrics.utilities import (get_deaths, get_state_person_time, get_transition_count,
-                                                      get_years_lived_with_disability, get_years_of_life_lost,
-                                                      TransitionString)
+                                            DiseaseObserver as DiseaseObserver_,
+                                            CategoricalRiskObserver as CategoricalRiskObserver_)
+from vivarium_public_health.metrics.utilities import (get_age_bins, get_deaths, get_state_person_time,
+                                                      get_transition_count, get_years_lived_with_disability,
+                                                      get_years_of_life_lost, TransitionString)
+from vivarium_public_health.utilities import EntityString
 
 from vivarium_ciff_sam.constants import models, results, data_keys
 
@@ -24,10 +26,11 @@ class ResultsStratifier:
 
     """
 
-    def __init__(self, observer_name: str, by_wasting: bool = True, by_stunting: bool = False):
+    def __init__(self, observer_name: str, by_wasting: bool = True, by_sqlns: bool = False, by_stunting: bool = False):
         self.name = f'{observer_name}_results_stratifier'
         self.by_wasting = by_wasting
         self.by_stunting = by_stunting
+        self.by_sqlns = by_sqlns
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
@@ -36,8 +39,8 @@ class ResultsStratifier:
         self.pipelines = {}
         columns_required = ['tracked']
 
-        def get_state_function(column_name: str, state_name: str) -> Callable:
-            return lambda pop: pop[column_name] == state_name
+        def get_state_function(column_name: str, state: Union[str, bool]) -> Callable:
+            return lambda pop: pop[column_name] == state
 
         self.stratification_levels = {}
 
@@ -54,6 +57,13 @@ class ResultsStratifier:
                 for i in range(4, 0, -1)
             }
             self.pipelines[data_keys.STUNTING.name] = builder.value.get_value('child_stunting.exposure')
+
+        if self.by_sqlns:
+            self.stratification_levels['sq_lns'] = {
+                coverage: get_state_function(data_keys.SQ_LNS.name, coverage == 'covered')
+                for coverage in ['covered', 'uncovered']
+            }
+            self.pipelines[data_keys.SQ_LNS.name] = builder.value.get_value(data_keys.SQ_LNS.COVERAGE)
 
         self.population_view = builder.population.get_view(columns_required)
         self.stratification_groups: pd.Series = None
@@ -74,10 +84,9 @@ class ResultsStratifier:
 
         stratification_groups = pd.Series('', index=index)
         all_stratifications = self.get_all_stratifications()
-        # todo do this without requiring the doubly nested loop by concatting strings
         for stratification in all_stratifications:
             stratification_group_name = '_'.join([f'{metric["metric"]}_{metric["category"]}'
-                                                  for metric in stratification])
+                                                  for metric in stratification]).lower()
             mask = pd.Series(True, index=index)
             for metric in stratification:
                 mask &= self.stratification_levels[metric['metric']][metric['category']](pop)
@@ -94,7 +103,7 @@ class ResultsStratifier:
         If no stratification levels are defined, returns a List with a single empty Tuple
         """
         # Get list of lists of metric and category pairs for each metric
-        groups = [[{'metric': metric, 'category': category} for category, category_mask in category_maps.items()]
+        groups = [[{'metric': metric, 'category': category} for category in category_maps]
                   for metric, category_maps in self.stratification_levels.items()]
         # Get product of all stratification combinations
         return list(itertools.product(*groups))
@@ -157,9 +166,11 @@ class ResultsStratifier:
 
 class MortalityObserver(MortalityObserver_):
 
-    def __init__(self, stratify_by_wasting: str = 'True', stratify_by_stunting: str = 'False'):
+    def __init__(self, stratify_by_wasting: str = 'True', stratify_by_sq_lns: str = 'False',
+                 stratify_by_stunting: str = 'False'):
         super().__init__()
-        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting == 'True', stratify_by_stunting == 'True')
+        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting == 'True', stratify_by_sq_lns == 'True',
+                                            stratify_by_stunting == 'True')
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:
@@ -195,9 +206,11 @@ class MortalityObserver(MortalityObserver_):
 
 class DisabilityObserver(DisabilityObserver_):
 
-    def __init__(self, stratify_by_wasting: str = 'True', stratify_by_stunting: str = 'False'):
+    def __init__(self, stratify_by_wasting: str = 'True', stratify_by_sq_lns: str = 'False',
+                 stratify_by_stunting: str = 'False'):
         super().__init__()
-        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting == 'True', stratify_by_stunting == 'True')
+        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting == 'True', stratify_by_sq_lns == 'True',
+                                            stratify_by_stunting == 'True')
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:
@@ -222,9 +235,11 @@ class DisabilityObserver(DisabilityObserver_):
 
 class DiseaseObserver(DiseaseObserver_):
 
-    def __init__(self, disease: str, stratify_by_wasting: str = 'True', stratify_by_stunting: str = 'False'):
+    def __init__(self, disease: str, stratify_by_wasting: str = 'True', stratify_by_sq_lns: str = 'False',
+                 stratify_by_stunting: str = 'False'):
         super().__init__(disease)
-        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting == 'True', stratify_by_stunting == 'True')
+        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting == 'True', stratify_by_sq_lns == 'True',
+                                            stratify_by_stunting == 'True')
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:
@@ -266,47 +281,27 @@ class DiseaseObserver(DiseaseObserver_):
         return f"DiseaseObserver({self.disease})"
 
 
-class DiseaseObserver(DiseaseObserver_):
+class CategoricalRiskObserver(CategoricalRiskObserver_):
 
-    def __init__(self, disease: str, stratify_by_wasting: str = 'True', stratify_by_stunting: str = 'False'):
-        super().__init__(disease)
-        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting == 'True', stratify_by_stunting == 'True')
+    def __init__(self, risk: str, stratify_by_wasting: str = 'False', stratify_by_sq_lns: str = 'False',
+                 stratify_by_stunting: str = 'False'):
+        super().__init__(risk)
+        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting == 'True', stratify_by_sq_lns == 'True',
+                                            stratify_by_stunting == 'True')
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:
         return [self.stratifier]
 
-    @property
-    def name(self):
-        return f'{self.disease}_disease_observer'
-
     def on_time_step_prepare(self, event: Event):
-        pop = self.population_view.get(event.index)
+        pop = pd.concat([self.population_view.get(event.index), pd.Series(self.exposure(event.index), name=self.risk)],
+                        axis=1)
         # Ignoring the edge case where the step spans a new year.
         # Accrue all counts and time to the current year.
         for labels, pop_in_group in self.stratifier.group(pop):
-            for state in self.states:
+            for category in self.categories:
                 # noinspection PyTypeChecker
-                state_person_time_this_step = get_state_person_time(pop_in_group, self.config, self.disease, state,
+                state_person_time_this_step = get_state_person_time(pop_in_group, self.config, self.risk, category,
                                                                     self.clock().year, event.step_size, self.age_bins)
                 state_person_time_this_step = self.stratifier.update_labels(state_person_time_this_step, labels)
                 self.person_time.update(state_person_time_this_step)
-
-        # This enables tracking of transitions between states
-        prior_state_pop = self.population_view.get(event.index)
-        prior_state_pop[self.previous_state_column] = prior_state_pop[self.disease]
-        self.population_view.update(prior_state_pop)
-
-    def on_collect_metrics(self, event: Event):
-        pop = self.population_view.get(event.index)
-        for labels, pop_in_group in self.stratifier.group(pop):
-            for transition in self.transitions:
-                transition = TransitionString(transition)
-                # noinspection PyTypeChecker
-                transition_counts_this_step = get_transition_count(pop_in_group, self.config, self.disease, transition,
-                                                                   event.time, self.age_bins)
-                transition_counts_this_step = self.stratifier.update_labels(transition_counts_this_step, labels)
-                self.counts.update(transition_counts_this_step)
-
-    def __repr__(self) -> str:
-        return f"DiseaseObserver({self.disease})"

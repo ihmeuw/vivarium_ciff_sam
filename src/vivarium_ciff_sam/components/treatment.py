@@ -23,7 +23,6 @@ class SQLNSTreatment:
             propensity_col,
         ]
 
-
         self.propensity = builder.value.register_value_producer(
             data_keys.SQ_LNS.PROPENSITY,
             source=lambda index: self.population_view.get(index)[propensity_col],

@@ -22,12 +22,13 @@ components:
             - ChildWasting()
             - SQLNSTreatment()
             - Intervention()
-            - DisabilityObserver('False', 'True')
-            - MortalityObserver('False', 'True')
-            - DiseaseObserver('diarrheal_diseases', 'False', 'True')
-            - DiseaseObserver('measles', 'False', 'True')
-            - DiseaseObserver('lower_respiratory_infections', 'False', 'True')
-            - DiseaseObserver('child_wasting', 'False')
+            - DisabilityObserver()
+            - MortalityObserver()
+            - DiseaseObserver('diarrheal_diseases')
+            - DiseaseObserver('measles')
+            - DiseaseObserver('lower_respiratory_infections')
+            - DiseaseObserver('child_wasting', 'False', 'True')
+            - CategoricalRiskObserver('child_stunting', 'False', 'True')
 
 configuration:
     input_data:
