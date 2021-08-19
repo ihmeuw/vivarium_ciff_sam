@@ -210,6 +210,32 @@ class __SQLNS(NamedTuple):
 SQ_LNS = __SQLNS()
 
 
+class __WastingTreatment(NamedTuple):
+    SAM_COVERAGE = 'wasting_treatment.sam_coverage'
+    MAM_COVERAGE = 'wasting_treatment.mam_coverage'
+    SAM_EFFECTIVE_COVERAGE = 'wasting_treatment.sam_effective_coverage'
+    MAM_EFFECTIVE_COVERAGE = 'wasting_treatment.mam_effective_coverage'
+    PROPENSITY = 'wasting_treatment.propensity'
+    EFFICACY_PROPENSITY = 'wasting_treatment.efficacy_propensity'
+
+    # Coverage state names
+    UNTREATED = 'untreated'
+    NON_RESPONSIVE = 'non_responsive'
+    EFFECTIVELY_COVERED = 'effectively_covered'
+    INELIGIBLE = 'ineligible'
+
+    @property
+    def name(self):
+        return 'wasting_treatment'
+
+    @property
+    def log_name(self):
+        return 'wasting treatment'
+
+
+WASTING_TREATMENT = __WastingTreatment()
+
+
 MAKE_ARTIFACT_KEY_GROUPS = [
     POPULATION,
     DIARRHEA,
@@ -219,4 +245,5 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     WASTING,
     STUNTING,
     SQ_LNS,
+    WASTING_TREATMENT,
 ]

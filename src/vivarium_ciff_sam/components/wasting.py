@@ -201,7 +201,7 @@ def load_mild_wasting_remission_rate(builder: Builder, *args) -> float:
 
 # noinspection DuplicatedCode
 def get_mild_wasting_remission_probability() -> float:
-    return 1 / data_values.MILD_WASTING_UX_RECOVERY_TIME
+    return 1 / data_values.WASTING.MILD_WASTING_UX_RECOVERY_TIME
 
 
 # noinspection PyUnusedLocal
@@ -254,8 +254,8 @@ def load_mam_remission_rate(builder: Builder, *args) -> float:
 def get_daily_mam_remission_probability() -> float:
     # r3: mam_tx_coverage * 1/time_to_mam_tx_recovery + (1-mam_tx_coverage)*(1/time_to_mam_ux_recovery)
     r3 = (
-        data_values.MAM_TX_COVERAGE / data_values.MAM_TX_RECOVERY_TIME
-        + (1 - data_values.MAM_TX_COVERAGE) / data_values.MAM_UX_RECOVERY_TIME
+            data_values.WASTING.MAM_TX_COVERAGE / data_values.WASTING.MAM_TX_RECOVERY_TIME
+            + (1 - data_values.WASTING.MAM_TX_COVERAGE) / data_values.WASTING.MAM_UX_RECOVERY_TIME
     )
     return r3
 
@@ -310,7 +310,7 @@ def load_sam_remission_rate(builder: Builder, *args) -> float:
 
 def get_daily_sam_untreated_remission_probability() -> float:
     # r2: (1-sam_tx_coverage)*(1/time_to_sam_ux_recovery)
-    r2 = (1 - data_values.SAM_TX_COVERAGE) / data_values.SAM_UX_RECOVERY_TIME
+    r2 = (1 - data_values.WASTING.SAM_TX_COVERAGE) / data_values.WASTING.SAM_UX_RECOVERY_TIME
     return r2
 
 
@@ -323,7 +323,7 @@ def load_sam_treated_remission_rate(builder: Builder, *args) -> float:
 
 def get_daily_sam_treated_remission_probability() -> float:
     # t1: sam_tx_coverage * (1/time_to_sam_tx_recovery)
-    t1 = data_values.SAM_TX_COVERAGE / data_values.SAM_TX_RECOVERY_TIME
+    t1 = data_values.WASTING.SAM_TX_COVERAGE / data_values.WASTING.SAM_TX_RECOVERY_TIME
     return t1
 
 
@@ -423,7 +423,7 @@ def load_daily_mortality_probabilities(builder: Builder) -> pd.DataFrame:
         index=pd.Index([data_keys.DIARRHEA.name, data_keys.MEASLES.name, data_keys.LRI.name], name='affected_entity')
     ).reindex(index=rr_ci.index, level='affected_entity')
     duration_c.loc[duration_c.index.get_level_values('age_start') == 0.0] = data_values.EARLY_NEONATAL_CAUSE_DURATION
-    duration_c = duration_c / 365   # convert to duration in years
+    duration_c = duration_c / data_values.YEAR_DURATION   # convert to duration in years
 
     # prevalence_pem_i
     # index = [ 'sex', 'age_start', 'age_end', 'year_start', 'year_end', 'affected_entity', 'parameter ]
@@ -463,8 +463,8 @@ def adjust_exposure(exposures: pd.DataFrame, adjustment: pd.Series) -> pd.DataFr
 
 
 def _convert_annual_rate_to_daily_probability(rate: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:
-    return 1 - np.exp(-rate / 365)
+    return 1 - np.exp(-rate / data_values.YEAR_DURATION)
 
 
 def _convert_daily_probability_to_annual_rate(probability: Union[pd.Series, float]) -> Union[pd.Series, float]:
-    return -np.log(1 - probability) * 365
+    return -np.log(1 - probability) * data_values.YEAR_DURATION
