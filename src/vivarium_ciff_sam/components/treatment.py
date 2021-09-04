@@ -225,6 +225,7 @@ class WastingTreatment:
         effective = coverage == data_keys.WASTING_TREATMENT.EFFECTIVELY_COVERED
         unaffected = coverage.isin([data_keys.WASTING_TREATMENT.UNTREATED, data_keys.WASTING_TREATMENT.NON_RESPONSIVE])
 
+        # r2_ux = r2 / (1 - sam_tx_coverage * sam_tx_efficacy)
         target[effective] = 0
         target[unaffected] /= (1 - self.sam_treatment_coverage_level * self.sam_treatment_efficacy_level)
         return target
