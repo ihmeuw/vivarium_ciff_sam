@@ -1,11 +1,12 @@
 from datetime import datetime
 from typing import NamedTuple, Tuple
 
+from numpy import log
 from scipy import stats
 
-##################
-# Time Constants #
-##################
+#######################
+# Universal Constants #
+#######################
 
 YEAR_DURATION: float = 365.25
 
@@ -40,8 +41,10 @@ class __Wasting(NamedTuple):
     SAM_TX_EFFICACY: Tuple = ('sam_tx_efficacy', stats.norm(loc=0.700, scale=0.0306))  # (0.760 - 0.640) / (2 * 1.96)
     MAM_TX_EFFICACY: Tuple = ('mam_tx_efficacy', stats.norm(loc=0.731, scale=0.0745))  # (0.877 - 0.585) / (2 * 1.96)
 
+    # Incidence correction factor (total exit rate)
+    SAM_K: float = ('sam_incidence_correction', stats.lognorm(s=0.115, scale=6.7))     # (log(8.4) - log(6.7)) / 1.96
+
     # Untreated time to recovery in days
-    SAM_UX_RECOVERY_TIME: float = 62.0
     MAM_UX_RECOVERY_TIME: float = 63.0
     MILD_WASTING_UX_RECOVERY_TIME: float = 1000.0
 

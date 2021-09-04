@@ -214,8 +214,8 @@ class WastingTreatment:
                                      data_keys.WASTING_TREATMENT.NON_RESPONSIVE])
                       & (data_values.WASTING.COVERAGE_START_AGE < age))
 
-        target[young_effective] = 1 / data_values.WASTING.SAM_TX_RECOVERY_TIME_UNDER_6MO
-        target[old_effective] = 1 / data_values.WASTING.SAM_TX_RECOVERY_TIME_OVER_6MO
+        target[young_effective] = data_values.YEAR_DURATION / data_values.WASTING.SAM_TX_RECOVERY_TIME_UNDER_6MO
+        target[old_effective] = data_values.YEAR_DURATION / data_values.WASTING.SAM_TX_RECOVERY_TIME_OVER_6MO
         target[unaffected] = 0
         return target
 
@@ -226,7 +226,7 @@ class WastingTreatment:
         unaffected = coverage.isin([data_keys.WASTING_TREATMENT.UNTREATED, data_keys.WASTING_TREATMENT.NON_RESPONSIVE])
 
         target[effective] = 0
-        target[unaffected] = 1 / data_values.WASTING.SAM_UX_RECOVERY_TIME
+        target[unaffected] /= (1 - self.sam_treatment_coverage_level * self.sam_treatment_efficacy_level)
         return target
 
     def apply_mam_treatment_modifier(self, index: pd.Index, target: pd.Series) -> pd.Series:
@@ -239,7 +239,7 @@ class WastingTreatment:
                                      data_keys.WASTING_TREATMENT.NON_RESPONSIVE])
                       & (data_values.WASTING.COVERAGE_START_AGE < age))
 
-        target[young_effective] = 1 / data_values.WASTING.MAM_TX_RECOVERY_TIME_UNDER_6MO
-        target[old_effective] = 1 / data_values.WASTING.MAM_TX_RECOVERY_TIME_OVER_6MO
-        target[unaffected] = 1 / data_values.WASTING.MAM_UX_RECOVERY_TIME
+        target[young_effective] = data_values.YEAR_DURATION / data_values.WASTING.MAM_TX_RECOVERY_TIME_UNDER_6MO
+        target[old_effective] = data_values.YEAR_DURATION / data_values.WASTING.MAM_TX_RECOVERY_TIME_OVER_6MO
+        target[unaffected] = data_values.YEAR_DURATION / data_values.WASTING.MAM_UX_RECOVERY_TIME
         return target
