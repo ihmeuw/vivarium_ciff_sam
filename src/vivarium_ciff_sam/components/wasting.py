@@ -343,7 +343,7 @@ def load_sam_untreated_remission_rate(builder: Builder, *args) -> pd.Series:
     daily_probability = get_daily_sam_untreated_remission_probability(mortality_probs, sam_tx_coverage,
                                                                       sam_tx_efficacy, sam_k)
     incidence_rate = _convert_daily_probability_to_annual_rate(daily_probability)
-    return incidence_rate
+    return incidence_rate.reset_index()
 
 
 def get_daily_sam_untreated_remission_probability(mortality_probs: pd.DataFrame, sam_tx_coverage: float,
