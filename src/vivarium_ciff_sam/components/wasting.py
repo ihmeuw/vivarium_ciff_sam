@@ -257,7 +257,7 @@ def get_daily_mam_incidence_probability(exposures: pd.DataFrame, adjustment: pd.
 # noinspection PyUnusedLocal
 def load_mam_remission_rate(builder: Builder, *args) -> float:
     draw = builder.configuration.input_data.input_draw_number
-    index = builder.data.load(data_keys.POPULATION.DEMOGRAPHY).index
+    index = builder.data.load(data_keys.POPULATION.DEMOGRAPHY).set_index(metadata.ARTIFACT_INDEX_COLUMNS).index
     tx_coverage = get_random_variable(draw, *data_values.WASTING.TX_COVERAGE)
     mam_tx_efficacy = get_random_variable(draw, *data_values.WASTING.MAM_TX_EFFICACY)
 
@@ -359,7 +359,7 @@ def get_daily_sam_untreated_remission_probability(mortality_probs: pd.DataFrame,
 
 # noinspection PyUnusedLocal
 def load_sam_treated_remission_rate(builder: Builder, *args) -> float:
-    index = builder.data.load(data_keys.POPULATION.DEMOGRAPHY).index
+    index = builder.data.load(data_keys.POPULATION.DEMOGRAPHY).set_index(metadata.ARTIFACT_INDEX_COLUMNS).index
     tx_coverage = get_random_variable(builder.configuration.input_data.input_draw_number,
                                       *data_values.WASTING.TX_COVERAGE)
     sam_tx_efficacy = get_random_variable(builder.configuration.input_data.input_draw_number,
