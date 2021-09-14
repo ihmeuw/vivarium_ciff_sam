@@ -94,10 +94,10 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.STUNTING.RELATIVE_RISK: load_gbd_2020_rr,
         data_keys.STUNTING.PAF: load_paf,
 
-        data_keys.WASTING_TREATMENT.DISTRIBUTION: load_wasting_non_treatment_distribution,
-        data_keys.WASTING_TREATMENT.EXPOSURE: load_wasting_non_treatment_exposure,
-        data_keys.WASTING_TREATMENT.RELATIVE_RISK: load_wasting_non_treatment_rr,
-        data_keys.WASTING_TREATMENT.PAF: load_paf,
+        data_keys.WASTING_NON_TREATMENT.DISTRIBUTION: load_wasting_non_treatment_distribution,
+        data_keys.WASTING_NON_TREATMENT.EXPOSURE: load_wasting_non_treatment_exposure,
+        data_keys.WASTING_NON_TREATMENT.RELATIVE_RISK: load_wasting_non_treatment_rr,
+        data_keys.WASTING_NON_TREATMENT.PAF: load_paf,
     }
     return mapping[lookup_key](lookup_key, location)
 
@@ -276,11 +276,11 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
 
 
 def load_paf(key: str, location: str) -> pd.DataFrame:
-    if key in [data_keys.WASTING.PAF, data_keys.STUNTING.PAF, data_keys.WASTING_TREATMENT.PAF]:
+    if key in [data_keys.WASTING.PAF, data_keys.STUNTING.PAF, data_keys.WASTING_NON_TREATMENT.PAF]:
         risk = {
             data_keys.WASTING.PAF: data_keys.WASTING,
             data_keys.STUNTING.PAF: data_keys.STUNTING,
-            data_keys.WASTING_TREATMENT.PAF: data_keys.WASTING_TREATMENT
+            data_keys.WASTING_NON_TREATMENT.PAF: data_keys.WASTING_NON_TREATMENT
         }[key]
 
         exp = get_data(risk.EXPOSURE, location)
@@ -330,7 +330,7 @@ def load_pem_disability_weight(key: str, location: str) -> pd.DataFrame:
 
 # noinspection PyUnusedLocal
 def load_wasting_non_treatment_distribution(key: str, location: str) -> str:
-    if key == data_keys.WASTING_TREATMENT.DISTRIBUTION:
+    if key == data_keys.WASTING_NON_TREATMENT.DISTRIBUTION:
         return 'dichotomous'
     else:
         raise ValueError(f'Unrecognized key {key}')
@@ -338,7 +338,7 @@ def load_wasting_non_treatment_distribution(key: str, location: str) -> str:
 
 # noinspection PyUnusedLocal
 def load_wasting_non_treatment_exposure(key: str, location: str) -> pd.DataFrame:
-    if key == data_keys.WASTING_TREATMENT.EXPOSURE:
+    if key == data_keys.WASTING_NON_TREATMENT.EXPOSURE:
         treatment_coverage = get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]),
                                                        *data_values.WASTING.TX_COVERAGE)
 
@@ -356,7 +356,7 @@ def load_wasting_non_treatment_exposure(key: str, location: str) -> pd.DataFrame
 
 
 def load_wasting_non_treatment_rr(key: str, location: str) -> pd.DataFrame:
-    if key == data_keys.WASTING_TREATMENT.RELATIVE_RISK:
+    if key == data_keys.WASTING_NON_TREATMENT.RELATIVE_RISK:
         sam_treatment_efficacy = get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]),
                                                            *data_values.WASTING.SAM_TX_EFFICACY)
         mam_treatment_efficacy = get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]),

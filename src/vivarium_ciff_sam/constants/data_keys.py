@@ -210,7 +210,7 @@ class __SQLNS(NamedTuple):
 SQ_LNS = __SQLNS()
 
 
-class __WastingTreatment(NamedTuple):
+class __WastingNonTreatment(NamedTuple):
 
     # Keys that will be loaded into the artifact. must have a colon type declaration
     EXPOSURE: TargetString = 'risk_factor.wasting_non_treatment.exposure'
@@ -218,22 +218,16 @@ class __WastingTreatment(NamedTuple):
     RELATIVE_RISK: TargetString = 'risk_factor.wasting_non_treatment.relative_risk'
     PAF: TargetString = 'risk_factor.wasting_non_treatment.population_attributable_fraction'
 
-    # Useful keys not for the artifact - distinguished by not using the colon type declaration
-    UNTREATED = 'untreated'
-    NON_RESPONSIVE = 'non_responsive'
-    EFFECTIVELY_COVERED = 'effectively_covered'
-    INELIGIBLE = 'ineligible'
-
     @property
     def name(self):
-        return 'wasting_treatment'
+        return 'wasting_non_treatment'
 
     @property
     def log_name(self):
-        return 'wasting treatment'
+        return 'wasting non-treatment'
 
 
-WASTING_TREATMENT = __WastingTreatment()
+WASTING_NON_TREATMENT = __WastingNonTreatment()
 
 
 MAKE_ARTIFACT_KEY_GROUPS = [
@@ -245,5 +239,5 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     WASTING,
     STUNTING,
     SQ_LNS,
-    WASTING_TREATMENT,
+    WASTING_NON_TREATMENT,
 ]
