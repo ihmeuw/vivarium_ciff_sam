@@ -126,7 +126,10 @@ def load_age_bins(key: str, location: str) -> pd.DataFrame:
 
 # noinspection PyUnusedLocal
 def load_demographic_dimensions(key: str, location: str) -> pd.DataFrame:
-    return interface.get_demographic_dimensions(location).droplevel('location')
+    if key == data_keys.POPULATION.DEMOGRAPHY:
+        return utilities.get_gbd_2020_demographic_dimensions()
+    else:
+        raise ValueError(f'Unrecognized key {key}')
 
 
 # noinspection PyUnusedLocal
@@ -339,7 +342,7 @@ def load_wasting_non_treatment_exposure(key: str, location: str) -> pd.DataFrame
         treatment_coverage = get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]),
                                                        *data_values.WASTING.TX_COVERAGE)
 
-        idx = utilities.get_gbd_2020_artifact_index()
+        idx = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
         cat2 = pd.DataFrame({f'draw_{i}': 1 for i in range(0, 1000)}, index=idx) * treatment_coverage
         cat1 = 1 - cat2
 
@@ -352,7 +355,6 @@ def load_wasting_non_treatment_exposure(key: str, location: str) -> pd.DataFrame
         raise ValueError(f'Unrecognized key {key}')
 
 
-# noinspection PyUnusedLocal
 def load_wasting_non_treatment_rr(key: str, location: str) -> pd.DataFrame:
     if key == data_keys.WASTING_TREATMENT.RELATIVE_RISK:
         sam_treatment_efficacy = get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]),
@@ -360,7 +362,7 @@ def load_wasting_non_treatment_rr(key: str, location: str) -> pd.DataFrame:
         mam_treatment_efficacy = get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]),
                                                            *data_values.WASTING.MAM_TX_EFFICACY)
 
-        idx = utilities.get_gbd_2020_artifact_index()
+        idx = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
 
         mam_tx_duration = pd.Series(index=idx)
         mam_tx_duration[idx.get_level_values('age_start') < 0.5] = data_values.WASTING.MAM_TX_RECOVERY_TIME_UNDER_6MO

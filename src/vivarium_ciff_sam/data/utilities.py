@@ -43,7 +43,7 @@ def get_entity(key: EntityKey) -> ModelableEntity:
 
 def reshape_gbd_2019_data_as_gbd_2020_data(gbd_2019_data: pd.DataFrame) -> pd.DataFrame:
     # Get target output index
-    full_gbd_2020_idx = get_gbd_2020_artifact_index()
+    full_gbd_2020_idx = get_gbd_2020_demographic_dimensions().index
 
     # Get target index subset to GBD 2019 estimation years
     subset_gbd_2019_years_idx = (
@@ -81,7 +81,7 @@ def reshape_gbd_2019_data_as_gbd_2020_data(gbd_2019_data: pd.DataFrame) -> pd.Da
     )
 
     # Repopulate year_end and age_end columns and set index
-    full_data = _apply_artifact_index(full_data_without_end_columns)
+    full_data = apply_artifact_index(full_data_without_end_columns)
     return full_data
 
 
@@ -135,7 +135,7 @@ def validate_and_reshape_child_wasting_data(data: pd.DataFrame, entity: Modelabl
     # from interface.get_measure
     data = _scrub_gbd_2020_conventions(data, location)
 
-    estimation_years = _get_gbd_2020_estimation_years()
+    estimation_years = get_gbd_2020_estimation_years()
     validation_years = pd.DataFrame({'year_start': range(min(estimation_years), max(estimation_years) + 1)})
     validation_years['year_end'] = validation_years['year_start'] + 1
 
@@ -152,7 +152,7 @@ def normalize_gbd_2020(data: pd.DataFrame, fill_value: Real = None,
     data = vi_utils.normalize_sex(data, fill_value, cols_to_fill)
 
     # vi_inputs.normalize_year(data)
-    binned_years = _get_gbd_2020_estimation_years()   # get GBD 2020 estimation years
+    binned_years = get_gbd_2020_estimation_years()   # get GBD 2020 estimation years
     years = {'annual': list(range(min(binned_years), max(binned_years) + 1)), 'binned': binned_years}
 
     if 'year_id' not in data:
@@ -175,33 +175,33 @@ def normalize_gbd_2020(data: pd.DataFrame, fill_value: Real = None,
     return data
 
 
-def get_gbd_2020_artifact_index() -> pd.Index:
-    estimation_years = _get_gbd_2020_estimation_years()
+def get_gbd_2020_demographic_dimensions() -> pd.DataFrame:
+    estimation_years = get_gbd_2020_estimation_years()
     year_starts = range(estimation_years[0], estimation_years[-1] + 1)
     age_bins = get_gbd_2020_age_bins()
 
     unique_index_data = (pd.DataFrame(product(['Female', 'Male'], age_bins.age_start, year_starts))
                          .rename(columns={0: 'sex', 1: 'age_start', 2: 'year_start'}))
 
-    index_data = _apply_artifact_index(unique_index_data)
-    return index_data.index
+    index_data = apply_artifact_index(unique_index_data)
+    return index_data
 
 
-def _apply_artifact_index(data: pd.DataFrame) -> pd.DataFrame:
+def apply_artifact_index(data: pd.DataFrame) -> pd.DataFrame:
     """Sets data frame index to match artifact format.
      Populates year_end and age_end columns if they are missing"""
-    age_bins = get_gbd_2020_age_bins()
 
     if 'year_end' not in data.columns:
         data['year_end'] = data['year_start'] + 1
     if 'age_end' not in data.columns:
+        age_bins = get_gbd_2020_age_bins()
         data['age_end'] = data['age_start'].apply(lambda x: {start: end for start, end
                                                              in zip(age_bins.age_start, age_bins.age_end)}[x])
     data = data.set_index(ARTIFACT_INDEX_COLUMNS)
     return data
 
 
-def _get_gbd_2020_estimation_years() -> List[int]:
+def get_gbd_2020_estimation_years() -> List[int]:
     """Gets the estimation years for a particular gbd round."""
     from db_queries import get_demographics
     warnings.filterwarnings("default", module="db_queries")
