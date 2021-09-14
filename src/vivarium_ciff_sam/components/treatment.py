@@ -1,5 +1,6 @@
 """Prevention and treatment models"""
 import pandas as pd
+
 from vivarium.framework.engine import Builder
 
 from vivarium_ciff_sam.constants import data_keys, data_values, models
@@ -83,19 +84,17 @@ class SQLNSTreatment:
         return target
 
 
-class WastingTreatment:
+# todo reimplement as risk factor - maybe remove entirely?
+class WastingTreatmentEffect:
     """Manages wasting treatment and maintenance measures"""
 
     @property
     def name(self) -> str:
         """The name of this component."""
-        return 'treatment_algorithm'
+        return 'wasting_treatment_effect'
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
-        self.treatment_randomness = builder.randomness.get_stream('initial_wasting_treatment_propensity')
-        self.efficacy_randomness = builder.randomness.get_stream('initial_wasting_treatment_efficacy_propensity')
-
         draw = builder.configuration.input_data.input_draw_number
 
         treatment_propensity_col = 'wasting_treatment_propensity'
@@ -107,7 +106,7 @@ class WastingTreatment:
         ]
 
         # Coverage levels for SAM and MAM treatment
-        self.sam_treatment_coverage_level = get_random_variable(draw, *data_values.WASTING.SAM_TX_COVERAGE)
+        self.sam_treatment_coverage_level = get_random_variable(draw, *data_values.WASTING.TX_COVERAGE)
         self.mam_treatment_coverage_level = get_random_variable(draw, *data_values.WASTING.MAM_TX_COVERAGE)
 
         # Treatment efficacy for SAM and MAM

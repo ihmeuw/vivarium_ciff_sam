@@ -211,14 +211,14 @@ SQ_LNS = __SQLNS()
 
 
 class __WastingTreatment(NamedTuple):
-    SAM_COVERAGE = 'wasting_treatment.sam_coverage'
-    MAM_COVERAGE = 'wasting_treatment.mam_coverage'
-    SAM_EFFECTIVE_COVERAGE = 'wasting_treatment.sam_effective_coverage'
-    MAM_EFFECTIVE_COVERAGE = 'wasting_treatment.mam_effective_coverage'
-    PROPENSITY = 'wasting_treatment.propensity'
-    EFFICACY_PROPENSITY = 'wasting_treatment.efficacy_propensity'
 
-    # Coverage state names
+    # Keys that will be loaded into the artifact. must have a colon type declaration
+    EXPOSURE: TargetString = 'risk_factor.wasting_non_treatment.exposure'
+    DISTRIBUTION: TargetString = 'risk_factor.wasting_non_treatment.distribution'
+    RELATIVE_RISK: TargetString = 'risk_factor.wasting_non_treatment.relative_risk'
+    PAF: TargetString = 'risk_factor.wasting_non_treatment.population_attributable_fraction'
+
+    # Useful keys not for the artifact - distinguished by not using the colon type declaration
     UNTREATED = 'untreated'
     NON_RESPONSIVE = 'non_responsive'
     EFFECTIVELY_COVERED = 'effectively_covered'

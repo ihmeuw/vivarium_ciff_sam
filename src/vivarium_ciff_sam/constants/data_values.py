@@ -34,8 +34,7 @@ EARLY_NEONATAL_CAUSE_DURATION: float = 3.5
 class __Wasting(NamedTuple):
     # Wasting treatment coverage
     COVERAGE_START_AGE: float = 28 / YEAR_DURATION  # ~0.0767
-    SAM_TX_COVERAGE: Tuple = ('sam_tx_coverage', stats.norm(loc=0.488, scale=0.0587))  # (0.604 - 0.374) / (2 * 1.96)
-    MAM_TX_COVERAGE: Tuple = ('mam_tx_coverage', stats.norm(loc=0.488, scale=0.0587))  # (0.604 - 0.374) / (2 * 1.96)
+    TX_COVERAGE: Tuple = ('sam_tx_coverage', stats.norm(loc=0.488, scale=0.0587))      # (0.604 - 0.374) / (2 * 1.96)
 
     # Wasting treatment efficacy
     SAM_TX_EFFICACY: Tuple = ('sam_tx_efficacy', stats.norm(loc=0.700, scale=0.0306))  # (0.760 - 0.640) / (2 * 1.96)

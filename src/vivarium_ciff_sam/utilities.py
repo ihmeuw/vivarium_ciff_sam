@@ -82,7 +82,7 @@ def delete_if_exists(*paths: Union[Path, List[Path]], confirm=False):
 
 
 def get_random_variable_draws(columns: pd.Index, seed: str, distribution) -> pd.Series:
-    return pd.Series([get_random_variable(x, seed, distribution.rvs) for x in range(0, columns.size)], index=columns)
+    return pd.Series([get_random_variable(x, seed, distribution) for x in range(0, columns.size)], index=columns)
 
 
 def get_random_variable(draw: int, seed: str, distribution) -> pd.Series:

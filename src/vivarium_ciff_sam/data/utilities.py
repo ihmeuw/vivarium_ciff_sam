@@ -43,7 +43,7 @@ def get_entity(key: EntityKey) -> ModelableEntity:
 
 def reshape_gbd_2019_data_as_gbd_2020_data(gbd_2019_data: pd.DataFrame) -> pd.DataFrame:
     # Get target output index
-    full_gbd_2020_idx = _get_gbd_2020_artifact_index()
+    full_gbd_2020_idx = get_gbd_2020_artifact_index()
 
     # Get target index subset to GBD 2019 estimation years
     subset_gbd_2019_years_idx = (
@@ -175,7 +175,7 @@ def normalize_gbd_2020(data: pd.DataFrame, fill_value: Real = None,
     return data
 
 
-def _get_gbd_2020_artifact_index() -> pd.Index:
+def get_gbd_2020_artifact_index() -> pd.Index:
     estimation_years = _get_gbd_2020_estimation_years()
     year_starts = range(estimation_years[0], estimation_years[-1] + 1)
     age_bins = get_gbd_2020_age_bins()
