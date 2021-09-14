@@ -218,7 +218,6 @@ def load_mam_exposure(cause: str, builder: Builder) -> pd.DataFrame:
 # noinspection PyUnusedLocal
 def load_mam_incidence_rate(builder: Builder, *args) -> pd.DataFrame:
     draw = builder.configuration.input_data.input_draw_number
-    # todo replace all tx_coverage and tx_efficacy sources with artifact data
     tx_coverage = get_random_variable(draw, *data_values.WASTING.TX_COVERAGE)
     mam_tx_efficacy = get_random_variable(draw, *data_values.WASTING.MAM_TX_EFFICACY)
     sam_tx_efficacy = get_random_variable(draw, *data_values.WASTING.SAM_TX_EFFICACY)
