@@ -1,8 +1,9 @@
 from datetime import datetime
 from typing import NamedTuple, Tuple
 
-from numpy import log
 from scipy import stats
+
+from vivarium_ciff_sam.utilities import get_lognorm_from_quantiles
 
 #######################
 # Universal Constants #
@@ -42,7 +43,7 @@ class __Wasting(NamedTuple):
     MAM_TX_EFFICACY: Tuple = ('mam_tx_efficacy', stats.norm(loc=0.731, scale=0.0745))  # (0.877 - 0.585) / (2 * 1.96)
 
     # Incidence correction factor (total exit rate)
-    SAM_K: float = ('sam_incidence_correction', stats.lognorm(s=0.115, scale=6.7))     # (log(8.4) - log(6.7)) / 1.96
+    SAM_K: float = ('sam_incidence_correction', get_lognorm_from_quantiles(median=6.7, lower=5.3, upper=8.4))
 
     # Untreated time to recovery in days
     MAM_UX_RECOVERY_TIME: float = 63.0
@@ -65,9 +66,12 @@ class __SQLNS(NamedTuple):
     COVERAGE_START_AGE: float = 0.5
     COVERAGE_BASELINE: float = 0.0
     COVERAGE_RAMP_UP: float = 0.9
-    EFFICACY_WASTING: float = 0.18
-    EFFICACY_STUNTING_SEVERE: float = 0.15
-    EFFICACY_STUNTING_MODERATE: float = 0.07
+    RISK_RATIO_WASTING: Tuple = ('sq_lns_wasting_effect',
+                                 get_lognorm_from_quantiles(median=0.82, lower=0.74, upper=0.91))
+    RISK_RATIO_STUNTING_SEVERE: Tuple = ('sq_lns_severe_stunting_effect',
+                                         get_lognorm_from_quantiles(median=0.85, lower=0.74, upper=0.98))
+    RISK_RATIO_STUNTING_MODERATE: Tuple = ('sq_lns_moderate_stunting_effect',
+                                           get_lognorm_from_quantiles(median=0.93, lower=0.88, upper=0.98))
 
 
 SQ_LNS = __SQLNS()

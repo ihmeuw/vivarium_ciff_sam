@@ -1,8 +1,9 @@
 import click
 import numpy as np
 import pandas as pd
+from scipy import stats
 
-from typing import Union, List
+from typing import List, Tuple, Union
 from pathlib import Path
 from loguru import logger
 
@@ -79,6 +80,30 @@ def delete_if_exists(*paths: Union[Path, List[Path]], confirm=False):
 #     data = pivot_categorical(data)
 #     data[project_globals.LBWSG_MISSING_CATEGORY.CAT] = project_globals.LBWSG_MISSING_CATEGORY.EXPOSURE
 #     return data
+
+
+def get_lognorm_from_quantiles(median: float, lower: float, upper: float,
+                               quantiles: Tuple[float, float] = (0.025, 0.975)) -> stats.lognorm:
+    """Returns a frozen lognormal distribution with the specified median, such that
+    (lower, upper) are approximately equal to the quantiles with ranks
+    (quantile_ranks[0], quantile_ranks[1]).
+    """
+    # Let Y ~ norm(mu, sigma^2) and X = exp(Y), where mu = log(median)
+    # so X ~ lognorm(s=sigma, scale=exp(mu)) in scipy's notation.
+    # We will determine sigma from the two specified quantiles lower and upper.
+
+    # mean (and median) of the normal random variable Y = log(X)
+    mu = np.log(median)
+    # quantiles of the standard normal distribution corresponding to quantile_ranks
+    stdnorm_quantiles = stats.norm.ppf(quantiles)
+    # quantiles of Y = log(X) corresponding to the quantiles (lower, upper) for X
+    norm_quantiles = np.log([lower, upper])
+    # standard deviation of Y = log(X) computed from the above quantiles for Y
+    # and the corresponding standard normal quantiles
+    sigma = (norm_quantiles[1] - norm_quantiles[0]) / (stdnorm_quantiles[1] - stdnorm_quantiles[0])
+    # Frozen lognormal distribution for X = exp(Y)
+    # (s=sigma is the shape parameter; the scale parameter is exp(mu), which equals the median)
+    return stats.lognorm(s=sigma, scale=median)
 
 
 def get_random_variable_draws(columns: pd.Index, seed: str, distribution) -> pd.Series:

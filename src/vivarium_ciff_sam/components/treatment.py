@@ -16,7 +16,12 @@ class SQLNSTreatment:
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
+        draw = builder.configuration.input_data.input_draw_number
         self.randomness = builder.randomness.get_stream('initial_sq_lns_propensity')
+
+        self.wasting_risk_ratio = get_random_variable(draw, *data_values.SQ_LNS.RISK_RATIO_WASTING)
+        self.severe_stunting_risk_ratio = get_random_variable(draw, *data_values.SQ_LNS.RISK_RATIO_STUNTING_SEVERE)
+        self.moderate_stunting_risk_ratio = get_random_variable(draw, *data_values.SQ_LNS.RISK_RATIO_STUNTING_MODERATE)
 
         propensity_col = 'sq_lns_propensity'
         required_columns = [
@@ -67,13 +72,13 @@ class SQLNSTreatment:
 
     def apply_wasting_treatment(self, index: pd.Index, target: pd.Series) -> pd.Series:
         covered = self.coverage(index)
-        target[covered] = target[covered] * (1 - data_values.SQ_LNS.EFFICACY_WASTING)
+        target[covered] = target[covered] * self.wasting_risk_ratio
 
         return target
 
     def apply_stunting_treatment(self, index: pd.Index, target: pd.DataFrame) -> pd.Series:
-        cat1_decrease = target.loc[:, 'cat1'] * data_values.SQ_LNS.EFFICACY_STUNTING_SEVERE
-        cat2_decrease = target.loc[:, 'cat2'] * data_values.SQ_LNS.EFFICACY_STUNTING_MODERATE
+        cat1_decrease = target.loc[:, 'cat1'] * (1 - self.severe_stunting_risk_ratio)
+        cat2_decrease = target.loc[:, 'cat2'] * (1 - self.moderate_stunting_risk_ratio)
 
         covered = self.coverage(index)
         target.loc[covered, 'cat1'] = target.loc[covered, 'cat1'] - cat1_decrease.loc[covered]
