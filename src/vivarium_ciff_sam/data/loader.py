@@ -377,7 +377,7 @@ def load_wasting_non_treatment_rr(key: str, location: str) -> pd.DataFrame:
         rr_sam_untreated_remission = (pd.DataFrame({f'draw_{i}': 1 for i in range(0, 1000)}, index=idx)
                                       / (1 - sam_treatment_efficacy))
         rr_sam_untreated_remission['affected_entity'] = 'severe_acute_malnutrition_to_moderate_acute_malnutrition'
-        rr_mam_remission = (data_values.WASTING.MAM_UX_RECOVERY_TIME
+        rr_mam_remission = (mam_tx_duration
                             / (mam_tx_duration * (1 - mam_treatment_efficacy)
                                + data_values.WASTING.MAM_UX_RECOVERY_TIME * mam_treatment_efficacy))
         rr_mam_remission['affected_entity'] = 'moderate_acute_malnutrition_to_mild_child_wasting'
