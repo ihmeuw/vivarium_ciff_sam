@@ -33,6 +33,9 @@ EARLY_NEONATAL_CAUSE_DURATION: float = 3.5
 # Wasting Model Parameters #
 ############################
 class __Wasting(NamedTuple):
+    # Wasting age start (in years)
+    START_AGE: float = 0.5
+
     # Wasting treatment coverage
     COVERAGE_START_AGE: float = 28 / YEAR_DURATION  # ~0.0767
     TX_COVERAGE: Tuple = ('sam_tx_coverage', stats.norm(loc=0.488, scale=0.0587))      # (0.604 - 0.374) / (2 * 1.96)
