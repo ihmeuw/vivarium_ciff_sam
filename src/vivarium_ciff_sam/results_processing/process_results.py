@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import NamedTuple, List
+from typing import Dict, NamedTuple, Union
 
 import pandas as pd
 import yaml
@@ -55,7 +55,7 @@ class MeasureData(NamedTuple):
             df.to_csv(output_dir / f'{key}.csv')
 
 
-def read_data(path: Path, single_run: bool) -> (pd.DataFrame, List[str]):
+def read_data(path: Path, single_run: bool) -> (pd.DataFrame, Dict[str, Union[str, int]]):
     data = pd.read_hdf(path)
     # noinspection PyUnresolvedReferences
     data = (data
@@ -77,7 +77,7 @@ def read_data(path: Path, single_run: bool) -> (pd.DataFrame, List[str]):
     return data, keyspace
 
 
-def filter_out_incomplete(data, keyspace):
+def filter_out_incomplete(data: pd.DataFrame, keyspace: Dict[str, Union[str, int]]):
     output = []
     for draw in keyspace[results.INPUT_DRAW_COLUMN]:
         # For each draw, gather all random seeds completed for all scenarios.
@@ -92,7 +92,7 @@ def filter_out_incomplete(data, keyspace):
     return pd.concat(output, ignore_index=True).reset_index(drop=True)
 
 
-def aggregate_over_seed(data):
+def aggregate_over_seed(data: pd.DataFrame) -> pd.DataFrame:
     non_count_columns = []
     for non_count_template in results.NON_COUNT_TEMPLATES:
         non_count_columns += results.RESULT_COLUMNS(non_count_template)
@@ -106,7 +106,7 @@ def aggregate_over_seed(data):
     ], axis=1).reset_index()
 
 
-def pivot_data(data):
+def pivot_data(data: pd.DataFrame) -> pd.DataFrame:
     return (data
             .set_index(GROUPBY_COLUMNS)
             .stack()
@@ -114,19 +114,22 @@ def pivot_data(data):
             .rename(columns={f'level_{len(GROUPBY_COLUMNS)}': 'process', 0: 'value'}))
 
 
-def sort_data(data):
+def sort_data(data: pd.DataFrame) -> pd.DataFrame:
     sort_order = [c for c in OUTPUT_COLUMN_SORT_ORDER if c in data.columns]
     other_cols = [c for c in data.columns if c not in sort_order]
     data = data[sort_order + other_cols].sort_values(sort_order)
     return data.reset_index(drop=True)
 
 
-def split_processing_column(data, has_wasting_stratification: bool = True, has_sqlns_stratification: bool = False,
-                            has_stunting_stratification: bool = False):
+def split_processing_column(data: pd.DataFrame, has_wasting_stratification: bool = True,
+                            has_wasting_treatment_stratification: bool = False, has_sqlns_stratification: bool = False,
+                            has_stunting_stratification: bool = False) -> pd.DataFrame:
     if has_stunting_stratification:
         data['process'], data['stunting_state'] = data.process.str.split(f'_stunting_state_').str
     if has_sqlns_stratification:
         data['process'], data['sq_lns'] = data.process.str.split(f'_sq_lns_').str
+    if has_wasting_treatment_stratification:
+        data['process'], data['wasting_treatment'] = data.process.str.split(f'_wasting_treatment_').str
     if has_wasting_stratification:
         data['process'], data['wasting_state'] = data.process.str.split(f'_wasting_state_').str
     data['process'], data['age'] = data.process.str.split('_in_age_group_').str
@@ -136,7 +139,7 @@ def split_processing_column(data, has_wasting_stratification: bool = True, has_s
     return data.drop(columns='process')
 
 
-def get_population_data(data):
+def get_population_data(data: pd.DataFrame) -> pd.DataFrame:
     total_pop = pivot_data(data[[results.TOTAL_POPULATION_COLUMN]
                                 + results.RESULT_COLUMNS('population')
                                 + GROUPBY_COLUMNS])
@@ -144,34 +147,41 @@ def get_population_data(data):
     return sort_data(total_pop)
 
 
-def get_measure_data(data, measure, has_wasting_stratification: bool = True, has_sqlns_stratification: bool = False,
-                     has_stunting_stratification: bool = False):
+def get_measure_data(data: pd.DataFrame, measure: str, has_wasting_stratification: bool = True,
+                     has_wasting_treatment_stratification: bool = False, has_sqlns_stratification: bool = False,
+                     has_stunting_stratification: bool = False) -> pd.DataFrame:
     data = pivot_data(data[results.RESULT_COLUMNS(measure) + GROUPBY_COLUMNS])
-    data = split_processing_column(data, has_wasting_stratification, has_sqlns_stratification, has_stunting_stratification)
+    data = split_processing_column(data, has_wasting_stratification, has_wasting_treatment_stratification,
+                                   has_sqlns_stratification, has_stunting_stratification)
     return sort_data(data)
 
 
-def get_by_cause_measure_data(data, measure, has_wasting_stratification: bool = True,
-                              has_sqlns_stratification: bool = False, has_stunting_stratification: bool = False):
-    data = get_measure_data(data, measure, has_wasting_stratification, has_sqlns_stratification,
-                            has_stunting_stratification)
+def get_by_cause_measure_data(data: pd.DataFrame, measure: str, has_wasting_stratification: bool = True,
+                              has_wasting_treatment_stratification: bool = False,
+                              has_sqlns_stratification: bool = False,
+                              has_stunting_stratification: bool = False) -> pd.DataFrame:
+    data = get_measure_data(data, measure, has_wasting_stratification, has_wasting_treatment_stratification,
+                            has_sqlns_stratification, has_stunting_stratification)
     data['measure'], data['cause'] = data.measure.str.split('_due_to_').str
     return sort_data(data)
 
 
-def get_state_person_time_measure_data(data, measure, has_wasting_stratification: bool = True,
+def get_state_person_time_measure_data(data: pd.DataFrame, measure: str, has_wasting_stratification: bool = True,
+                                       has_wasting_treatment_stratification: bool = False,
                                        has_sqlns_stratification: bool = False,
-                                       has_stunting_stratification: bool = False):
-    data = get_measure_data(data, measure, has_wasting_stratification, has_sqlns_stratification,
-                            has_stunting_stratification)
+                                       has_stunting_stratification: bool = False) -> pd.DataFrame:
+    data = get_measure_data(data, measure, has_wasting_stratification, has_wasting_treatment_stratification,
+                            has_sqlns_stratification, has_stunting_stratification)
     data['measure'], data['cause'] = 'state_person_time', data.measure.str.split('_person_time').str[0]
     return sort_data(data)
 
 
-def get_transition_count_measure_data(data, measure, has_wasting_stratification: bool = True,
+def get_transition_count_measure_data(data: pd.DataFrame, measure: str, has_wasting_stratification: bool = True,
+                                      has_wasting_treatment_stratification: bool = False,
                                       has_sqlns_stratification: bool = False,
-                                      has_stunting_stratification: bool = False):
+                                      has_stunting_stratification: bool = False) -> pd.DataFrame:
     # Oops, edge case.
     data = data.drop(columns=[c for c in data.columns if 'event_count' in c and '2027' in c])
-    data = get_measure_data(data, measure, has_wasting_stratification, has_sqlns_stratification, has_stunting_stratification)
+    data = get_measure_data(data, measure, has_wasting_stratification, has_wasting_treatment_stratification,
+                            has_sqlns_stratification, has_stunting_stratification)
     return sort_data(data)
