@@ -82,6 +82,13 @@ def delete_if_exists(*paths: Union[Path, List[Path]], confirm=False):
 #     return data
 
 
+def get_norm_from_quantiles(mean: float, lower: float, upper: float,
+                            quantiles: Tuple[float, float] = (0.025, 0.975)) -> stats.norm:
+    stdnorm_quantiles = stats.norm.ppf(quantiles)
+    sd = (upper - lower) / (stdnorm_quantiles[1] - stdnorm_quantiles[0])
+    return stats.norm(loc=mean, scale=sd)
+
+
 def get_lognorm_from_quantiles(median: float, lower: float, upper: float,
                                quantiles: Tuple[float, float] = (0.025, 0.975)) -> stats.lognorm:
     """Returns a frozen lognormal distribution with the specified median, such that

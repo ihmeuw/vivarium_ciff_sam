@@ -1,9 +1,7 @@
 from datetime import datetime
 from typing import NamedTuple, Tuple
 
-from scipy import stats
-
-from vivarium_ciff_sam.utilities import get_lognorm_from_quantiles
+from vivarium_ciff_sam.utilities import get_norm_from_quantiles, get_lognorm_from_quantiles
 
 #######################
 # Universal Constants #
@@ -38,11 +36,14 @@ class __Wasting(NamedTuple):
 
     # Wasting treatment coverage
     COVERAGE_START_AGE: float = 28 / YEAR_DURATION  # ~0.0767
-    TX_COVERAGE: Tuple = ('sam_tx_coverage', stats.norm(loc=0.488, scale=0.0587))      # (0.604 - 0.374) / (2 * 1.96)
+    BASELINE_TX_COVERAGE: Tuple = ('sam_tx_coverage', get_norm_from_quantiles(mean=0.488, lower=0.374, upper=0.604))
+    ALTERNATIVE_TX_COVERAGE: float = 0.9
 
     # Wasting treatment efficacy
-    SAM_TX_EFFICACY: Tuple = ('sam_tx_efficacy', stats.norm(loc=0.700, scale=0.0306))  # (0.760 - 0.640) / (2 * 1.96)
-    MAM_TX_EFFICACY: Tuple = ('mam_tx_efficacy', stats.norm(loc=0.731, scale=0.0745))  # (0.877 - 0.585) / (2 * 1.96)
+    BASELINE_SAM_TX_EFFICACY: Tuple = ('sam_tx_efficacy', get_norm_from_quantiles(mean=0.700, lower=0.64, upper=0.76))
+    BASELINE_MAM_TX_EFFICACY: Tuple = ('mam_tx_efficacy', get_norm_from_quantiles(mean=0.731, lower=0.585, upper=0.877))
+    SAM_TX_ALTERNATIVE_EFFICACY: float = 0.75
+    MAM_TX_ALTERNATIVE_EFFICACY: float = 0.75
 
     # Incidence correction factor (total exit rate)
     SAM_K: float = ('sam_incidence_correction', get_lognorm_from_quantiles(median=6.7, lower=5.3, upper=8.4))

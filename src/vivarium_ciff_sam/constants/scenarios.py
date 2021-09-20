@@ -1,14 +1,16 @@
-from typing import NamedTuple
-
-
 #############
 # Scenarios #
 #############
 
-class __Scenarios(NamedTuple):
-    BASELINE: str = 'baseline'
-    TREATMENT: str = 'treatment_only'
-    BOTH: str = 'treatment_and_prevention'
+class Scenario:
+
+    def __init__(self, has_alternative_treatment: bool, has_sqlns: bool):
+        self.has_alternative_treatment = has_alternative_treatment
+        self.has_sqlns = has_sqlns
 
 
-SCENARIOS = __Scenarios()
+SCENARIOS = {
+    'baseline': Scenario(False, False),
+    'wasting_treatment': Scenario(True, False),
+    'sqlns': Scenario(True, True),
+}

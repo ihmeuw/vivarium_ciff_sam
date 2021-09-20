@@ -222,9 +222,9 @@ def load_mam_exposure(cause: str, builder: Builder) -> pd.DataFrame:
 # noinspection PyUnusedLocal, DuplicatedCode
 def load_mam_incidence_rate(builder: Builder, *args) -> pd.DataFrame:
     draw = builder.configuration.input_data.input_draw_number
-    tx_coverage = get_random_variable(draw, *data_values.WASTING.TX_COVERAGE)
-    mam_tx_efficacy = get_random_variable(draw, *data_values.WASTING.MAM_TX_EFFICACY)
-    sam_tx_efficacy = get_random_variable(draw, *data_values.WASTING.SAM_TX_EFFICACY)
+    tx_coverage = get_random_variable(draw, *data_values.WASTING.BASELINE_TX_COVERAGE)
+    mam_tx_efficacy = get_random_variable(draw, *data_values.WASTING.BASELINE_MAM_TX_EFFICACY)
+    sam_tx_efficacy = get_random_variable(draw, *data_values.WASTING.BASELINE_SAM_TX_EFFICACY)
 
     exposures = load_child_wasting_exposures(builder)
     adjustment = load_acmr_adjustment(builder)
@@ -262,8 +262,8 @@ def get_daily_mam_incidence_probability(exposures: pd.DataFrame, adjustment: pd.
 def load_mam_remission_rate(builder: Builder, *args) -> float:
     draw = builder.configuration.input_data.input_draw_number
     index = builder.data.load(data_keys.POPULATION.DEMOGRAPHY).set_index(metadata.ARTIFACT_INDEX_COLUMNS).index
-    tx_coverage = get_random_variable(draw, *data_values.WASTING.TX_COVERAGE)
-    mam_tx_efficacy = get_random_variable(draw, *data_values.WASTING.MAM_TX_EFFICACY)
+    tx_coverage = get_random_variable(draw, *data_values.WASTING.BASELINE_TX_COVERAGE)
+    mam_tx_efficacy = get_random_variable(draw, *data_values.WASTING.BASELINE_MAM_TX_EFFICACY)
 
     daily_probability = get_daily_mam_remission_probability(index, tx_coverage, mam_tx_efficacy)
     incidence_rate = _convert_daily_probability_to_annual_rate(daily_probability)
@@ -299,8 +299,8 @@ def load_sam_exposure(cause: str, builder: Builder) -> pd.DataFrame:
 # noinspection PyUnusedLocal, DuplicatedCode
 def load_sam_incidence_rate(builder: Builder, *args) -> pd.DataFrame:
     draw = builder.configuration.input_data.input_draw_number
-    tx_coverage = get_random_variable(draw, *data_values.WASTING.TX_COVERAGE)
-    sam_tx_efficacy = get_random_variable(draw, *data_values.WASTING.SAM_TX_EFFICACY)
+    tx_coverage = get_random_variable(draw, *data_values.WASTING.BASELINE_TX_COVERAGE)
+    sam_tx_efficacy = get_random_variable(draw, *data_values.WASTING.BASELINE_SAM_TX_EFFICACY)
     sam_k = get_random_variable(draw, *data_values.WASTING.SAM_K)
 
     exposures = load_child_wasting_exposures(builder)
@@ -339,8 +339,8 @@ def get_daily_sam_incidence_probability(exposures: pd.DataFrame, adjustment: pd.
 # noinspection PyUnusedLocal
 def load_sam_untreated_remission_rate(builder: Builder, *args) -> pd.Series:
     draw = builder.configuration.input_data.input_draw_number
-    tx_coverage = get_random_variable(draw, *data_values.WASTING.TX_COVERAGE)
-    sam_tx_efficacy = get_random_variable(draw, *data_values.WASTING.SAM_TX_EFFICACY)
+    tx_coverage = get_random_variable(draw, *data_values.WASTING.BASELINE_TX_COVERAGE)
+    sam_tx_efficacy = get_random_variable(draw, *data_values.WASTING.BASELINE_SAM_TX_EFFICACY)
     sam_k = get_random_variable(draw, *data_values.WASTING.SAM_K)
     mortality_probs = load_daily_mortality_probabilities(builder)
 
@@ -368,9 +368,9 @@ def get_daily_sam_untreated_remission_probability(mortality_probs: pd.DataFrame,
 def load_sam_treated_remission_rate(builder: Builder, *args) -> float:
     index = builder.data.load(data_keys.POPULATION.DEMOGRAPHY).set_index(metadata.ARTIFACT_INDEX_COLUMNS).index
     tx_coverage = get_random_variable(builder.configuration.input_data.input_draw_number,
-                                      *data_values.WASTING.TX_COVERAGE)
+                                      *data_values.WASTING.BASELINE_TX_COVERAGE)
     sam_tx_efficacy = get_random_variable(builder.configuration.input_data.input_draw_number,
-                                          *data_values.WASTING.SAM_TX_EFFICACY)
+                                          *data_values.WASTING.BASELINE_SAM_TX_EFFICACY)
 
     daily_probability = get_daily_sam_treated_remission_probability(index, tx_coverage, sam_tx_efficacy)
     remission_rate = _convert_daily_probability_to_annual_rate(daily_probability)

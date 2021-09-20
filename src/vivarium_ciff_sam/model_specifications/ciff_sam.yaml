@@ -17,16 +17,17 @@ components:
             - RiskEffect('risk_factor.child_stunting', 'cause.measles.incidence_rate')
             - RiskEffect('risk_factor.child_stunting', 'cause.lower_respiratory_infections.incidence_rate')
 
-            - Risk('risk_factor.wasting_non_treatment')
-            - RiskEffect('risk_factor.wasting_non_treatment', 'risk_factor.severe_acute_malnutrition_to_mild_child_wasting.transition_rate')
-            - RiskEffect('risk_factor.wasting_non_treatment', 'risk_factor.severe_acute_malnutrition_to_moderate_acute_malnutrition.transition_rate')
-            - RiskEffect('risk_factor.wasting_non_treatment', 'risk_factor.moderate_acute_malnutrition_to_mild_child_wasting.transition_rate')
+            - Risk('risk_factor.wasting_treatment')
+            - RiskEffect('risk_factor.wasting_treatment', 'risk_factor.severe_acute_malnutrition_to_mild_child_wasting.transition_rate')
+            - RiskEffect('risk_factor.wasting_treatment', 'risk_factor.severe_acute_malnutrition_to_moderate_acute_malnutrition.transition_rate')
+            - RiskEffect('risk_factor.wasting_treatment', 'risk_factor.moderate_acute_malnutrition_to_mild_child_wasting.transition_rate')
 
     vivarium_ciff_sam:
         components:
             - ChildWasting()
             - SQLNSTreatment()
-            - Intervention()
+            - SQLNSIntervention()
+            - WastingTreatmentIntervention()
             - DisabilityObserver('wasting')
             - MortalityObserver('wasting')
             - DiseaseObserver('diarrheal_diseases', 'wasting')
@@ -49,7 +50,7 @@ configuration:
         random_seed: 0
     time:
         start:
-            year: 2022
+            year: 2021
             month: 1
             day: 1
         end:

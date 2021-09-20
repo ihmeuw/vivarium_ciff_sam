@@ -3,5 +3,4 @@ random_seed_count: 100
 
 branches:
   - intervention:
-#      todo add treatment only scenario
-      scenario: ['baseline', 'treatment_and_prevention']
+      scenario: ['baseline', 'wasting_treatment', 'sqlns']
