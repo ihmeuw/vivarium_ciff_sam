@@ -56,15 +56,15 @@ class ResultsStratifier:
                 f'cat{i}': get_state_function(data_keys.STUNTING.name, f'cat{i}')
                 for i in range(4, 0, -1)
             }
-            self.pipelines[data_keys.STUNTING.name] = builder.value.get_value('child_stunting.exposure')
+            self.pipelines[data_keys.STUNTING.name] = builder.value.get_value(f'{data_keys.STUNTING.name}.exposure')
 
         if self.by_wasting_treatment:
-            wasting_treatment_key = data_keys.WASTING_NON_TREATMENT.name
+            wasting_treatment_key = data_keys.WASTING_TREATMENT.name
             self.stratification_levels['wasting_treatment'] = {
                 coverage: get_state_function(wasting_treatment_key, category)
                 for category, coverage in (('cat2', 'covered'), ('cat1', 'uncovered'))
             }
-            self.pipelines[wasting_treatment_key] = builder.value.get_value('wasting_non_treatment.exposure')
+            self.pipelines[wasting_treatment_key] = builder.value.get_value(f'{wasting_treatment_key}.exposure')
 
         if self.by_sqlns:
             self.stratification_levels['sq_lns'] = {
