@@ -442,7 +442,9 @@ def load_wasting_treatment_rr(key: str, location: str) -> pd.DataFrame:
             [rr_sam_treated_remission, rr_sam_untreated_remission, rr_mam_remission]
         )
         rr['affected_measure'] = 'transition_rate'
-        rr = rr.set_index(['affected_entity', 'affected_measure'], append=True).sort_index()
+        rr = rr.set_index(['affected_entity', 'affected_measure'], append=True)
+        rr.index = rr.index.reorder_levels([col for col in rr.index.names if col != 'parameter'] + ['parameter'])
+        rr.sort_index()
         return rr
     else:
         raise ValueError(f'Unrecognized key {key}')
