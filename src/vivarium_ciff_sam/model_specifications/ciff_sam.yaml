@@ -22,6 +22,11 @@ components:
             - RiskEffect('risk_factor.wasting_treatment', 'risk_factor.severe_acute_malnutrition_to_moderate_acute_malnutrition.transition_rate')
             - RiskEffect('risk_factor.wasting_treatment', 'risk_factor.moderate_acute_malnutrition_to_mild_child_wasting.transition_rate')
 
+            - Risk('risk_factor.x_factor')
+            - RiskEffect('risk_factor.x_factor', 'risk_factor.mild_child_wasting.incidence_rate')
+            - RiskEffect('risk_factor.x_factor', 'risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
+            - RiskEffect('risk_factor.x_factor', 'risk_factor.moderate_acute_malnutrition_to_severe_acute_malnutrition.transition_rate')
+
     vivarium_ciff_sam:
         components:
             - ChildWasting()
@@ -69,6 +74,19 @@ configuration:
 
     intervention:
         scenario: 'baseline'
+
+    x_factor:
+        exposure: 0.187565
+
+    effect_of_x_factor_on_mild_child_wasting:
+        incidence_rate:
+            relative_risk: 1.1
+    effect_of_x_factor_on_mild_child_wasting_to_moderate_acute_malnutrition:
+        transition_rate:
+            relative_risk: 1.1
+    effect_of_x_factor_on_moderate_acute_malnutrition_to_severe_acute_malnutrition:
+        transition_rate:
+            relative_risk: 1.1
 
     metrics:
         disability:

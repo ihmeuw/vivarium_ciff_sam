@@ -55,6 +55,7 @@ class WastingTreatmentIntervention:
         self.scenario = scenarios.SCENARIOS[builder.configuration.intervention.scenario]
         self.clock = builder.time.clock()
 
+        # NOTE: this operation is NOT commutative. This pipeline must not be modified anywhere else.
         builder.value.register_value_modifier(
             f'risk_factor.{data_keys.WASTING_TREATMENT.name}.exposure_parameters',
             modifier=self.coverage_effect,
