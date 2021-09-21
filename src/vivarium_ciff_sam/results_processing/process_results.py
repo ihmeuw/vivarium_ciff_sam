@@ -33,7 +33,8 @@ def make_measure_data(data):
         disease_transition_count=get_transition_count_measure_data(data, 'disease_transition_count'),
         wasting_state_person_time=get_state_person_time_measure_data(data, 'wasting_state_person_time', False, True),
         wasting_transition_count=get_transition_count_measure_data(data, 'wasting_transition_count', False, True),
-        stunting_state_person_time=get_state_person_time_measure_data(data, 'stunting_state_person_time', False, True)
+        stunting_state_person_time=get_state_person_time_measure_data(data, 'stunting_state_person_time', False, False,
+                                                                      True)
     )
     return measure_data
 
