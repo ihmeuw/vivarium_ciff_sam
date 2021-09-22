@@ -27,8 +27,8 @@ YLLS_COLUMN_TEMPLATE = 'ylls_due_to_{CAUSE_OF_DEATH}_in_{YEAR}_among_{SEX}_in_ag
 YLDS_COLUMN_TEMPLATE = 'ylds_due_to_{CAUSE_OF_DISABILITY}_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
 DISEASE_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{DISEASE_STATE}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
 DISEASE_TRANSITION_COUNT_COLUMN_TEMPLATE = '{DISEASE_TRANSITION}_event_count_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
-WASTING_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{WASTING_STATE}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_treatment_{WASTING_TREATMENT_STATE}_sq_lns_{SQLNS_STATE}'
-WASTING_TRANSITION_COUNT_COLUMN_TEMPLATE = '{WASTING_TRANSITION}_event_count_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_treatment_{WASTING_TREATMENT_STATE}_sq_lns_{SQLNS_STATE}'
+WASTING_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{WASTING_STATE}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_treatment_{WASTING_TREATMENT_STATE}_sq_lns_{SQLNS_STATE}_x_factor_{X_FACTOR_STATE}'
+WASTING_TRANSITION_COUNT_COLUMN_TEMPLATE = '{WASTING_TRANSITION}_event_count_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_treatment_{WASTING_TREATMENT_STATE}_sq_lns_{SQLNS_STATE}_x_factor_{X_FACTOR_STATE}'
 STUNTING_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{STUNTING_STATE}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_sq_lns_{SQLNS_STATE}'
 
 COLUMN_TEMPLATES = {
@@ -52,6 +52,7 @@ YEARS = tuple(range(2022, 2027))
 AGE_GROUPS = ('early_neonatal', 'late_neonatal', '1-5_months', '6-11_months', '12_to_23_months', '2_to_4')
 STUNTING_STATES = ('cat4', 'cat3', 'cat2', 'cat1')
 TREATMENT_STATES = ('covered', 'uncovered')
+X_FACTOR_STATE = ('cat2', 'cat1')
 CAUSES_OF_DEATH = (
     'other_causes',
     models.DIARRHEA.STATE_NAME,
@@ -82,6 +83,7 @@ TEMPLATE_FIELD_MAP = {
     'STUNTING_STATE': STUNTING_STATES,
     'SQLNS_STATE': TREATMENT_STATES,
     'WASTING_TREATMENT_STATE': TREATMENT_STATES,
+    'X_FACTOR_STATE': X_FACTOR_STATE,
 }
 
 
