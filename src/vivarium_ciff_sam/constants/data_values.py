@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import NamedTuple, Tuple
+from typing import Dict, NamedTuple, Tuple
 
 from vivarium_ciff_sam.utilities import get_norm_from_quantiles, get_lognorm_from_quantiles
 
@@ -34,6 +34,14 @@ class __Wasting(NamedTuple):
     # Wasting age start (in years)
     START_AGE: float = 0.5
 
+    # Wasting treatment distribution type and categories
+    DISTRIBUTION: str = 'ordered_polytomous'
+    CATEGORIES: Dict[str, str] = {
+        'cat1': 'Untreated',
+        'cat2': 'Baseline treatment',
+        'cat3': 'Alternative scenario treatment',
+    }
+
     # Wasting treatment coverage
     COVERAGE_START_AGE: float = 28 / YEAR_DURATION  # ~0.0767
     BASELINE_TX_COVERAGE: Tuple = ('sam_tx_coverage', get_norm_from_quantiles(mean=0.488, lower=0.374, upper=0.604))
@@ -60,6 +68,22 @@ class __Wasting(NamedTuple):
 
 
 WASTING = __Wasting()
+
+
+###########################
+# Maternal BMI Parameters #
+###########################
+class __MaternalBMI(NamedTuple):
+    DISTRIBUTION: str = 'dichotomous'
+    CATEGORIES: Dict[str, str] = {
+        'cat1': 'BMI < 18.5',
+        'cat2': 'BMI >= 18.5',
+    }
+
+    EXPOSURE: Tuple = ('maternal_bmi_exposure', get_norm_from_quantiles(mean=0.224, lower=0.217, upper=0.231))
+
+
+MATERNAL_BMI = __MaternalBMI()
 
 
 ######################################

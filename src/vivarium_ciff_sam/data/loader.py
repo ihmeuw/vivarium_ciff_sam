@@ -99,6 +99,10 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.WASTING_TREATMENT.EXPOSURE: load_wasting_treatment_exposure,
         data_keys.WASTING_TREATMENT.RELATIVE_RISK: load_wasting_treatment_rr,
         data_keys.WASTING_TREATMENT.PAF: load_paf,
+
+        data_keys.X_FACTOR.DISTRIBUTION: load_low_maternal_bmi_distribution,
+        data_keys.X_FACTOR.CATEGORIES: load_low_maternal_bmi_categories,
+        data_keys.X_FACTOR.EXPOSURE: load_low_maternal_bmi_exposure,
     }
     return mapping[lookup_key](lookup_key, location)
 
@@ -332,7 +336,7 @@ def load_pem_disability_weight(key: str, location: str) -> pd.DataFrame:
 # noinspection PyUnusedLocal
 def load_wasting_treatment_distribution(key: str, location: str) -> str:
     if key == data_keys.WASTING_TREATMENT.DISTRIBUTION:
-        return 'ordered_polytomous'
+        return data_values.WASTING.DISTRIBUTION
     else:
         raise ValueError(f'Unrecognized key {key}')
 
@@ -340,16 +344,11 @@ def load_wasting_treatment_distribution(key: str, location: str) -> str:
 # noinspection PyUnusedLocal
 def load_wasting_treatment_categories(key: str, location: str) -> str:
     if key == data_keys.WASTING_TREATMENT.CATEGORIES:
-        return {
-            'cat1': 'Untreated',
-            'cat2': 'Baseline treatment',
-            'cat3': 'Alternative scenario treatment',
-        }
+        return data_values.WASTING.CATEGORIES
     else:
         raise ValueError(f'Unrecognized key {key}')
 
 
-# noinspection PyUnusedLocal
 def load_wasting_treatment_exposure(key: str, location: str) -> pd.DataFrame:
     if key == data_keys.WASTING_TREATMENT.EXPOSURE:
         treatment_coverage = get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]),
@@ -446,5 +445,39 @@ def load_wasting_treatment_rr(key: str, location: str) -> pd.DataFrame:
         rr.index = rr.index.reorder_levels([col for col in rr.index.names if col != 'parameter'] + ['parameter'])
         rr.sort_index()
         return rr
+    else:
+        raise ValueError(f'Unrecognized key {key}')
+
+
+# noinspection PyUnusedLocal
+def load_low_maternal_bmi_distribution(key: str, location: str) -> str:
+    if key in [data_keys.X_FACTOR.DISTRIBUTION]:
+        return data_values.MATERNAL_BMI.DISTRIBUTION
+    else:
+        raise ValueError(f'Unrecognized key {key}')
+
+
+# noinspection PyUnusedLocal
+def load_low_maternal_bmi_categories(key: str, location: str) -> str:
+    if key in [data_keys.X_FACTOR.CATEGORIES]:
+        return data_values.MATERNAL_BMI.CATEGORIES
+    else:
+        raise ValueError(f'Unrecognized key {key}')
+
+
+def load_low_maternal_bmi_exposure(key: str, location: str) -> pd.DataFrame:
+    if key in [data_keys.X_FACTOR.EXPOSURE]:
+        exposure = get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]),
+                                             *data_values.MATERNAL_BMI.EXPOSURE)
+
+        idx = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
+        cat1 = pd.DataFrame({f'draw_{i}': 1.0 for i in range(0, 1000)}, index=idx) * exposure
+        cat2 = 1 - cat1
+
+        cat1['parameter'] = 'cat1'
+        cat2['parameter'] = 'cat2'
+
+        exposure = pd.concat([cat1, cat2]).set_index('parameter', append=True).sort_index()
+        return exposure
     else:
         raise ValueError(f'Unrecognized key {key}')

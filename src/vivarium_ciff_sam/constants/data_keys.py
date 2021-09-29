@@ -236,6 +236,27 @@ class __WastingTreatment(NamedTuple):
 WASTING_TREATMENT = __WastingTreatment()
 
 
+class __XFactor(NamedTuple):
+
+    # Keys that will be loaded into the artifact. must have a colon type declaration
+    EXPOSURE: TargetString = 'risk_factor.x_factor.exposure'
+    DISTRIBUTION: TargetString = 'risk_factor.x_factor.distribution'
+    CATEGORIES: TargetString = 'risk_factor.x_factor.categories'
+
+    # Useful keys not for the artifact - distinguished by not using the colon type declaration
+
+    @property
+    def name(self):
+        return 'x_factor'
+
+    @property
+    def log_name(self):
+        return 'x-factor'
+
+
+X_FACTOR = __XFactor()
+
+
 MAKE_ARTIFACT_KEY_GROUPS = [
     POPULATION,
     DIARRHEA,
@@ -246,4 +267,5 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     STUNTING,
     SQ_LNS,
     WASTING_TREATMENT,
+    X_FACTOR,
 ]
