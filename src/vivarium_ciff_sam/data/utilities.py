@@ -1,6 +1,6 @@
 from itertools import product
 from numbers import Real
-from typing import List
+from typing import List, Union
 import warnings
 
 import pandas as pd
@@ -10,7 +10,7 @@ from vivarium.framework.artifact import EntityKey
 from vivarium_gbd_access import constants as gbd_constants, gbd
 from vivarium_gbd_access.utilities import get_draws, query
 from vivarium_inputs import globals as vi_globals, utilities as vi_utils, utility_data
-from vivarium_inputs.mapping_extension import alternative_risk_factors
+from vivarium_inputs.mapping_extension import alternative_risk_factors, AlternativeRiskFactor
 from vivarium_inputs.validation.raw import check_metadata
 from vivarium_inputs.validation.sim import validate_for_simulation
 
@@ -220,8 +220,8 @@ def _scrub_gbd_conventions(data: pd.DataFrame, location: str, age_group_ids: Lis
     return data
 
 
-def process_exposure(data: pd.DataFrame, key: str, entity: ModelableEntity, location: str, age_group_ids: List[int],
-                     gbd_round_id: int) -> pd.DataFrame:
+def process_exposure(data: pd.DataFrame, key: str, entity: Union[RiskFactor, AlternativeRiskFactor],
+                     location: str, age_group_ids: List[int], gbd_round_id: int) -> pd.DataFrame:
     data['rei_id'] = entity.gbd_id
 
     # from vivarium_inputs.extract.extract_exposure
@@ -236,22 +236,31 @@ def process_exposure(data: pd.DataFrame, key: str, entity: ModelableEntity, loca
 
     # from vivarium_inputs.core.get_exposure
     data = data.drop('modelable_entity_id', 'columns')
-    tmrel_cat = utility_data.get_tmrel_category(entity)
-    exposed = data[data.parameter != tmrel_cat]
-    unexposed = data[data.parameter == tmrel_cat]
-    #  FIXME: We fill 1 as exposure of tmrel category, which is not correct.
-    data = pd.concat([normalize_age_and_years(exposed, fill_value=0, gbd_round_id=gbd_round_id),
-                      normalize_age_and_years(unexposed, fill_value=1, gbd_round_id=gbd_round_id)],
-                     ignore_index=True)
 
-    # normalize so all categories sum to 1
-    cols = list(set(data.columns).difference(vi_globals.DRAW_COLUMNS + ['parameter']))
-    data = data.set_index(cols + ['parameter'])
-    sums = (
-        data.groupby(cols)[vi_globals.DRAW_COLUMNS].sum()
-            .reindex(index=data.index)
-    )
-    data = data.divide(sums).reset_index()
+    if entity.name in vi_globals.EXTRA_RESIDUAL_CATEGORY:
+        cat = vi_globals.EXTRA_RESIDUAL_CATEGORY[entity.name]
+        data = data.drop(labels=data.query('parameter == @cat').index)
+        data[vi_globals.DRAW_COLUMNS] = data[vi_globals.DRAW_COLUMNS].clip(lower=vi_globals.MINIMUM_EXPOSURE_VALUE)
+
+    if entity.distribution in ['dichotomous', 'ordered_polytomous', 'unordered_polytomous']:
+        tmrel_cat = utility_data.get_tmrel_category(entity)
+        exposed = data[data.parameter != tmrel_cat]
+        unexposed = data[data.parameter == tmrel_cat]
+        #  FIXME: We fill 1 as exposure of tmrel category, which is not correct.
+        data = pd.concat([normalize_age_and_years(exposed, fill_value=0, gbd_round_id=gbd_round_id),
+                          normalize_age_and_years(unexposed, fill_value=1, gbd_round_id=gbd_round_id)],
+                         ignore_index=True)
+
+        # normalize so all categories sum to 1
+        cols = list(set(data.columns).difference(vi_globals.DRAW_COLUMNS + ['parameter']))
+        data = data.set_index(cols + ['parameter'])
+        sums = (
+            data.groupby(cols)[vi_globals.DRAW_COLUMNS].sum()
+                .reindex(index=data.index)
+        )
+        data = data.divide(sums).reset_index()
+    else:
+        data = vi_utils.normalize(data, fill_value=0)
 
     data = data.filter(vi_globals.DEMOGRAPHIC_COLUMNS + vi_globals.DRAW_COLUMNS + ['parameter'])
     data = validate_and_reshape_gbd_data(data, entity, key, location, age_group_ids, gbd_round_id)
