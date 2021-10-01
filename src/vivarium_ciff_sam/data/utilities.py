@@ -238,6 +238,7 @@ def process_exposure(data: pd.DataFrame, key: str, entity: Union[RiskFactor, Alt
     data = data.drop('modelable_entity_id', 'columns')
 
     if entity.name in vi_globals.EXTRA_RESIDUAL_CATEGORY:
+        # noinspection PyUnusedLocal
         cat = vi_globals.EXTRA_RESIDUAL_CATEGORY[entity.name]
         data = data.drop(labels=data.query('parameter == @cat').index)
         data[vi_globals.DRAW_COLUMNS] = data[vi_globals.DRAW_COLUMNS].clip(lower=vi_globals.MINIMUM_EXPOSURE_VALUE)
