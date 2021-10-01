@@ -465,7 +465,7 @@ def load_lbwsg_exposure(key: str, location: str) -> pd.DataFrame:
         entity = utilities.get_entity(key)
         data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE, 'rei_id',
                                   metadata.GBD_2019_LBWSG_AGE_GROUPS, metadata.GBD_2019_ROUND_ID, 'step4')
-        data = data[data['year_id'] == 2019]
+        data = data[data['year_id'] == 2019].drop(columns='year_id')
         data = utilities.process_exposure(data, key, entity, location, metadata.GBD_2019_LBWSG_AGE_GROUPS,
                                           metadata.GBD_2019_ROUND_ID)
         return data
