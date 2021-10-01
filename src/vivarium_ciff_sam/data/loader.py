@@ -20,7 +20,7 @@ from vivarium.framework.artifact import EntityKey
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_inputs import globals as vi_globals, interface, utilities as vi_utils, utility_data
 
-from vivarium_ciff_sam.constants import data_keys, data_values
+from vivarium_ciff_sam.constants import data_keys, data_values, metadata
 from vivarium_ciff_sam.data import utilities
 
 from vivarium_ciff_sam.utilities import get_random_variable_draws
@@ -103,6 +103,10 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.X_FACTOR.DISTRIBUTION: load_low_maternal_bmi_distribution,
         data_keys.X_FACTOR.CATEGORIES: load_low_maternal_bmi_categories,
         data_keys.X_FACTOR.EXPOSURE: load_low_maternal_bmi_exposure,
+
+        data_keys.LBWSG.DISTRIBUTION: load_metadata,
+        data_keys.LBWSG.CATEGORIES: load_metadata,
+        data_keys.LBWSG.EXPOSURE: load_lbwsg_exposure,
     }
     return mapping[lookup_key](lookup_key, location)
 
@@ -122,7 +126,7 @@ def load_population_structure(key: str, location: str) -> pd.DataFrame:
 # noinspection PyUnusedLocal
 def load_age_bins(key: str, location: str) -> pd.DataFrame:
     all_age_bins = (
-        utilities.get_gbd_2020_age_bins()
+        utilities.get_gbd_age_bins(metadata.GBD_2020_AGE_GROUPS)
         .set_index(['age_start', 'age_end', 'age_group_name'])
         .sort_index()
     )
@@ -194,41 +198,10 @@ def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
     key = EntityKey(key)
     entity = utilities.get_gbd_2020_entity(key)
 
-    data = utilities.get_gbd_2020_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE, 'rei_id')
-    data['rei_id'] = entity.gbd_id
-
-    # from vivarium_inputs.extract.extract_exposure
-    allowable_measures = [vi_globals.MEASURES['Proportion'], vi_globals.MEASURES['Continuous'],
-                          vi_globals.MEASURES['Prevalence']]
-    proper_measure_id = set(data.measure_id).intersection(allowable_measures)
-    if len(proper_measure_id) != 1:
-        raise vi_globals.DataAbnormalError(f'Exposure data have {len(proper_measure_id)} measure id(s). '
-                                           f'Data should have exactly one id out of {allowable_measures} '
-                                           f'but came back with {proper_measure_id}.')
-    data = data[data.measure_id == proper_measure_id.pop()]
-
-    # from vivarium_inputs.core.get_exposure
-    data = data.drop('modelable_entity_id', 'columns')
-    tmrel_cat = utility_data.get_tmrel_category(entity)
-    unexposed = data[data.parameter == tmrel_cat]
-    exposed = [data[data.parameter == cat] for cat in [data_keys.WASTING.CAT3, data_keys.WASTING.CAT2,
-                                                       data_keys.WASTING.CAT1]]
-    #  FIXME: We fill 1 as exposure of tmrel category, which is not correct.
-    data = pd.concat([utilities.normalize_gbd_2020(cat, fill_value=0) for cat in exposed]
-                     + [utilities.normalize_gbd_2020(unexposed, fill_value=1)],
-                     ignore_index=True)
-
-    # normalize so all categories sum to 1
-    cols = list(set(data.columns).difference(vi_globals.DRAW_COLUMNS + ['parameter']))
-    data = data.set_index(cols + ['parameter'])
-    sums = (
-        data.groupby(cols)[vi_globals.DRAW_COLUMNS].sum()
-            .reindex(index=data.index)
-    )
-    data = data.divide(sums).reset_index()
-
-    data = data.filter(vi_globals.DEMOGRAPHIC_COLUMNS + vi_globals.DRAW_COLUMNS + ['parameter'])
-    data = utilities.validate_and_reshape_child_wasting_data(data, entity, key, location)
+    data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE, 'rei_id',
+                              metadata.GBD_2020_AGE_GROUPS, metadata.GBD_2020_ROUND_ID)
+    data = utilities.process_exposure(data, key, entity, location, metadata.GBD_2020_AGE_GROUPS,
+                                      metadata.GBD_2020_ROUND_ID)
 
     if key == data_keys.STUNTING.EXPOSURE:
         # Remove neonatal exposure
@@ -243,7 +216,8 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
     key = EntityKey(key)
     entity = utilities.get_gbd_2020_entity(key)
 
-    data = utilities.get_gbd_2020_data(key, entity, location, gbd_constants.SOURCES.RR, 'rei_id')
+    data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.RR, 'rei_id', metadata.GBD_2020_AGE_GROUPS,
+                              metadata.GBD_2020_ROUND_ID)
     data['rei_id'] = entity.gbd_id
 
     # from vivarium_inputs.extract.extract_relative_risk
@@ -261,7 +235,7 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
     data = data.filter(vi_globals.DEMOGRAPHIC_COLUMNS + ['affected_entity', 'affected_measure', 'parameter']
                        + vi_globals.DRAW_COLUMNS)
     data = (data.groupby(['affected_entity', 'parameter'])
-            .apply(utilities.normalize_gbd_2020, fill_value=1)
+            .apply(utilities.normalize_age_and_years, fill_value=1, gbd_round_id=metadata.GBD_2020_ROUND_ID)
             .reset_index(drop=True))
 
     tmrel_cat = utility_data.get_tmrel_category(entity)
@@ -270,7 +244,8 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
                                                      .mask(np.isclose(data.loc[tmrel_mask, vi_globals.DRAW_COLUMNS],
                                                                       1.0), 1.0))
 
-    data = utilities.validate_and_reshape_child_wasting_data(data, entity, key, location)
+    data = utilities.validate_and_reshape_gbd_data(data, entity, key, location, metadata.GBD_2020_AGE_GROUPS,
+                                                   metadata.GBD_2020_ROUND_ID)
 
     if key == data_keys.STUNTING.RELATIVE_RISK:
         # Remove neonatal relative risks
@@ -482,5 +457,17 @@ def load_low_maternal_bmi_exposure(key: str, location: str) -> pd.DataFrame:
 
         exposure = pd.concat([cat1, cat2]).set_index('parameter', append=True).sort_index()
         return exposure
+
+
+def load_lbwsg_exposure(key: str, location: str) -> pd.DataFrame:
+    if key == data_keys.LBWSG.EXPOSURE:
+        key = EntityKey(key)
+        entity = utilities.get_entity(key)
+        data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE, 'rei_id',
+                                  metadata.GBD_2019_LBWSG_AGE_GROUPS, metadata.GBD_2019_ROUND_ID, 'step4')
+        data = data[data['year_id'] == 2019]
+        data = utilities.process_exposure(data, key, entity, location, metadata.GBD_2019_LBWSG_AGE_GROUPS,
+                                          metadata.GBD_2019_ROUND_ID)
+        return data
     else:
         raise ValueError(f'Unrecognized key {key}')

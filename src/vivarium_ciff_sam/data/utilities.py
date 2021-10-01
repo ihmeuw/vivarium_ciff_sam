@@ -103,8 +103,8 @@ def get_gbd_2020_entity(key: str) -> ModelableEntity:
     return entity
 
 
-def get_gbd_2020_data(key: EntityKey, entity: ModelableEntity, location: str, source: str,
-                      gbd_id_type: str) -> pd.DataFrame:
+def get_data(key: EntityKey, entity: ModelableEntity, location: str, source: str, gbd_id_type: str,
+             age_group_ids: List[int], gbd_round_id: int, decomp_step: str = 'iterative') -> pd.DataFrame:
     # from interface.get_measure
     # from vivarium_inputs.core.get_data
     location_id = utility_data.get_location_id(location) if isinstance(location, str) else location
@@ -120,39 +120,41 @@ def get_gbd_2020_data(key: EntityKey, entity: ModelableEntity, location: str, so
                      source=source,
                      location_id=location_id,
                      sex_id=gbd_constants.SEX.MALE + gbd_constants.SEX.FEMALE,
-                     age_group_id=GBD_2020_AGE_GROUPS,
-                     gbd_round_id=GBD_2020_ROUND_ID,
-                     decomp_step='iterative',
+                     age_group_id=age_group_ids,
+                     gbd_round_id=gbd_round_id,
+                     decomp_step=decomp_step,
                      status='best')
     return data
 
 
-def validate_and_reshape_child_wasting_data(data: pd.DataFrame, entity: ModelableEntity, key: EntityKey,
-                                            location: str) -> pd.DataFrame:
+def validate_and_reshape_gbd_data(data: pd.DataFrame, entity: ModelableEntity, key: EntityKey,
+                                  location: str, age_group_ids: List[int], gbd_round_id: int) -> pd.DataFrame:
+
     # from vivarium_inputs.core.get_data
     data = vi_utils.reshape(data, value_cols=vi_globals.DRAW_COLUMNS)
 
     # from interface.get_measure
-    data = _scrub_gbd_2020_conventions(data, location)
+    data = _scrub_gbd_conventions(data, location, age_group_ids)
 
-    estimation_years = get_gbd_2020_estimation_years()
+    estimation_years = get_gbd_estimation_years(gbd_round_id)
     validation_years = pd.DataFrame({'year_start': range(min(estimation_years), max(estimation_years) + 1)})
     validation_years['year_end'] = validation_years['year_start'] + 1
 
     validate_for_simulation(data, entity, key.measure, location, years=validation_years,
-                            age_bins=get_gbd_2020_age_bins())
+                            age_bins=get_gbd_age_bins(age_group_ids))
     data = vi_utils.split_interval(data, interval_column='age', split_column_prefix='age')
     data = vi_utils.split_interval(data, interval_column='year', split_column_prefix='year')
     data = vi_utils.sort_hierarchical_data(data).droplevel('location')
     return data
 
 
-def normalize_gbd_2020(data: pd.DataFrame, fill_value: Real = None,
-                       cols_to_fill: List[str] = vi_globals.DRAW_COLUMNS) -> pd.DataFrame:
+def normalize_age_and_years(data: pd.DataFrame, fill_value: Real = None,
+                            cols_to_fill: List[str] = vi_globals.DRAW_COLUMNS,
+                            gbd_round_id: int = GBD_2020_ROUND_ID) -> pd.DataFrame:
     data = vi_utils.normalize_sex(data, fill_value, cols_to_fill)
 
     # vi_inputs.normalize_year(data)
-    binned_years = get_gbd_2020_estimation_years()   # get GBD 2020 estimation years
+    binned_years = get_gbd_estimation_years(gbd_round_id)
     years = {'annual': list(range(min(binned_years), max(binned_years) + 1)), 'binned': binned_years}
 
     if 'year_id' not in data:
@@ -176,9 +178,9 @@ def normalize_gbd_2020(data: pd.DataFrame, fill_value: Real = None,
 
 
 def get_gbd_2020_demographic_dimensions() -> pd.DataFrame:
-    estimation_years = get_gbd_2020_estimation_years()
+    estimation_years = get_gbd_estimation_years(GBD_2020_ROUND_ID)
     year_starts = range(estimation_years[0], estimation_years[-1] + 1)
-    age_bins = get_gbd_2020_age_bins()
+    age_bins = get_gbd_age_bins(GBD_2020_AGE_GROUPS)
 
     unique_index_data = (pd.DataFrame(product(['Female', 'Male'], age_bins.age_start, year_starts))
                          .rename(columns={0: 'sex', 1: 'age_start', 2: 'year_start'}))
@@ -194,33 +196,71 @@ def apply_artifact_index(data: pd.DataFrame) -> pd.DataFrame:
     if 'year_end' not in data.columns:
         data['year_end'] = data['year_start'] + 1
     if 'age_end' not in data.columns:
-        age_bins = get_gbd_2020_age_bins()
+        age_bins = get_gbd_age_bins(GBD_2020_AGE_GROUPS)
         data['age_end'] = data['age_start'].apply(lambda x: {start: end for start, end
                                                              in zip(age_bins.age_start, age_bins.age_end)}[x])
     data = data.set_index(ARTIFACT_INDEX_COLUMNS)
     return data
 
 
-def get_gbd_2020_estimation_years() -> List[int]:
+def get_gbd_estimation_years(gbd_round_id: int) -> List[int]:
     """Gets the estimation years for a particular gbd round."""
     from db_queries import get_demographics
     warnings.filterwarnings("default", module="db_queries")
 
-    return get_demographics(gbd_constants.CONN_DEFS.EPI, gbd_round_id=GBD_2020_ROUND_ID)['year_id']
+    return get_demographics(gbd_constants.CONN_DEFS.EPI, gbd_round_id=gbd_round_id)['year_id']
 
 
-def _scrub_gbd_2020_conventions(data: pd.DataFrame, location: str) -> pd.DataFrame:
+def _scrub_gbd_conventions(data: pd.DataFrame, location: str, age_group_ids: List[int]) -> pd.DataFrame:
     data = vi_utils.scrub_location(data, location)
     data = vi_utils.scrub_sex(data)
-    data = _scrub_gbd_2020_age(data)
+    data = _scrub_age(data, age_group_ids)
     data = vi_utils.scrub_year(data)
     data = vi_utils.scrub_affected_entity(data)
     return data
 
 
-def _scrub_gbd_2020_age(data: pd.DataFrame) -> pd.DataFrame:
+def process_exposure(data: pd.DataFrame, key: str, entity: ModelableEntity, location: str, age_group_ids: List[int],
+                     gbd_round_id: int) -> pd.DataFrame:
+    data['rei_id'] = entity.gbd_id
+
+    # from vivarium_inputs.extract.extract_exposure
+    allowable_measures = [vi_globals.MEASURES['Proportion'], vi_globals.MEASURES['Continuous'],
+                          vi_globals.MEASURES['Prevalence']]
+    proper_measure_id = set(data.measure_id).intersection(allowable_measures)
+    if len(proper_measure_id) != 1:
+        raise vi_globals.DataAbnormalError(f'Exposure data have {len(proper_measure_id)} measure id(s). '
+                                           f'Data should have exactly one id out of {allowable_measures} '
+                                           f'but came back with {proper_measure_id}.')
+    data = data[data.measure_id == proper_measure_id.pop()]
+
+    # from vivarium_inputs.core.get_exposure
+    data = data.drop('modelable_entity_id', 'columns')
+    tmrel_cat = utility_data.get_tmrel_category(entity)
+    exposed = data[data.parameter != tmrel_cat]
+    unexposed = data[data.parameter == tmrel_cat]
+    #  FIXME: We fill 1 as exposure of tmrel category, which is not correct.
+    data = pd.concat([normalize_age_and_years(exposed, fill_value=0, gbd_round_id=gbd_round_id),
+                      normalize_age_and_years(unexposed, fill_value=1, gbd_round_id=gbd_round_id)],
+                     ignore_index=True)
+
+    # normalize so all categories sum to 1
+    cols = list(set(data.columns).difference(vi_globals.DRAW_COLUMNS + ['parameter']))
+    data = data.set_index(cols + ['parameter'])
+    sums = (
+        data.groupby(cols)[vi_globals.DRAW_COLUMNS].sum()
+            .reindex(index=data.index)
+    )
+    data = data.divide(sums).reset_index()
+
+    data = data.filter(vi_globals.DEMOGRAPHIC_COLUMNS + vi_globals.DRAW_COLUMNS + ['parameter'])
+    data = validate_and_reshape_gbd_data(data, entity, key, location, age_group_ids, gbd_round_id)
+    return data
+
+
+def _scrub_age(data: pd.DataFrame, age_group_ids: List[int]) -> pd.DataFrame:
     if 'age_group_id' in data.index.names:
-        age_bins = get_gbd_2020_age_bins().set_index('age_group_id')
+        age_bins = get_gbd_age_bins(age_group_ids).set_index('age_group_id')
         id_levels = data.index.levels[data.index.names.index('age_group_id')]
         interval_levels = [pd.Interval(age_bins.age_start[age_id], age_bins.age_end[age_id], closed='left')
                            for age_id in id_levels]
@@ -228,7 +268,7 @@ def _scrub_gbd_2020_age(data: pd.DataFrame) -> pd.DataFrame:
     return data
 
 
-def get_gbd_2020_age_bins() -> pd.DataFrame:
+def get_gbd_age_bins(age_group_ids: List[int]) -> pd.DataFrame:
     # from gbd.get_age_bins()
     q = f"""
                 SELECT age_group_id,
@@ -236,7 +276,7 @@ def get_gbd_2020_age_bins() -> pd.DataFrame:
                        age_group_years_end,
                        age_group_name
                 FROM age_group
-                WHERE age_group_id IN ({','.join([str(a) for a in GBD_2020_AGE_GROUPS])})
+                WHERE age_group_id IN ({','.join([str(a) for a in age_group_ids])})
                 """
     raw_age_bins = query(q, 'shared')
 
