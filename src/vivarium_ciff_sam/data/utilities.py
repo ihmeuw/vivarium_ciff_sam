@@ -294,6 +294,9 @@ def get_gbd_age_bins(age_group_ids: List[int]) -> pd.DataFrame:
         raw_age_bins[['age_group_id', 'age_group_name', 'age_group_years_start', 'age_group_years_end']]
         .rename(columns={'age_group_years_start': 'age_start', 'age_group_years_end': 'age_end'})
     )
+
+    # set age start for birth prevalence age bin to -1 to avoid validation issues
+    age_bins.loc[age_bins['age_end'] == 0.0, 'age_start'] = -1.0
     return age_bins
 
 
