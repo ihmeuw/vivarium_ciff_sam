@@ -106,6 +106,7 @@ class LBWSGRisk(Risk, ABC):
             return exposure
 
         exposures = pd.concat([lbwsg_categories, propensities], axis=1).apply(get_exposure_from_category, axis=1)
+        exposures.name = self.exposure_pipeline_name
         return exposures
 
     @staticmethod
