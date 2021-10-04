@@ -9,6 +9,7 @@ from vivarium.framework.randomness import RandomnessStream
 from vivarium.framework.values import Pipeline
 from vivarium_public_health.risks import Risk
 from vivarium_public_health.risks.data_transformations import get_exposure_post_processor
+from vivarium_public_health.utilities import EntityString
 
 from vivarium_ciff_sam.constants import data_keys
 
@@ -20,6 +21,18 @@ class LBWSGRisk(Risk, ABC):
     """
 
     LBWSG_EXPOSURE_PIPELINE_NAME = f'{data_keys.LBWSG.name}.exposure'
+
+    def __init__(self, risk: str):
+        """
+        Parameters
+        ----------
+        risk :
+            the type and name of a risk, specified as "type.name". Type is singular.
+        """
+        self.risk = EntityString(risk)
+        self.configuration_defaults = {f'{self.risk.name}': Risk.configuration_defaults['risk']}
+        self.exposure_distribution = None
+        self._sub_components = []
 
     @property
     def propensity_column_name(self) -> str:
@@ -42,7 +55,7 @@ class LBWSGRisk(Risk, ABC):
         self.randomness = self.get_propensity_randomness_stream(builder)
         self.propensity = self.get_propensity_pipeline(builder)
         self.exposure = self.get_exposure_pipeline(builder)
-        self.lbwsg_exposure = self.get_lbwsg_exposure_pipeline(builder)
+        self.lbwsg_exposure = LBWSGRisk.get_lbwsg_exposure_pipeline(builder)
         self.category_endpoints = self.get_category_endpoints(builder)
 
         self.population_view = self.get_population_view(builder)
@@ -63,12 +76,9 @@ class LBWSGRisk(Risk, ABC):
             self.exposure_pipeline_name,
             source=self.get_current_exposure,
             requires_columns=['age', 'sex'],
-            requires_values=[self.propensity_pipeline_name, self.LBWSG_EXPOSURE_PIPELINE_NAME],
+            requires_values=[self.propensity_pipeline_name, LBWSGRisk.LBWSG_EXPOSURE_PIPELINE_NAME],
             preferred_post_processor=get_exposure_post_processor(builder, self.risk)
         )
-
-    def get_lbwsg_exposure_pipeline(self, builder: Builder) -> Pipeline:
-        return builder.value.get_value(self.LBWSG_EXPOSURE_PIPELINE_NAME)
 
     def get_category_endpoints(self, builder: Builder) -> Dict[str, Tuple[float, float]]:
         category_endpoints = {cat: self.parse_description(description)
@@ -97,6 +107,10 @@ class LBWSGRisk(Risk, ABC):
 
         exposures = pd.concat([lbwsg_categories, propensities], axis=1).apply(get_exposure_from_category, axis=1)
         return exposures
+
+    @staticmethod
+    def get_lbwsg_exposure_pipeline(builder: Builder) -> Pipeline:
+        return builder.value.get_value(LBWSGRisk.LBWSG_EXPOSURE_PIPELINE_NAME)
 
     @staticmethod
     @abstractmethod
