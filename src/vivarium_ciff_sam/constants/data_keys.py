@@ -269,7 +269,7 @@ class __LowBirthWeightShortGestation(NamedTuple):
 
     @property
     def name(self):
-        return 'lbwsg'
+        return 'low_birth_weight_and_short_gestation'
 
     @property
     def log_name(self):

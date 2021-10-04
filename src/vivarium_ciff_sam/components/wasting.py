@@ -36,7 +36,7 @@ class RiskModel(DiseaseModel):
     #     return f"risk_model.{self.state_column}"
 
     # noinspection PyAttributeOutsideInit
-    def setup(self, builder):
+    def setup(self, builder: Builder):
         super().setup(builder)
 
         self.exposure = builder.value.register_value_producer(
