@@ -13,7 +13,7 @@ class TransitionString(str):
 
 
 # noinspection PyPep8Naming
-class __SIModel:
+class __SISModel:
     def __init__(self, model_name: str):
         self.MODEL_NAME = model_name
         self.SUSCEPTIBLE_STATE_NAME: str = f'susceptible_to_{self.MODEL_NAME}'
@@ -55,12 +55,12 @@ class __WastingModel:
 ###########################
 
 
-DIARRHEA = __SIModel(data_keys.DIARRHEA.name)
-LRI = __SIModel(data_keys.LRI.name)
-MEASLES = __SIModel(data_keys.MEASLES.name)
+DIARRHEA = __SISModel(data_keys.DIARRHEA.name)
+LRI = __SISModel(data_keys.LRI.name)
+MEASLES = __SISModel(data_keys.MEASLES.name)
 WASTING = __WastingModel()
 
-CAUSE_MODELS: List[__SIModel] = [
+CAUSE_MODELS: List[__SISModel] = [
     DIARRHEA,
     LRI,
     MEASLES,

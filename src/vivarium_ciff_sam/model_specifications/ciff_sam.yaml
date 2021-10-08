@@ -76,9 +76,6 @@ configuration:
         age_end: 5
         exit_age: 5
 
-    wasting_equations:
-        include_mortality: False
-
     intervention:
         scenario: 'baseline'
 
