@@ -262,8 +262,8 @@ class __LowBirthWeightShortGestation(NamedTuple):
     EXPOSURE: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.exposure'
     DISTRIBUTION: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.distribution'
     CATEGORIES: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.categories'
-    # RELATIVE_RISK: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.relative_risk'
-    # PAF: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.population_attributable_fraction'
+    RELATIVE_RISK: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.relative_risk'
+    PAF: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.population_attributable_fraction'
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
 
@@ -279,6 +279,33 @@ class __LowBirthWeightShortGestation(NamedTuple):
 LBWSG = __LowBirthWeightShortGestation()
 
 
+class __UnmodeledCauses(NamedTuple):
+    # Keys that will be loaded into the artifact. must have a colon type declaration
+    URI_CSMR: TargetString = 'cause.upper_respiratory_infections.cause_specific_mortality_rate'
+    OTITIS_MEDIA_CSMR: TargetString = 'cause.otitis_media.cause_specific_mortality_rate'
+    MENINGITIS_CSMR: TargetString = 'cause.meningitis.cause_specific_mortality_rate'
+    ENCEPHALITIS_CSMR: TargetString = 'cause.encephalitis.cause_specific_mortality_rate'
+    NEONATAL_PRETERM_BIRTH_CSMR: TargetString = 'cause.neonatal_preterm_birth.cause_specific_mortality_rate'
+    NEONATAL_ENCEPHALOPATHY_CSMR: TargetString = 'cause.neonatal_encephalopathy_due_to_birth_asphyxia_and_trauma.cause_specific_mortality_rate'
+    NEONATAL_SEPSIS_CSMR: TargetString = 'cause.neonatal_sepsis_and_other_neonatal_infections.cause_specific_mortality_rate'
+    NEONATAL_JAUNDICE_CSMR: TargetString = 'cause.hemolytic_disease_and_other_neonatal_jaundice.cause_specific_mortality_rate'
+    OTHER_NEONATAL_DISORDERS_CSMR: TargetString = 'cause.other_neonatal_disorders.cause_specific_mortality_rate'
+    SIDS_CSMR: TargetString = 'cause.sudden_infant_death_syndrome.cause_specific_mortality_rate'
+
+    # Useful keys not for the artifact - distinguished by not using the colon type declaration
+
+    @property
+    def name(self):
+        return 'unmodeled_causes'
+
+    @property
+    def log_name(self):
+        return 'unmodeled causes'
+
+
+UNMODELED_CAUSES = __UnmodeledCauses()
+
+
 MAKE_ARTIFACT_KEY_GROUPS = [
     POPULATION,
     DIARRHEA,
@@ -291,4 +318,5 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     WASTING_TREATMENT,
     X_FACTOR,
     LBWSG,
+    UNMODELED_CAUSES,
 ]

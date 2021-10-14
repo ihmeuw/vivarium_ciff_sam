@@ -15,10 +15,10 @@ for an example.
 import numpy as np
 import pandas as pd
 
-from gbd_mapping import sequelae
+from gbd_mapping import sequelae, Cause
 from vivarium.framework.artifact import EntityKey
 from vivarium_gbd_access import constants as gbd_constants
-from vivarium_inputs import globals as vi_globals, interface, utilities as vi_utils, utility_data
+from vivarium_inputs import interface
 
 from vivarium_ciff_sam.constants import data_keys, data_values, metadata
 from vivarium_ciff_sam.data import utilities
@@ -107,6 +107,19 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.LBWSG.DISTRIBUTION: load_metadata,
         data_keys.LBWSG.CATEGORIES: load_metadata,
         data_keys.LBWSG.EXPOSURE: load_lbwsg_exposure,
+        data_keys.LBWSG.RELATIVE_RISK: load_lbwsg_rr,
+        data_keys.LBWSG.PAF: load_paf,
+
+        data_keys.UNMODELED_CAUSES.URI_CSMR: load_standard_data,
+        data_keys.UNMODELED_CAUSES.OTITIS_MEDIA_CSMR: load_standard_data,
+        data_keys.UNMODELED_CAUSES.MENINGITIS_CSMR: load_standard_data,
+        data_keys.UNMODELED_CAUSES.ENCEPHALITIS_CSMR: load_standard_data,
+        data_keys.UNMODELED_CAUSES.NEONATAL_PRETERM_BIRTH_CSMR: load_standard_data,
+        data_keys.UNMODELED_CAUSES.NEONATAL_ENCEPHALOPATHY_CSMR: load_standard_data,
+        data_keys.UNMODELED_CAUSES.NEONATAL_SEPSIS_CSMR: load_standard_data,
+        data_keys.UNMODELED_CAUSES.NEONATAL_JAUNDICE_CSMR: load_standard_data,
+        data_keys.UNMODELED_CAUSES.OTHER_NEONATAL_DISORDERS_CSMR: load_standard_data,
+        data_keys.UNMODELED_CAUSES.SIDS_CSMR: load_sids_csmr,
     }
     return mapping[lookup_key](lookup_key, location)
 
@@ -200,8 +213,8 @@ def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
 
     data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE, 'rei_id',
                               metadata.GBD_2020_AGE_GROUPS, metadata.GBD_2020_ROUND_ID)
-    data = utilities.process_exposure(data, key, entity, location, metadata.GBD_2020_AGE_GROUPS,
-                                      metadata.GBD_2020_ROUND_ID)
+    data = utilities.process_exposure(data, key, entity, location, metadata.GBD_2020_ROUND_ID,
+                                      metadata.GBD_2020_AGE_GROUPS)
 
     if key == data_keys.STUNTING.EXPOSURE:
         # Remove neonatal exposure
@@ -218,34 +231,8 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
 
     data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.RR, 'rei_id', metadata.GBD_2020_AGE_GROUPS,
                               metadata.GBD_2020_ROUND_ID)
-    data['rei_id'] = entity.gbd_id
-
-    # from vivarium_inputs.extract.extract_relative_risk
-    data = vi_utils.filter_to_most_detailed_causes(data)
-
-    # from vivarium_inputs.core.get_relative_risk
-    data = vi_utils.convert_affected_entity(data, 'cause_id')
-    morbidity = data.morbidity == 1
-    mortality = data.mortality == 1
-    data.loc[morbidity & mortality, 'affected_measure'] = 'incidence_rate'
-    data.loc[morbidity & ~mortality, 'affected_measure'] = 'incidence_rate'
-    data.loc[~morbidity & mortality, 'affected_measure'] = 'excess_mortality_rate'
-    data = utilities.filter_relative_risk_to_cause_restrictions(data)
-
-    data = data.filter(vi_globals.DEMOGRAPHIC_COLUMNS + ['affected_entity', 'affected_measure', 'parameter']
-                       + vi_globals.DRAW_COLUMNS)
-    data = (data.groupby(['affected_entity', 'parameter'])
-            .apply(utilities.normalize_age_and_years, fill_value=1, gbd_round_id=metadata.GBD_2020_ROUND_ID)
-            .reset_index(drop=True))
-
-    tmrel_cat = utility_data.get_tmrel_category(entity)
-    tmrel_mask = data.parameter == tmrel_cat
-    data.loc[tmrel_mask, vi_globals.DRAW_COLUMNS] = (data.loc[tmrel_mask, vi_globals.DRAW_COLUMNS]
-                                                     .mask(np.isclose(data.loc[tmrel_mask, vi_globals.DRAW_COLUMNS],
-                                                                      1.0), 1.0))
-
-    data = utilities.validate_and_reshape_gbd_data(data, entity, key, location, metadata.GBD_2020_AGE_GROUPS,
-                                                   metadata.GBD_2020_ROUND_ID)
+    data = utilities.process_relative_risk(data, key, entity, location, metadata.GBD_2020_ROUND_ID,
+                                           metadata.GBD_2020_AGE_GROUPS)
 
     if key == data_keys.STUNTING.RELATIVE_RISK:
         # Remove neonatal relative risks
@@ -259,11 +246,12 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
 
 
 def load_paf(key: str, location: str) -> pd.DataFrame:
-    if key in [data_keys.WASTING.PAF, data_keys.STUNTING.PAF, data_keys.WASTING_TREATMENT.PAF]:
+    if key in [data_keys.WASTING.PAF, data_keys.STUNTING.PAF, data_keys.WASTING_TREATMENT.PAF, data_keys.LBWSG.PAF]:
         risk = {
             data_keys.WASTING.PAF: data_keys.WASTING,
             data_keys.STUNTING.PAF: data_keys.STUNTING,
-            data_keys.WASTING_TREATMENT.PAF: data_keys.WASTING_TREATMENT
+            data_keys.WASTING_TREATMENT.PAF: data_keys.WASTING_TREATMENT,
+            data_keys.LBWSG.PAF: data_keys.LBWSG,
         }[key]
 
         exp = get_data(risk.EXPOSURE, location)
@@ -466,8 +454,39 @@ def load_lbwsg_exposure(key: str, location: str) -> pd.DataFrame:
         data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE, 'rei_id',
                                   metadata.GBD_2019_LBWSG_AGE_GROUPS, metadata.GBD_2019_ROUND_ID, 'step4')
         data = data[data['year_id'] == 2019].drop(columns='year_id')
-        data = utilities.process_exposure(data, key, entity, location, metadata.GBD_2019_LBWSG_AGE_GROUPS,
-                                          metadata.GBD_2019_ROUND_ID)
+        data = utilities.process_exposure(data, key, entity, location, metadata.GBD_2019_ROUND_ID,
+                                          metadata.GBD_2019_LBWSG_AGE_GROUPS | metadata.GBD_2020_AGE_GROUPS)
+        return data
+    else:
+        raise ValueError(f'Unrecognized key {key}')
+
+
+def load_lbwsg_rr(key: str, location: str) -> pd.DataFrame:
+    if key == data_keys.LBWSG.RELATIVE_RISK:
+        key = EntityKey(key)
+        entity = utilities.get_entity(key)
+        data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.RR, 'rei_id',
+                                  metadata.GBD_2020_AGE_GROUPS & metadata.GBD_2019_LBWSG_AGE_GROUPS,
+                                  metadata.GBD_2019_ROUND_ID, 'step4')
+        data = data[data['year_id'] == 2019].drop(columns='year_id')
+        data = utilities.process_relative_risk(data, key, entity, location, metadata.GBD_2019_ROUND_ID,
+                                               metadata.GBD_2020_AGE_GROUPS, whitelist_sids=True)
+        return data
+    else:
+        raise ValueError(f'Unrecognized key {key}')
+
+
+def load_sids_csmr(key: str, location: str) -> pd.DataFrame:
+    if key == data_keys.UNMODELED_CAUSES.SIDS_CSMR:
+        key = EntityKey(key)
+        entity: Cause = utilities.get_entity(key)
+
+        # get around the validation rejecting yll only causes
+        entity.restrictions.yll_only = False
+        entity.restrictions.yld_age_group_id_start = 3
+        entity.restrictions.yld_age_group_id_end = 3
+
+        data = interface.get_measure(entity, key.measure, location).droplevel('location')
         return data
     else:
         raise ValueError(f'Unrecognized key {key}')
