@@ -24,9 +24,18 @@ class RiskState(DiseaseState):
 
 class RiskModel(DiseaseModel):
 
+    configuration_defaults = {
+        "risk": {
+            "mild_child_wasting_untreated_recovery_time": data_values.WASTING.MILD_WASTING_UX_RECOVERY_TIME,
+        }
+    }
+
     def __init__(self, risk, **kwargs):
         super().__init__(risk, **kwargs)
-        self.configuration_defaults = {f'{self.state_column}': Risk.configuration_defaults['risk']}
+        self.configuration_defaults = {
+            f'{self.state_column}': {**Risk.configuration_defaults['risk'],
+                                     **RiskModel.configuration_defaults['risk']},
+        }
 
     # This would be a preferable name, but the generic DiseaseObserver works with no modifications if we use the
     # standard naming from DiseaseModel. Extending to DiseaseObserver to RiskObserver would provide no functional gain
@@ -197,14 +206,15 @@ def get_daily_mild_incidence_probability(exposures: pd.DataFrame, adjustment: pd
 # noinspection PyUnusedLocal
 def load_mild_wasting_remission_rate(cause: str, builder: Builder) -> pd.DataFrame:
     index = builder.data.load(data_keys.POPULATION.DEMOGRAPHY).set_index(metadata.ARTIFACT_INDEX_COLUMNS).index
+    mild_wasting_ux_recovery_time = builder.configuration.child_wasting.mild_child_wasting_untreated_recovery_time
 
-    daily_probability = get_mild_wasting_remission_probability(index)
+    daily_probability = get_mild_wasting_remission_probability(index, mild_wasting_ux_recovery_time)
     incidence_rate = _convert_daily_probability_to_annual_rate(daily_probability)
     return incidence_rate.reset_index()
 
 
-def get_mild_wasting_remission_probability(index: pd.Index) -> pd.Series:
-    r1 = pd.Series(1 / data_values.WASTING.MILD_WASTING_UX_RECOVERY_TIME, index=index, name='mild_wasting_remission')
+def get_mild_wasting_remission_probability(index: pd.Index, mild_child_wasting_ux_recovery_time) -> pd.Series:
+    r1 = pd.Series(1 / mild_child_wasting_ux_recovery_time, index=index, name='mild_wasting_remission')
     _reset_underage_transitions(r1)
     return r1
 
