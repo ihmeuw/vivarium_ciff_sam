@@ -58,7 +58,7 @@ class __Wasting(NamedTuple):
 
     # Untreated time to recovery in days
     MAM_UX_RECOVERY_TIME: float = 63.0
-    MILD_WASTING_UX_RECOVERY_TIME: float = 1000.0
+    DEFAULT_MILD_WASTING_UX_RECOVERY_TIME: float = 1000.0
 
     # Treated time to recovery in days
     SAM_TX_RECOVERY_TIME_OVER_6MO: float = 48.3
