@@ -36,6 +36,8 @@ components:
             - LowBirthWeight()
             - ShortGestation()
 
+            - DiseaseEffect('risk_factor.child_wasting', 'risk_factor.x_factor.exposure_parameters')
+
             - SQLNSTreatment()
 
             - SQLNSIntervention()
@@ -72,7 +74,7 @@ configuration:
             day: 31
         step_size: 0.5 # Days
     population:
-        population_size: 10000
+        population_size: 10_000
         age_start: 0
         age_end: 5
         exit_age: 5
@@ -81,7 +83,14 @@ configuration:
         scenario: 'baseline'
 
     child_wasting:
-        mild_child_wasting_untreated_recovery_time: 1000
+        mild_child_wasting_untreated_recovery_time: 1_000
+
+    effect_of_child_wasting_on_x_factor:
+        exposure_parameters:
+            cat1: 0.99
+            cat2: 0.85
+            cat3: 0.3
+            cat4: 0.01
 
     effect_of_x_factor_on_mild_child_wasting:
         incidence_rate:

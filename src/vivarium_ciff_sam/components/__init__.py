@@ -1,3 +1,4 @@
+from vivarium_ciff_sam.components.disease_effect import DiseaseEffect
 from vivarium_ciff_sam.components.intervention import SQLNSIntervention, WastingTreatmentIntervention
 from vivarium_ciff_sam.components.observers import (CategoricalRiskObserver, DisabilityObserver, DiseaseObserver,
                                                     MortalityObserver)
