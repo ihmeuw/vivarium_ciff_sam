@@ -87,10 +87,10 @@ configuration:
 
     effect_of_child_wasting_on_x_factor:
         exposure_parameters:
-            cat1: 0.99
-            cat2: 0.85
-            cat3: 0.3
-            cat4: 0.01
+            severe_acute_malnutrition: 0.99
+            moderate_acute_malnutrition: 0.85
+            mild_child_wasting: 0.3
+            susceptible_to_child_wasting: 0.01
 
     effect_of_x_factor_on_mild_child_wasting:
         incidence_rate:
