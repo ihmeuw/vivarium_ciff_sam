@@ -81,24 +81,24 @@ configuration:
         scenario: 'baseline'
 
     child_wasting:
-        mild_child_wasting_untreated_recovery_time: 1_000
+        mild_child_wasting_untreated_recovery_time: 27
 
     effect_of_child_wasting_on_x_factor:
         exposure_parameters:
-            severe_acute_malnutrition: 0.99
-            moderate_acute_malnutrition: 0.85
-            mild_child_wasting: 0.3
+            severe_acute_malnutrition: 0.6
+            moderate_acute_malnutrition: 0.5
+            mild_child_wasting: 0.25
             susceptible_to_child_wasting: 0.01
 
     effect_of_x_factor_on_mild_child_wasting:
         incidence_rate:
-            relative_risk: 1.1
+            relative_risk: 1.0
     effect_of_x_factor_on_mild_child_wasting_to_moderate_acute_malnutrition:
         transition_rate:
-            relative_risk: 1.1
+            relative_risk: 3.16
     effect_of_x_factor_on_moderate_acute_malnutrition_to_severe_acute_malnutrition:
         transition_rate:
-            relative_risk: 1.1
+            relative_risk: 3.16
 
     metrics:
         disability:

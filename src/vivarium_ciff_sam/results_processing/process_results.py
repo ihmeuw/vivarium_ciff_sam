@@ -8,11 +8,10 @@ from vivarium_ciff_sam.constants import results
 
 
 SCENARIO_COLUMN = 'scenario'
-X_FACTOR_COLUMN = 'x_factor_effect'
+# X_FACTOR_COLUMN = 'x_factor_effect'
 GROUPBY_COLUMNS = [
     results.INPUT_DRAW_COLUMN,
     SCENARIO_COLUMN,
-    X_FACTOR_COLUMN,
 ]
 OUTPUT_COLUMN_SORT_ORDER = [
     'age_group',
@@ -65,18 +64,15 @@ def read_data(path: Path, single_run: bool) -> (pd.DataFrame, Dict[str, Union[st
     # noinspection PyUnresolvedReferences
     data = (data
             .reset_index(drop=True)
-            .rename(columns={results.OUTPUT_SCENARIO_COLUMN: SCENARIO_COLUMN,
-                             results.X_FACTOR_EFFECT_COLUMN: X_FACTOR_COLUMN})
+            .rename(columns={results.OUTPUT_SCENARIO_COLUMN: SCENARIO_COLUMN})
             )
     if single_run:
         data[results.INPUT_DRAW_COLUMN] = 0
         data[results.RANDOM_SEED_COLUMN] = 0
         data[SCENARIO_COLUMN] = 'baseline'
-        data[X_FACTOR_COLUMN] = 1.1
         keyspace = {results.INPUT_DRAW_COLUMN: [0],
                     results.RANDOM_SEED_COLUMN: [0],
-                    results.OUTPUT_SCENARIO_COLUMN: ['baseline'],
-                    results.X_FACTOR_EFFECT_COLUMN: [1.1]}
+                    results.OUTPUT_SCENARIO_COLUMN: ['baseline']}
     else:
         data[results.INPUT_DRAW_COLUMN] = data[results.INPUT_DRAW_COLUMN].astype(int)
         data[results.RANDOM_SEED_COLUMN] = data[results.RANDOM_SEED_COLUMN].astype(int)
@@ -92,12 +88,9 @@ def filter_out_incomplete(data: pd.DataFrame, keyspace: Dict[str, Union[str, int
         random_seeds = set(keyspace[results.RANDOM_SEED_COLUMN])
         draw_data = data.loc[data[results.INPUT_DRAW_COLUMN] == draw]
         for scenario in keyspace[results.OUTPUT_SCENARIO_COLUMN]:
-            for x_factor_effect in keyspace[results.X_FACTOR_EFFECT_COLUMN]:
-                seeds_in_data = draw_data.loc[
-                    (data[SCENARIO_COLUMN] == scenario) & (data[X_FACTOR_COLUMN] == x_factor_effect),
-                    results.RANDOM_SEED_COLUMN
-                ].unique()
-                random_seeds = random_seeds.intersection(seeds_in_data)
+            seeds_in_data = draw_data.loc[data[SCENARIO_COLUMN] == scenario,
+                                          results.RANDOM_SEED_COLUMN].unique()
+            random_seeds = random_seeds.intersection(seeds_in_data)
         draw_data = draw_data.loc[draw_data[results.RANDOM_SEED_COLUMN].isin(random_seeds)]
         output.append(draw_data)
     return pd.concat(output, ignore_index=True).reset_index(drop=True)
