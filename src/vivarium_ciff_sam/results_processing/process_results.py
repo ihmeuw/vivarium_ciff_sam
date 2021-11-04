@@ -11,7 +11,7 @@ SCENARIO_COLUMN = 'scenario'
 # X_FACTOR_COLUMN = 'x_factor_effect'
 GROUPBY_COLUMNS = [
     results.INPUT_DRAW_COLUMN,
-    # SCENARIO_COLUMN,
+    SCENARIO_COLUMN,
 ]
 OUTPUT_COLUMN_SORT_ORDER = [
     'age_group',
