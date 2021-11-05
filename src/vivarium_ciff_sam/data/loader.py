@@ -102,7 +102,6 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
 
         data_keys.X_FACTOR.DISTRIBUTION: load_low_maternal_bmi_distribution,
         data_keys.X_FACTOR.CATEGORIES: load_low_maternal_bmi_categories,
-        data_keys.X_FACTOR.EXPOSURE: load_low_maternal_bmi_exposure,
 
         data_keys.LBWSG.DISTRIBUTION: load_metadata,
         data_keys.LBWSG.CATEGORIES: load_metadata,

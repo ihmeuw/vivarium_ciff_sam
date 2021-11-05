@@ -23,10 +23,6 @@ components:
             - RiskEffect('risk_factor.wasting_treatment', 'risk_factor.severe_acute_malnutrition_to_moderate_acute_malnutrition.transition_rate')
             - RiskEffect('risk_factor.wasting_treatment', 'risk_factor.moderate_acute_malnutrition_to_mild_child_wasting.transition_rate')
 
-            - RiskEffect('risk_factor.x_factor', 'risk_factor.mild_child_wasting.incidence_rate')
-            - RiskEffect('risk_factor.x_factor', 'risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
-            - RiskEffect('risk_factor.x_factor', 'risk_factor.moderate_acute_malnutrition_to_severe_acute_malnutrition.transition_rate')
-
             - Risk('risk_factor.low_birth_weight_and_short_gestation')
 
     vivarium_ciff_sam:
@@ -34,7 +30,11 @@ components:
             - ChildWasting()
             - LowBirthWeight()
             - ShortGestation()
+
             - XFactorExposure()
+            - XFactorEffect('risk_factor.mild_child_wasting.incidence_rate')
+            - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
+            - XFactorEffect('risk_factor.moderate_acute_malnutrition_to_severe_acute_malnutrition.transition_rate')
 
             - SQLNSTreatment()
 
