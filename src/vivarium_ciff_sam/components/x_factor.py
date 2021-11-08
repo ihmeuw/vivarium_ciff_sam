@@ -6,12 +6,16 @@ from vivarium.framework.population import PopulationView
 from vivarium.framework.randomness import RandomnessStream
 from vivarium.framework.values import Pipeline
 
+from vivarium_public_health.risks.effect import RiskEffect
+
+from vivarium_ciff_sam.constants import data_keys, metadata, models
+
 
 class XFactorExposure:
 
     configuration_defaults = {
         "x_factor": {
-            "exposure": 'data',
+            "exposure": 'derived',
             "rebinned_exposed": [],
             "category_thresholds": [],
         },
@@ -79,7 +83,6 @@ class XFactorExposure:
         return builder.value.register_value_producer(
             self.exposure_parameters_pipeline_name,
             source=self.get_exposure_parameters,
-            # todo does this need to be age specific?
             requires_columns=[self.initial_wasting_column_name]
         )
 
@@ -97,7 +100,6 @@ class XFactorExposure:
         )
 
     def get_population_view(self, builder: Builder) -> PopulationView:
-        # todo do we need the age column?
         return builder.population.get_view([self.initial_wasting_column_name, self.propensity_column_name])
 
     def on_initialize_simulants(self, pop_data):
@@ -121,3 +123,64 @@ class XFactorExposure:
         exposure.name = self.exposure_pipeline_name
         exposure[propensity < exposure_parameters] = 'cat1'
         return exposure
+
+
+class XFactorEffect(RiskEffect):
+
+    def __init__(self, target: str):
+        super().__init__('risk_factor.x_factor', target)
+
+    def load_population_attributable_fraction_data(self, builder: Builder):
+        exposure_data = self._calculate_exposure(builder)
+        relative_risk_data = self._calculate_rr(builder)
+
+        mean_rr = (exposure_data * relative_risk_data).groupby(metadata.ARTIFACT_INDEX_COLUMNS).sum()
+        paf_data = ((mean_rr - 1)/mean_rr).reset_index().rename(columns={0: 'value'})
+        return paf_data
+
+    @staticmethod
+    def _calculate_exposure(builder: Builder) -> pd.Series:
+        exposure_configs = builder.configuration.effect_of_child_wasting_on_x_factor.exposure_parameters.to_dict()
+
+        wasting_exposure = (
+            builder.data.load(data_keys.WASTING.EXPOSURE)
+            .set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['parameter'])
+        )
+        exposure_parameters = pd.Series(
+            {models.get_risk_category(k): v for k, v in exposure_configs.items()},
+            index=wasting_exposure.index.get_level_values('parameter').unique()
+        )
+
+        cat1_exposure = (
+            (wasting_exposure['value'] * exposure_parameters)
+            .groupby(metadata.ARTIFACT_INDEX_COLUMNS)
+            .sum()
+            .reset_index()
+        )
+        cat1_exposure['parameter'] = 'cat1'
+
+        cat2_exposure = cat1_exposure.copy()
+        cat2_exposure.loc[:, 0] = 1 - cat1_exposure.loc[:, 0]
+        cat2_exposure['parameter'] = 'cat2'
+        return (
+            pd.concat([cat1_exposure, cat2_exposure], ignore_index=True)
+            .set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['parameter'])
+            .loc[:, 0]
+        )
+
+    def _calculate_rr(self, builder: Builder) -> pd.Series:
+        rr_value = (
+            builder.configuration[f'effect_of_x_factor_on_{self.target.name}'][self.target.measure]['relative_risk']
+        )
+
+        cat1 = builder.data.load('population.demographic_dimensions')
+        cat1['parameter'] = 'cat1'
+        cat1['value'] = rr_value
+        cat2 = cat1.copy()
+        cat2['parameter'] = 'cat2'
+        cat2['value'] = 1
+        return (
+            pd.concat([cat1, cat2], ignore_index=True)
+            .set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['parameter'])
+            .value
+        )

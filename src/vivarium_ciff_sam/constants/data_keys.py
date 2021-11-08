@@ -239,7 +239,6 @@ WASTING_TREATMENT = __WastingTreatment()
 class __XFactor(NamedTuple):
 
     # Keys that will be loaded into the artifact. must have a colon type declaration
-    EXPOSURE: TargetString = 'risk_factor.x_factor.exposure'
     DISTRIBUTION: TargetString = 'risk_factor.x_factor.distribution'
     CATEGORIES: TargetString = 'risk_factor.x_factor.categories'
 
