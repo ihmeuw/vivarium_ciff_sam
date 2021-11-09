@@ -58,9 +58,10 @@ class RiskModel(DiseaseModel):
                                               requires_columns=['age', 'sex'])
 
         self.population_view = builder.population.get_view(['age', 'sex', self.state_column,
-                                                            f'initial_{self.state_column}'])
+                                                            f'initial_{self.state_column}_propensity'])
         builder.population.initializes_simulants(self.on_initialize_simulants,
-                                                 creates_columns=[self.state_column, f'initial_{self.state_column}'],
+                                                 creates_columns=[self.state_column,
+                                                                  f'initial_{self.state_column}_propensity'],
                                                  requires_columns=['age', 'sex'],
                                                  requires_streams=[f'{self.state_column}_initial_states'])
         self.randomness = builder.randomness.get_stream(f'{self.state_column}_initial_states')
@@ -78,11 +79,8 @@ class RiskModel(DiseaseModel):
 
     def on_initialize_simulants(self, pop_data):
         super().on_initialize_simulants(pop_data)
-        initial_state = (
-            self.population_view.subview([self.state_column]).get(pop_data.index)
-                .rename(columns={self.state_column: f'initial_{self.state_column}'})
-        )
-        self.population_view.update(initial_state)
+        initial_propensity = self.randomness.get_draw(pop_data.index).rename(f'initial_{self.state_column}_propensity')
+        self.population_view.update(initial_propensity)
 
     def get_current_exposure(self, index: pd.Index) -> pd.Series:
         wasting_state = self.population_view.subview([self.state_column]).get(index)[self.state_column]
