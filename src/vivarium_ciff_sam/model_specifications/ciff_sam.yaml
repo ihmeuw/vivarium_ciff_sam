@@ -84,12 +84,8 @@ configuration:
     child_wasting:
         mild_child_wasting_untreated_recovery_time: 27
 
-    effect_of_child_wasting_on_x_factor:
-        exposure_parameters:
-            severe_acute_malnutrition: 0.6
-            moderate_acute_malnutrition: 0.5
-            mild_child_wasting: 0.25
-            susceptible_to_child_wasting: 0.01
+    x_factor:
+        exposure: 0.32
 
     effect_of_x_factor_on_mild_child_wasting:
         incidence_rate:
