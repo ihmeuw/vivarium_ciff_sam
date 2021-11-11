@@ -96,7 +96,8 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
 
         data_keys.WASTING_TREATMENT.DISTRIBUTION: load_wasting_treatment_distribution,
         data_keys.WASTING_TREATMENT.CATEGORIES: load_wasting_treatment_categories,
-        data_keys.WASTING_TREATMENT.EXPOSURE: load_wasting_treatment_exposure,
+        data_keys.WASTING_TREATMENT.SAM_EXPOSURE: load_wasting_treatment_exposure,
+        data_keys.WASTING_TREATMENT.MAM_EXPOSURE: load_wasting_treatment_exposure,
         data_keys.WASTING_TREATMENT.RELATIVE_RISK: load_wasting_treatment_rr,
         data_keys.WASTING_TREATMENT.PAF: load_paf,
 
@@ -315,9 +316,13 @@ def load_wasting_treatment_categories(key: str, location: str) -> str:
 
 
 def load_wasting_treatment_exposure(key: str, location: str) -> pd.DataFrame:
-    if key == data_keys.WASTING_TREATMENT.EXPOSURE:
+    if key in [data_keys.WASTING_TREATMENT.SAM_EXPOSURE, data_keys.WASTING_TREATMENT.MAM_EXPOSURE]:
+        coverage_distribution = (
+            data_values.WASTING.BASELINE_SAM_TX_COVERAGE if key == data_keys.WASTING_TREATMENT.SAM_EXPOSURE
+            else data_values.WASTING.BASELINE_MAM_TX_COVERAGE
+        )
         treatment_coverage = get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]),
-                                                       *data_values.WASTING.BASELINE_TX_COVERAGE)
+                                                       *coverage_distribution)
 
         idx = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
         cat3 = pd.DataFrame({f'draw_{i}': 0.0 for i in range(0, 1000)}, index=idx)
@@ -428,22 +433,6 @@ def load_low_maternal_bmi_categories(key: str, location: str) -> str:
         return data_values.MATERNAL_BMI.CATEGORIES
     else:
         raise ValueError(f'Unrecognized key {key}')
-
-
-def load_low_maternal_bmi_exposure(key: str, location: str) -> pd.DataFrame:
-    if key in [data_keys.X_FACTOR.EXPOSURE]:
-        exposure = get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]),
-                                             *data_values.MATERNAL_BMI.EXPOSURE)
-
-        idx = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
-        cat1 = pd.DataFrame({f'draw_{i}': 1.0 for i in range(0, 1000)}, index=idx) * exposure
-        cat2 = 1 - cat1
-
-        cat1['parameter'] = 'cat1'
-        cat2['parameter'] = 'cat2'
-
-        exposure = pd.concat([cat1, cat2]).set_index('parameter', append=True).sort_index()
-        return exposure
 
 
 def load_lbwsg_exposure(key: str, location: str) -> pd.DataFrame:

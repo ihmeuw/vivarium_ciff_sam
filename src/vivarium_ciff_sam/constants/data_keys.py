@@ -213,7 +213,8 @@ SQ_LNS = __SQLNS()
 class __WastingTreatment(NamedTuple):
 
     # Keys that will be loaded into the artifact. must have a colon type declaration
-    EXPOSURE: TargetString = 'risk_factor.wasting_treatment.exposure'
+    SAM_EXPOSURE: TargetString = 'risk_factor.wasting_treatment.sam_exposure'
+    MAM_EXPOSURE: TargetString = 'risk_factor.wasting_treatment.mam_exposure'
     DISTRIBUTION: TargetString = 'risk_factor.wasting_treatment.distribution'
     CATEGORIES: TargetString = 'risk_factor.wasting_treatment.categories'
     RELATIVE_RISK: TargetString = 'risk_factor.wasting_treatment.relative_risk'
