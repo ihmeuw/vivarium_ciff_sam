@@ -46,7 +46,7 @@ class __Wasting(NamedTuple):
     COVERAGE_START_AGE: float = 28 / YEAR_DURATION  # ~0.0767
     BASELINE_SAM_TX_COVERAGE: Tuple = ('sam_tx_coverage', get_norm_from_quantiles(mean=0.488, lower=0.374, upper=0.604))
     BASELINE_MAM_TX_COVERAGE: Tuple = ('sam_tx_coverage', get_norm_from_quantiles(mean=0.15, lower=0.1, upper=0.2))
-    ALTERNATIVE_TX_COVERAGE: float = 0.9
+    ALTERNATIVE_TX_COVERAGE: float = 0.7
 
     # Wasting treatment efficacy
     BASELINE_SAM_TX_EFFICACY: Tuple = ('sam_tx_efficacy', get_norm_from_quantiles(mean=0.700, lower=0.64, upper=0.76))
