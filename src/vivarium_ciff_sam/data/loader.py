@@ -347,7 +347,8 @@ def load_sam_treatment_rr(key: str, location: str) -> pd.DataFrame:
     if key != data_keys.SAM_TREATMENT.RELATIVE_RISK:
         raise ValueError(f'Unrecognized key {key}')
 
-    sam_tx_efficacy, sam_tx_efficacy_tmrel = utilities.get_treatment_efficacy(location, data_keys.WASTING.CAT1)
+    demography = get_data(data_keys.POPULATION.DEMOGRAPHY, location).reset_index()
+    sam_tx_efficacy, sam_tx_efficacy_tmrel = utilities.get_treatment_efficacy(demography, data_keys.WASTING.CAT1)
 
     # rr_t1 = t1 / t1_tmrel
     #       = (sam_tx_efficacy / sam_tx_duration) / (sam_tx_efficacy_tmrel / sam_tx_duration)
@@ -376,7 +377,8 @@ def load_mam_treatment_rr(key: str, location: str) -> pd.DataFrame:
     if key != data_keys.MAM_TREATMENT.RELATIVE_RISK:
         raise ValueError(f'Unrecognized key {key}')
 
-    mam_tx_efficacy, mam_tx_efficacy_tmrel = utilities.get_treatment_efficacy(location, data_keys.WASTING.CAT2)
+    demography = get_data(data_keys.POPULATION.DEMOGRAPHY, location).reset_index()
+    mam_tx_efficacy, mam_tx_efficacy_tmrel = utilities.get_treatment_efficacy(demography, data_keys.WASTING.CAT2)
     index = mam_tx_efficacy.index
 
     mam_ux_duration = data_values.WASTING.MAM_UX_RECOVERY_TIME

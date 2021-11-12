@@ -343,7 +343,7 @@ def process_relative_risk(data: pd.DataFrame, key: str, entity: Union[RiskFactor
     return data
 
 
-def get_treatment_efficacy(location: str, treatment_type: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def get_treatment_efficacy(demography: pd.DataFrame, treatment_type: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
     baseline_efficacy = {
         data_keys.WASTING.CAT1: get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]),
                                                           *data_values.WASTING.BASELINE_SAM_TX_EFFICACY),
@@ -355,10 +355,7 @@ def get_treatment_efficacy(location: str, treatment_type: str) -> Tuple[pd.DataF
         data_keys.WASTING.CAT2: data_values.WASTING.MAM_TX_ALTERNATIVE_EFFICACY
     }
 
-    idx_as_frame = (
-        get_data(data_keys.POPULATION.DEMOGRAPHY, location).reset_index()
-        .merge(pd.DataFrame({'parameter': [f'cat{i}' for i in range(1, 4)]}), how='cross')
-    )
+    idx_as_frame = demography.merge(pd.DataFrame({'parameter': [f'cat{i}' for i in range(1, 4)]}), how='cross')
     index = idx_as_frame.set_index(list(idx_as_frame.columns)).index
 
     efficacy = pd.DataFrame({f'draw_{i}': 1.0 for i in range(0, 1000)}, index=index)
