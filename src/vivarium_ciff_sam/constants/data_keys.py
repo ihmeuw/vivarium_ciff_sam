@@ -210,15 +210,14 @@ class __SQLNS(NamedTuple):
 SQ_LNS = __SQLNS()
 
 
-class __WastingTreatment(NamedTuple):
+class __SAMTreatment(NamedTuple):
 
     # Keys that will be loaded into the artifact. must have a colon type declaration
-    SAM_EXPOSURE: TargetString = 'risk_factor.wasting_treatment.sam_exposure'
-    MAM_EXPOSURE: TargetString = 'risk_factor.wasting_treatment.mam_exposure'
-    DISTRIBUTION: TargetString = 'risk_factor.wasting_treatment.distribution'
-    CATEGORIES: TargetString = 'risk_factor.wasting_treatment.categories'
-    RELATIVE_RISK: TargetString = 'risk_factor.wasting_treatment.relative_risk'
-    PAF: TargetString = 'risk_factor.wasting_treatment.population_attributable_fraction'
+    EXPOSURE: TargetString = 'risk_factor.sam_treatment.exposure'
+    DISTRIBUTION: TargetString = 'risk_factor.sam_treatment.distribution'
+    CATEGORIES: TargetString = 'risk_factor.sam_treatment.categories'
+    RELATIVE_RISK: TargetString = 'risk_factor.sam_treatment.relative_risk'
+    PAF: TargetString = 'risk_factor.sam_treatment.population_attributable_fraction'
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
     TMREL_CATEGORY = 'cat2'
@@ -227,34 +226,40 @@ class __WastingTreatment(NamedTuple):
 
     @property
     def name(self):
-        return 'wasting_treatment'
+        return 'sam_treatment'
 
     @property
     def log_name(self):
         return 'wasting treatment'
 
 
-WASTING_TREATMENT = __WastingTreatment()
+SAM_TREATMENT = __SAMTreatment()
 
 
-class __XFactor(NamedTuple):
+class __MAMTreatment(NamedTuple):
 
     # Keys that will be loaded into the artifact. must have a colon type declaration
-    DISTRIBUTION: TargetString = 'risk_factor.x_factor.distribution'
-    CATEGORIES: TargetString = 'risk_factor.x_factor.categories'
+    EXPOSURE: TargetString = 'risk_factor.mam_treatment.exposure'
+    DISTRIBUTION: TargetString = 'risk_factor.mam_treatment.distribution'
+    CATEGORIES: TargetString = 'risk_factor.mam_treatment.categories'
+    RELATIVE_RISK: TargetString = 'risk_factor.mam_treatment.relative_risk'
+    PAF: TargetString = 'risk_factor.mam_treatment.population_attributable_fraction'
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
+    TMREL_CATEGORY = 'cat2'
+    COVERED_CATEGORIES = ['cat2', 'cat3']
+    UNCOVERED_CATEGORIES = ['cat1']
 
     @property
     def name(self):
-        return 'x_factor'
+        return 'mam_treatment'
 
     @property
     def log_name(self):
-        return 'x-factor'
+        return 'wasting treatment'
 
 
-X_FACTOR = __XFactor()
+MAM_TREATMENT = __MAMTreatment()
 
 
 class __LowBirthWeightShortGestation(NamedTuple):
@@ -315,8 +320,8 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     WASTING,
     STUNTING,
     SQ_LNS,
-    WASTING_TREATMENT,
-    X_FACTOR,
+    SAM_TREATMENT,
+    MAM_TREATMENT,
     LBWSG,
     UNMODELED_CAUSES,
 ]

@@ -4,7 +4,7 @@ from typing import Dict, NamedTuple, Union
 import pandas as pd
 import yaml
 
-from vivarium_ciff_sam.constants import results
+from vivarium_ciff_sam.constants import results, scenarios
 
 
 SCENARIO_COLUMN = 'scenario'
@@ -69,10 +69,10 @@ def read_data(path: Path, single_run: bool) -> (pd.DataFrame, Dict[str, Union[st
     if single_run:
         data[results.INPUT_DRAW_COLUMN] = 0
         data[results.RANDOM_SEED_COLUMN] = 0
-        data[SCENARIO_COLUMN] = 'baseline'
+        data[SCENARIO_COLUMN] = scenarios.SCENARIOS.BASELINE.name
         keyspace = {results.INPUT_DRAW_COLUMN: [0],
                     results.RANDOM_SEED_COLUMN: [0],
-                    results.OUTPUT_SCENARIO_COLUMN: ['baseline']}
+                    results.OUTPUT_SCENARIO_COLUMN: [scenarios.SCENARIOS.BASELINE.name]}
     else:
         data[results.INPUT_DRAW_COLUMN] = data[results.INPUT_DRAW_COLUMN].astype(int)
         data[results.RANDOM_SEED_COLUMN] = data[results.RANDOM_SEED_COLUMN].astype(int)
