@@ -444,14 +444,15 @@ def load_child_wasting_exposures(builder: Builder) -> pd.DataFrame:
 
 def load_wasting_treatment_coverage(builder: Builder, wasting_category: str) -> pd.Series:
     if wasting_category == data_keys.WASTING.CAT1:
-        raw_data = builder.data.load(data_keys.WASTING_TREATMENT.SAM_EXPOSURE)
+        treatment_type = data_keys.SAM_TREATMENT
     elif wasting_category == data_keys.WASTING.CAT2:
-        raw_data = builder.data.load(data_keys.WASTING_TREATMENT.MAM_EXPOSURE)
+        treatment_type = data_keys.MAM_TREATMENT
     else:
         raise ValueError(f'Not a treated wasting category: {wasting_category}')
 
+    raw_data = builder.data.load(treatment_type.EXPOSURE)
     tx_coverage = (
-        raw_data[raw_data.parameter == data_keys.WASTING_TREATMENT.TMREL_CATEGORY]
+        raw_data[raw_data.parameter == treatment_type.TMREL_CATEGORY]
         .drop(columns=['parameter'])
         .set_index(metadata.ARTIFACT_INDEX_COLUMNS)
         .value

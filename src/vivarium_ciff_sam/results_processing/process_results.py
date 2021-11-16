@@ -136,7 +136,8 @@ def split_processing_column(data: pd.DataFrame, has_wasting_stratification: bool
     if has_sqlns_stratification:
         data['process'], data['sq_lns'] = data.process.str.split(f'_sq_lns_').str
     if has_wasting_treatment_stratification:
-        data['process'], data['wasting_treatment'] = data.process.str.split(f'_wasting_treatment_').str
+        data['process'], data['mam_treatment'] = data.process.str.split(f'_mam_treatment_').str
+        data['process'], data['sam_treatment'] = data.process.str.split(f'_sam_treatment_').str
     if has_wasting_stratification:
         data['process'], data['wasting_state'] = data.process.str.split(f'_wasting_state_').str
     data['process'], data['age'] = data.process.str.split('_in_age_group_').str

@@ -57,7 +57,11 @@ class WastingTreatmentIntervention:
 
         # NOTE: this operation is NOT commutative. This pipeline must not be modified anywhere else.
         builder.value.register_value_modifier(
-            f'risk_factor.{data_keys.WASTING_TREATMENT.name}.exposure_parameters',
+            f'risk_factor.{data_keys.SAM_TREATMENT.name}.exposure_parameters',
+            modifier=self.coverage_effect,
+        )
+        builder.value.register_value_modifier(
+            f'risk_factor.{data_keys.MAM_TREATMENT.name}.exposure_parameters',
             modifier=self.coverage_effect,
         )
 
@@ -66,8 +70,8 @@ class WastingTreatmentIntervention:
     def coverage_effect(self, idx: pd.Index, target: pd.Series) -> pd.Series:
         # if this is the alternative scenario and the scale up has already started update coverage
         if self.scenario.has_alternative_treatment and data_values.SCALE_UP_START_DT <= self.clock():
-            target['cat1'] = 0.1
+            target['cat1'] = 1 - data_values.WASTING.ALTERNATIVE_TX_COVERAGE
             target['cat2'] = 0.0
-            target['cat3'] = 0.9
+            target['cat3'] = data_values.WASTING.ALTERNATIVE_TX_COVERAGE
 
         return target
