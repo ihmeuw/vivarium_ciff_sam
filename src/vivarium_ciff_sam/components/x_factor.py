@@ -10,8 +10,9 @@ class XFactorExposure(Risk):
 
     def __init__(self):
         super().__init__('risk_factor.x_factor')
-        self.propensity_column_name = f'initial_child_wasting_propensity'
+        self.propensity_column_name = 'initial_child_wasting_propensity'
         self.propensity_pipeline_name = 'x_factor.propensity'
+        self.exposure_pipeline_name = 'x_factor.exposure'
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
@@ -28,7 +29,7 @@ class XFactorExposure(Risk):
 
     def get_exposure_pipeline(self, builder: Builder) -> Pipeline:
         return builder.value.register_value_producer(
-            f'{self.risk.name}.exposure',
+            self.exposure_pipeline_name,
             source=self.get_current_exposure,
             requires_columns=['age', 'sex'],
             requires_values=[f'{self.risk.name}.propensity'],

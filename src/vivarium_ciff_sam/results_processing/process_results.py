@@ -4,7 +4,7 @@ from typing import Dict, NamedTuple, Union
 import pandas as pd
 import yaml
 
-from vivarium_ciff_sam.constants import results
+from vivarium_ciff_sam.constants import results, scenarios
 
 
 SCENARIO_COLUMN = 'scenario'
@@ -69,10 +69,10 @@ def read_data(path: Path, single_run: bool) -> (pd.DataFrame, Dict[str, Union[st
     if single_run:
         data[results.INPUT_DRAW_COLUMN] = 0
         data[results.RANDOM_SEED_COLUMN] = 0
-        data[SCENARIO_COLUMN] = 'baseline'
+        data[SCENARIO_COLUMN] = scenarios.SCENARIOS.BASELINE.name
         keyspace = {results.INPUT_DRAW_COLUMN: [0],
                     results.RANDOM_SEED_COLUMN: [0],
-                    results.OUTPUT_SCENARIO_COLUMN: ['baseline']}
+                    results.OUTPUT_SCENARIO_COLUMN: [scenarios.SCENARIOS.BASELINE.name]}
     else:
         data[results.INPUT_DRAW_COLUMN] = data[results.INPUT_DRAW_COLUMN].astype(int)
         data[results.RANDOM_SEED_COLUMN] = data[results.RANDOM_SEED_COLUMN].astype(int)
@@ -136,7 +136,8 @@ def split_processing_column(data: pd.DataFrame, has_wasting_stratification: bool
     if has_sqlns_stratification:
         data['process'], data['sq_lns'] = data.process.str.split(f'_sq_lns_').str
     if has_wasting_treatment_stratification:
-        data['process'], data['wasting_treatment'] = data.process.str.split(f'_wasting_treatment_').str
+        data['process'], data['mam_treatment'] = data.process.str.split(f'_mam_treatment_').str
+        data['process'], data['sam_treatment'] = data.process.str.split(f'_sam_treatment_').str
     if has_wasting_stratification:
         data['process'], data['wasting_state'] = data.process.str.split(f'_wasting_state_').str
     data['process'], data['age'] = data.process.str.split('_in_age_group_').str

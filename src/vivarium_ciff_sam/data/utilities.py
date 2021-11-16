@@ -1,6 +1,6 @@
 from itertools import product
 from numbers import Real
-from typing import List, Set, Union
+from typing import List, Set, Union, Tuple
 import warnings
 
 import numpy as np
@@ -13,9 +13,10 @@ from vivarium_gbd_access.utilities import get_draws, query
 from vivarium_inputs import globals as vi_globals, utilities as vi_utils, utility_data
 from vivarium_inputs.mapping_extension import alternative_risk_factors, AlternativeRiskFactor
 from vivarium_inputs.validation.raw import check_metadata
-from vivarium_inputs.validation.sim import validate_for_simulation
 
+from vivarium_ciff_sam.constants import data_keys, data_values, scenarios
 from vivarium_ciff_sam.constants.metadata import ARTIFACT_INDEX_COLUMNS, GBD_2020_AGE_GROUPS, GBD_2020_ROUND_ID
+from vivarium_ciff_sam.utilities import get_random_variable_draws
 
 
 def _load_em_from_meid(location, meid, measure):
@@ -340,6 +341,33 @@ def process_relative_risk(data: pd.DataFrame, key: str, entity: Union[RiskFactor
 
     data = validate_and_reshape_gbd_data(data, entity, key, location, gbd_round_id, age_group_ids)
     return data
+
+
+def get_treatment_efficacy(demography: pd.DataFrame, treatment_type: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    baseline_efficacy = {
+        data_keys.WASTING.CAT1: get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]),
+                                                          *data_values.WASTING.BASELINE_SAM_TX_EFFICACY),
+        data_keys.WASTING.CAT2: get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]),
+                                                          *data_values.WASTING.BASELINE_MAM_TX_EFFICACY)
+    }
+    alternative_efficacy = {
+        data_keys.WASTING.CAT1: data_values.WASTING.SAM_TX_ALTERNATIVE_EFFICACY,
+        data_keys.WASTING.CAT2: data_values.WASTING.MAM_TX_ALTERNATIVE_EFFICACY
+    }
+
+    idx_as_frame = demography.merge(pd.DataFrame({'parameter': [f'cat{i}' for i in range(1, 4)]}), how='cross')
+    index = idx_as_frame.set_index(list(idx_as_frame.columns)).index
+
+    efficacy = pd.DataFrame({f'draw_{i}': 1.0 for i in range(0, 1000)}, index=index)
+    efficacy[index.get_level_values('parameter') == 'cat1'] *= 0.0
+    efficacy[index.get_level_values('parameter') == 'cat2'] *= baseline_efficacy[treatment_type]
+    efficacy[index.get_level_values('parameter') == 'cat3'] *= alternative_efficacy[treatment_type]
+
+    tmrel_efficacy = (
+        efficacy[efficacy.index.get_level_values('parameter') == data_keys.MAM_TREATMENT.TMREL_CATEGORY]
+        .droplevel('parameter')
+    )
+    return efficacy, tmrel_efficacy
 
 
 def _scrub_age(data: pd.DataFrame, age_group_ids: List[int] = None) -> pd.DataFrame:
