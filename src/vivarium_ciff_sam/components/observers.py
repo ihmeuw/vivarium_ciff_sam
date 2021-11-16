@@ -43,19 +43,19 @@ class ResultsStratifier:
 
         self.stratification_levels = {}
 
-        def get_state_function(source_name: str, state: Union[str, bool, List]) -> Callable:
-            return lambda pop: (pop[source_name] == state if not isinstance(state, List)
-                                else pop[source_name].isin(state))
-
         def setup_stratification(source_name: str, is_pipeline: bool, stratification_name: str,
                                  categories: List[Union[str, Tuple[str, str]]]):
+
+            def get_state_function(state: Union[str, bool, List]) -> Callable:
+                return lambda pop: (pop[source_name] == state if not isinstance(state, List)
+                                    else pop[source_name].isin(state))
 
             for i, category in enumerate(categories):
                 if type(category) == str:
                     categories[i] = (category, category)
 
             self.stratification_levels[stratification_name] = {
-                stratification_key: get_state_function(source_name, source_value)
+                stratification_key: get_state_function(source_value)
                 for stratification_key, source_value in categories
             }
             if is_pipeline:
