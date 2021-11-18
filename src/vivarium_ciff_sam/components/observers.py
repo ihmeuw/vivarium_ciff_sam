@@ -44,19 +44,18 @@ class ResultsStratifier:
         self.stratification_levels = {}
 
         def setup_stratification(source_name: str, is_pipeline: bool, stratification_name: str,
-                                 categories: List[Union[str, Tuple[str, str]]]):
+                                 categories: Iterable):
 
             def get_state_function(state: Union[str, bool, List]) -> Callable:
                 return lambda pop: (pop[source_name] == state if not isinstance(state, List)
                                     else pop[source_name].isin(state))
 
-            for i, category in enumerate(categories):
-                if type(category) == str:
-                    categories[i] = (category, category)
+            if type(categories) != dict:
+                categories = {category: category for category in categories}
 
             self.stratification_levels[stratification_name] = {
                 stratification_key: get_state_function(source_value)
-                for stratification_key, source_value in categories
+                for stratification_key, source_value in categories.items()
             }
             if is_pipeline:
                 self.pipelines[source_name] = builder.value.get_value(source_name)
@@ -64,24 +63,24 @@ class ResultsStratifier:
                 columns_required.append(data_keys.WASTING.name)
 
         if self.by_wasting:
-            setup_stratification(data_keys.WASTING.name, False, 'wasting_state', list(models.WASTING.STATES))
+            setup_stratification(data_keys.WASTING.name, False, 'wasting_state', models.WASTING.STATES)
 
         if self.by_stunting:
-            setup_stratification(f'{data_keys.STUNTING.name}.exposure', True, 'stunting_state', list(range(4, 0, -1)))
+            setup_stratification(f'{data_keys.STUNTING.name}.exposure', True, 'stunting_state', range(4, 0, -1))
 
         if self.by_wasting_treatment:
             setup_stratification(f'{data_keys.SAM_TREATMENT.name}.exposure', True, 'sam_treatment',
-                                 [('covered', data_keys.SAM_TREATMENT.COVERED_CATEGORIES),
-                                  ('uncovered', data_keys.SAM_TREATMENT.UNCOVERED_CATEGORIES)])
+                                 {'covered': data_keys.SAM_TREATMENT.COVERED_CATEGORIES,
+                                  'uncovered': data_keys.SAM_TREATMENT.UNCOVERED_CATEGORIES})
             setup_stratification(f'{data_keys.MAM_TREATMENT.name}.exposure', True, 'mam_treatment',
-                                 [('covered', data_keys.MAM_TREATMENT.COVERED_CATEGORIES),
-                                  ('uncovered', data_keys.MAM_TREATMENT.UNCOVERED_CATEGORIES)])
+                                 {'covered': data_keys.MAM_TREATMENT.COVERED_CATEGORIES,
+                                  'uncovered': data_keys.MAM_TREATMENT.UNCOVERED_CATEGORIES})
 
         if self.by_sqlns:
-            setup_stratification(data_keys.SQ_LNS.COVERAGE, True, 'sq_lns', [('covered', True), ('uncovered', False)])
+            setup_stratification(data_keys.SQ_LNS.COVERAGE, True, 'sq_lns', {'covered': True, 'uncovered': False})
 
         if self.by_x_factor:
-            setup_stratification('x_factor.exposure', True, 'x_factor', ['cat2', 'cat1'])
+            setup_stratification('x_factor.exposure', True, 'x_factor', ('cat2', 'cat1'))
 
         self.population_view = builder.population.get_view(columns_required)
         self.stratification_groups: pd.Series = None
