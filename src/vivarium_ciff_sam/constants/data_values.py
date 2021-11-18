@@ -110,3 +110,4 @@ SQ_LNS = __SQLNS()
 ###################################
 
 SCALE_UP_START_DT = datetime(2023, 1, 1)
+SCALE_UP_END_DT = datetime(2026, 1, 1)

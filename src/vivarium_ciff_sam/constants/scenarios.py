@@ -9,7 +9,7 @@ class Scenario:
 
     def __init__(self, name: str, has_alternative_treatment: bool, has_sqlns: bool):
         self.name = name
-        self.has_alternative_treatment = has_alternative_treatment
+        self.has_alternative_wasting_treatment = has_alternative_treatment
         self.has_sqlns = has_sqlns
 
 

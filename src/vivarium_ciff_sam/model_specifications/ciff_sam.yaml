@@ -42,7 +42,8 @@ components:
             - SQLNSTreatment()
 
             - SQLNSIntervention()
-            - WastingTreatmentIntervention()
+            - WastingTreatmentIntervention('sam_treatment')
+            - WastingTreatmentIntervention('mam_treatment')
 
             - DisabilityObserver('wasting')
             - MortalityObserver('wasting')
