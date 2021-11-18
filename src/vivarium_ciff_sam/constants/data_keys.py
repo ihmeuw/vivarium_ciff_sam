@@ -220,9 +220,13 @@ class __WastingTreatment(NamedTuple):
     PAF: TargetString
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
-    TMREL_CATEGORY = 'cat2'
-    COVERED_CATEGORIES = ['cat2', 'cat3']
-    UNCOVERED_CATEGORIES = ['cat1']
+    UNCOVERED = 'cat1'
+    BASELINE_COVERAGE = 'cat2'
+    ALTERNATIVE_COVERAGE = 'cat3'
+
+    TMREL_CATEGORY = BASELINE_COVERAGE
+    COVERED_CATEGORIES = [BASELINE_COVERAGE, ALTERNATIVE_COVERAGE]
+    UNCOVERED_CATEGORIES = [UNCOVERED]
 
     @property
     def name(self):
