@@ -18,12 +18,10 @@ components:
             - RiskEffect('risk_factor.child_stunting', 'cause.measles.incidence_rate')
             - RiskEffect('risk_factor.child_stunting', 'cause.lower_respiratory_infections.incidence_rate')
 
-            - Risk('risk_factor.sam_treatment')
-            - RiskEffect('risk_factor.sam_treatment', 'risk_factor.severe_acute_malnutrition_to_mild_child_wasting.transition_rate')
-            - RiskEffect('risk_factor.sam_treatment', 'risk_factor.severe_acute_malnutrition_to_moderate_acute_malnutrition.transition_rate')
+            - RiskEffect('risk_factor.severe_acute_malnutrition_treatment', 'risk_factor.severe_acute_malnutrition_to_mild_child_wasting.transition_rate')
+            - RiskEffect('risk_factor.severe_acute_malnutrition_treatment', 'risk_factor.severe_acute_malnutrition_to_moderate_acute_malnutrition.transition_rate')
 
-            - Risk('risk_factor.mam_treatment')
-            - RiskEffect('risk_factor.mam_treatment', 'risk_factor.moderate_acute_malnutrition_to_mild_child_wasting.transition_rate')
+            - RiskEffect('risk_factor.moderate_acute_malnutrition_treatment', 'risk_factor.moderate_acute_malnutrition_to_mild_child_wasting.transition_rate')
 
             - RiskEffect('risk_factor.x_factor', 'risk_factor.mild_child_wasting.incidence_rate')
             - RiskEffect('risk_factor.x_factor', 'risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
@@ -39,11 +37,13 @@ components:
 
             - XFactorExposure()
 
+            - WastingTreatment('severe_acute_malnutrition_treatment')
+            - WastingTreatment('moderate_acute_malnutrition_treatment')
             - SQLNSTreatment()
 
+            - WastingTreatmentIntervention('severe_acute_malnutrition_treatment')
+            - WastingTreatmentIntervention('moderate_acute_malnutrition_treatment')
             - SQLNSIntervention()
-            - WastingTreatmentIntervention('sam_treatment')
-            - WastingTreatmentIntervention('mam_treatment')
 
             - DisabilityObserver('wasting')
             - MortalityObserver('wasting')

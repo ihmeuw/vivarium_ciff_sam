@@ -300,6 +300,15 @@ class DiseaseObserver(DiseaseObserver_):
     def __repr__(self) -> str:
         return f"DiseaseObserver({self.disease})"
 
+    ################
+    # Name Getters #
+    ################
+
+    @staticmethod
+    def get_previous_state_column_name(disease_name: str) -> str:
+        return f'previous_{disease_name}'
+
+
 
 class CategoricalRiskObserver(CategoricalRiskObserver_):
 

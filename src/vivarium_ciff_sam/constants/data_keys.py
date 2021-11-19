@@ -239,16 +239,16 @@ class __WastingTreatment(NamedTuple):
 
 def _get_wasting_treatment_keys(treatment_type: str) -> __WastingTreatment:
     return __WastingTreatment(
-        EXPOSURE=TargetString(f'risk_factor.{treatment_type}_treatment.exposure'),
-        DISTRIBUTION=TargetString(f'risk_factor.{treatment_type}_treatment.distribution'),
-        CATEGORIES=TargetString(f'risk_factor.{treatment_type}_treatment.categories'),
-        RELATIVE_RISK=TargetString(f'risk_factor.{treatment_type}_treatment.relative_risk'),
-        PAF=TargetString(f'risk_factor.{treatment_type}_treatment.population_attributable_fraction'),
+        EXPOSURE=TargetString(f'risk_factor.{treatment_type}.exposure'),
+        DISTRIBUTION=TargetString(f'risk_factor.{treatment_type}.distribution'),
+        CATEGORIES=TargetString(f'risk_factor.{treatment_type}.categories'),
+        RELATIVE_RISK=TargetString(f'risk_factor.{treatment_type}.relative_risk'),
+        PAF=TargetString(f'risk_factor.{treatment_type}.population_attributable_fraction'),
     )
 
 
-SAM_TREATMENT = _get_wasting_treatment_keys('sam')
-MAM_TREATMENT = _get_wasting_treatment_keys('mam')
+SAM_TREATMENT = _get_wasting_treatment_keys('severe_acute_malnutrition_treatment')
+MAM_TREATMENT = _get_wasting_treatment_keys('moderate_acute_malnutrition_treatment')
 
 
 class __LowBirthWeightShortGestation(NamedTuple):
