@@ -252,7 +252,8 @@ class Risk:
     ########################
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
-        self.population_view.update(self.randomness.get_draw(pop_data.index))
+        self.population_view.update(pd.Series(self.randomness.get_draw(pop_data.index),
+                                              name=self.propensity_column_name))
 
     ####################
     # Pipeline sources #
@@ -295,7 +296,7 @@ class WastingTreatment(Risk):
     ##########################
 
     def get_treated_state(self) -> str:
-        return models.get_risk_category(self.risk.name.split('_treatment')[0])
+        return self.risk.name.split('_treatment')[0]
 
     def get_remission_states(self) -> List[str]:
         return [transition.to_state for transition in models.WASTING.TRANSITIONS
@@ -315,16 +316,16 @@ class WastingTreatment(Risk):
                                             self.wasting_column])
 
     def register_on_time_step_prepare_listener(self, builder: Builder) -> None:
-        builder.event.register_listener('time_step__prepare', self.on_time_step_prepare, priority=9)
+        builder.event.register_listener('time_step__cleanup', self.on_time_step_cleanup)
 
     ########################
     # Event-driven methods #
     ########################
 
-    def on_time_step_prepare(self, event: Event):
+    def on_time_step_cleanup(self, event: Event):
         pop = self.population_view.get(event.index)
         propensity = pop[self.propensity_column_name]
-        remitted_pop = pop[(pop[self.previous_wasting_column] == self.treated_state)
-                           & pop[self.wasting_column].isin(self.remission_states)]
-        propensity[remitted_pop] = self.randomness.get_draw(remitted_pop.index)
+        remitted_mask = ((pop[self.previous_wasting_column] == self.treated_state)
+                         & pop[self.wasting_column].isin(self.remission_states))
+        propensity.loc[remitted_mask] = self.randomness.get_draw(remitted_mask.index)
         self.population_view.update(propensity)
