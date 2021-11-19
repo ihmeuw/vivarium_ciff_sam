@@ -289,7 +289,6 @@ class WastingTreatment(Risk):
         self.wasting_column = data_keys.WASTING.name
 
         self.treated_state = self.get_treated_state()
-        self.remission_states = self.get_remission_states()
 
     ##########################
     # Initialization methods #
@@ -297,10 +296,6 @@ class WastingTreatment(Risk):
 
     def get_treated_state(self) -> str:
         return self.risk.name.split('_treatment')[0]
-
-    def get_remission_states(self) -> List[str]:
-        return [transition.to_state for transition in models.WASTING.TRANSITIONS
-                if transition.from_state == self.treated_state]
 
     #################
     # Setup methods #
@@ -326,6 +321,6 @@ class WastingTreatment(Risk):
         pop = self.population_view.get(event.index)
         propensity = pop[self.propensity_column_name]
         remitted_mask = ((pop[self.previous_wasting_column] == self.treated_state)
-                         & pop[self.wasting_column].isin(self.remission_states))
+                         & pop[self.wasting_column] != self.treated_state)
         propensity.loc[remitted_mask] = self.randomness.get_draw(remitted_mask.index)
         self.population_view.update(propensity)
