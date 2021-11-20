@@ -1,4 +1,3 @@
-from abc import abstractmethod, ABC
 from datetime import datetime
 from typing import Callable, Dict, List, Tuple
 
@@ -13,7 +12,7 @@ from vivarium_public_health.utilities import EntityString
 from vivarium_ciff_sam.constants import data_keys, data_values, scenarios
 
 
-class LinearScaleUpIntervention(ABC):
+class LinearScaleUpIntervention:
 
     def __init__(self, treatment: str):
         self.treatment = EntityString(treatment)
@@ -102,9 +101,13 @@ class LinearScaleUpIntervention(ABC):
     def get_population_view(self, builder: Builder, required_columns: List[str]):
         return builder.population.get_view(required_columns)
 
-    @abstractmethod
     def apply_scale_up(self, idx: pd.Index, target: pd.Series, scale_up_progress: float) -> pd.Series:
-        pass
+        start_value = self.scale_up_start_value(idx)
+        end_value = self.scale_up_end_value(idx)
+        value_increase = scale_up_progress * (end_value - start_value)
+
+        target.loc[idx] += value_increase
+        return target
 
     def coverage_effect(self, idx: pd.Index, target: pd.Series) -> pd.Series:
         if not self.is_intervention_scenario or self.clock() < self.scale_up_start_date:
