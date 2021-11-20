@@ -26,6 +26,8 @@ class LinearScaleUpIntervention(ABC):
                 f"{self.treatment.name}": {
                     "start": 'sim_start',
                     "end": 'sim_end',
+                    "start_value": 'data',
+                    "end_value": 'data',
                 }
             }
         }
@@ -66,9 +68,26 @@ class LinearScaleUpIntervention(ABC):
 
         return get_endpoint('start'), get_endpoint('end')
 
-    @abstractmethod
     def get_scale_up_value_endpoints(self, builder: Builder) -> Tuple[LookupTable, LookupTable]:
-        pass
+        scale_up_config = builder.configuration.scale_up_interventions[f'{self.treatment.name}']
+
+        def get_endpoint_value(endpoint_type: str) -> LookupTable:
+            if scale_up_config[endpoint_type] == 'data':
+                endpoint = self.get_endpoint_value_from_data(builder, endpoint_type)
+            else:
+                endpoint = builder.lookup.build_table(scale_up_config[endpoint_type])
+            return endpoint
+
+        return get_endpoint_value('start_value'), get_endpoint_value('end_value')
+
+    def get_endpoint_value_from_data(self, builder: Builder, endpoint_type: str) -> LookupTable:
+        if endpoint_type == 'start_value':
+            endpoint_data = builder.data.load(f'{self.treatment}.exposure')
+        elif endpoint_type == 'end_value':
+            endpoint_data = builder.data.load(f'alternate_{self.treatment}.exposure')
+        else:
+            raise ValueError(f'Invalid endpoint type {endpoint_type}. Allowed types are "start_value" and "end_value".')
+        return builder.lookup.build_table(endpoint_data)
 
     def get_required_columns(self) -> List[str]:
         return []
@@ -121,6 +140,8 @@ class SQLNSIntervention(LinearScaleUpIntervention):
                         "month": data_values.SCALE_UP_END_DT.month,
                         "day": data_values.SCALE_UP_END_DT.day,
                     },
+                    "start_value": data_values.SQ_LNS.COVERAGE_BASELINE,
+                    "end_value": data_values.SQ_LNS.COVERAGE_RAMP_UP,
                 }
             }
         }
@@ -182,6 +203,8 @@ class WastingTreatmentIntervention(LinearScaleUpIntervention):
                         "month": data_values.SCALE_UP_END_DT.month,
                         "day": data_values.SCALE_UP_END_DT.day,
                     },
+                    "start_value": 'data',
+                    "end_value": data_values.WASTING.ALTERNATIVE_TX_COVERAGE,
                 }
             }
         }
@@ -189,14 +212,16 @@ class WastingTreatmentIntervention(LinearScaleUpIntervention):
     def get_is_intervention_scenario(self, builder: Builder) -> bool:
         return scenarios.SCENARIOS[builder.configuration.intervention.scenario].has_alternative_wasting_treatment
 
-    def get_scale_up_value_endpoints(self, builder: Builder) -> Tuple[LookupTable, LookupTable]:
+    def get_endpoint_value_from_data(self, builder: Builder, endpoint_type: str) -> LookupTable:
+        if endpoint_type != 'start_value':
+            raise ValueError(f'Invalid endpoint type {endpoint_type}. "start_value" is the only allowed type.')
+
         baseline_coverage = builder.data.load(self.treatment_keys.EXPOSURE)
         baseline_coverage = (
             baseline_coverage[baseline_coverage['parameter'] == self.treatment_keys.BASELINE_COVERAGE]
             .drop(columns='parameter')
         )
-        return (builder.lookup.build_table(baseline_coverage, key_columns=['sex'], parameter_columns=['age', 'year']),
-                builder.lookup.build_table(data_values.WASTING.ALTERNATIVE_TX_COVERAGE))
+        return builder.lookup.build_table(baseline_coverage, key_columns=['sex'], parameter_columns=['age', 'year'])
 
     def register_intervention_modifiers(self, builder: Builder):
         # NOTE: this operation is NOT commutative. This pipeline must not be modified in any other component.
