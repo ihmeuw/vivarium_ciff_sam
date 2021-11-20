@@ -17,7 +17,7 @@ class LinearScaleUpIntervention(ABC):
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
         """Perform this component's setup."""
-        self.scenario = self.get_scenario(builder)
+        self.is_intervention_scenario = self.get_is_intervention_scenario(builder)
         self.clock = self.get_clock(builder)
         self.scale_up_start_date, self.scale_up_end_date = self.get_scale_up_date_endpoints()
         self.scale_up_start_value, self.scale_up_end_value = self.get_scale_up_value_endpoints(builder)
@@ -30,9 +30,8 @@ class LinearScaleUpIntervention(ABC):
         if required_columns:
             self.population_view = self.get_population_view(builder, required_columns)
 
-    # noinspection PyMethodMayBeStatic
-    def get_scenario(self, builder: Builder) -> scenarios.Scenario:
-        return scenarios.SCENARIOS[builder.configuration.intervention.scenario]
+    def get_is_intervention_scenario(self, builder: Builder) -> bool:
+        return builder.configuration.intervention.scenario != 'baseline'
 
     # noinspection PyMethodMayBeStatic
     def get_clock(self, builder: Builder) -> Callable[[], Time]:
@@ -60,15 +59,11 @@ class LinearScaleUpIntervention(ABC):
         return builder.population.get_view(required_columns)
 
     @abstractmethod
-    def is_intervention_scenario(self) -> bool:
-        pass
-
-    @abstractmethod
     def apply_scale_up(self, idx: pd.Index, target: pd.Series, scale_up_progress: float) -> pd.Series:
         pass
 
     def coverage_effect(self, idx: pd.Index, target: pd.Series) -> pd.Series:
-        if not self.is_intervention_scenario() or self.clock() < self.scale_up_start_date:
+        if not self.is_intervention_scenario or self.clock() < self.scale_up_start_date:
             scale_up_progress = 0.0
         elif self.scale_up_start_date <= self.clock() < self.scale_up_end_date:
             scale_up_progress = ((self.clock() - self.scale_up_start_date)
@@ -84,6 +79,11 @@ class SQLNSIntervention(LinearScaleUpIntervention):
 
     def __init__(self):
         self.name = 'sqlns_intervention'
+        self.sqlns_propensity_pipeline_name = data_keys.SQ_LNS.PROPENSITY_PIPELINE
+        self.sqlns_coverage_pipeline_name = data_keys.SQ_LNS.COVERAGE_PIPELINE
+
+    def get_is_intervention_scenario(self, builder: Builder) -> bool:
+        return scenarios.SCENARIOS[builder.configuration.intervention.scenario].has_sqlns
 
     def get_scale_up_value_endpoints(self, builder: Builder) -> Tuple[LookupTable, LookupTable]:
         return (builder.lookup.build_table(data_values.SQ_LNS.COVERAGE_BASELINE),
@@ -94,22 +94,19 @@ class SQLNSIntervention(LinearScaleUpIntervention):
 
     # noinspection PyMethodMayBeStatic
     def get_required_pipelines(self, builder: Builder) -> Dict[str, Pipeline]:
-        return {data_keys.SQ_LNS.PROPENSITY: builder.value.get_value(data_keys.SQ_LNS.PROPENSITY)}
+        return {self.sqlns_propensity_pipeline_name: builder.value.get_value(self.sqlns_propensity_pipeline_name)}
 
     def register_intervention_modifiers(self, builder: Builder):
         builder.value.register_value_modifier(
-            data_keys.SQ_LNS.COVERAGE,
+            self.sqlns_coverage_pipeline_name,
             modifier=self.coverage_effect,
             requires_columns=['age'],
-            requires_values=[data_keys.SQ_LNS.PROPENSITY]
+            requires_values=[self.sqlns_propensity_pipeline_name]
         )
-
-    def is_intervention_scenario(self) -> bool:
-        return self.scenario.has_sqlns
 
     def apply_scale_up(self, idx: pd.Index, target: pd.Series, scale_up_progress: float) -> pd.Series:
         age = self.population_view.get(idx)['age']
-        propensity = self.pipelines[data_keys.SQ_LNS.PROPENSITY](idx)
+        propensity = self.pipelines[self.sqlns_propensity_pipeline_name](idx)
         start_value = self.scale_up_start_value(idx)
         end_value = self.scale_up_end_value(idx)
 
@@ -127,6 +124,9 @@ class WastingTreatmentIntervention(LinearScaleUpIntervention):
             data_keys.MAM_TREATMENT.name: data_keys.MAM_TREATMENT
         }[wasting_treatment]
 
+    def get_is_intervention_scenario(self, builder: Builder) -> bool:
+        return scenarios.SCENARIOS[builder.configuration.intervention.scenario].has_alternative_wasting_treatment
+
     def get_scale_up_value_endpoints(self, builder: Builder) -> Tuple[LookupTable, LookupTable]:
         baseline_coverage = builder.data.load(self.treatment.EXPOSURE)
         baseline_coverage = (
@@ -142,9 +142,6 @@ class WastingTreatmentIntervention(LinearScaleUpIntervention):
             f'risk_factor.{self.treatment.name}.exposure_parameters',
             modifier=self.coverage_effect,
         )
-
-    def is_intervention_scenario(self) -> bool:
-        return self.scenario.has_alternative_wasting_treatment
 
     def apply_scale_up(self, idx: pd.Index, target: pd.Series, scale_up_progress: float) -> pd.Series:
         start_value = self.scale_up_start_value(idx)

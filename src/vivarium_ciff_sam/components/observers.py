@@ -12,6 +12,7 @@ from vivarium_public_health.metrics.utilities import (get_deaths, get_state_pers
                                                       get_years_lived_with_disability, get_years_of_life_lost,
                                                       TransitionString)
 
+from vivarium_ciff_sam.components.treatment import SQLNSTreatment
 from vivarium_ciff_sam.constants import models, results, data_keys
 
 
@@ -77,7 +78,8 @@ class ResultsStratifier:
                                   'uncovered': data_keys.MAM_TREATMENT.UNCOVERED_CATEGORIES})
 
         if self.by_sqlns:
-            setup_stratification(data_keys.SQ_LNS.COVERAGE, True, 'sq_lns', {'covered': True, 'uncovered': False})
+            setup_stratification(SQLNSTreatment.get_coverage_pipeline_name(), True, 'sq_lns',
+                                 {'covered': True, 'uncovered': False})
 
         if self.by_x_factor:
             setup_stratification('x_factor.exposure', True, 'x_factor', ('cat2', 'cat1'))
@@ -307,7 +309,6 @@ class DiseaseObserver(DiseaseObserver_):
     @staticmethod
     def get_previous_state_column_name(disease_name: str) -> str:
         return f'previous_{disease_name}'
-
 
 
 class CategoricalRiskObserver(CategoricalRiskObserver_):

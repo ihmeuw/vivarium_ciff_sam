@@ -82,7 +82,7 @@ configuration:
         exit_age: 5
 
     intervention:
-        scenario: 'baseline'
+        scenario: 'wasting_treatment'
 
     child_wasting:
         mild_child_wasting_untreated_recovery_time: 30
