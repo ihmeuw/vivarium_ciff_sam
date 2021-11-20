@@ -37,12 +37,12 @@ components:
 
             - XFactorExposure()
 
-            - WastingTreatment('severe_acute_malnutrition_treatment')
-            - WastingTreatment('moderate_acute_malnutrition_treatment')
+            - WastingTreatment('risk_factor.severe_acute_malnutrition_treatment')
+            - WastingTreatment('risk_factor.moderate_acute_malnutrition_treatment')
             - SQLNSTreatment()
 
-            - WastingTreatmentIntervention('severe_acute_malnutrition_treatment')
-            - WastingTreatmentIntervention('moderate_acute_malnutrition_treatment')
+            - WastingTreatmentIntervention('risk_factor.severe_acute_malnutrition_treatment')
+            - WastingTreatmentIntervention('risk_factor.moderate_acute_malnutrition_treatment')
             - SQLNSIntervention()
 
             - DisabilityObserver('wasting')
@@ -67,7 +67,7 @@ configuration:
         random_seed: 0
     time:
         start:
-            year: 2022
+            year: 2024
             month: 1
             day: 1
         end:
@@ -82,7 +82,7 @@ configuration:
         exit_age: 5
 
     intervention:
-        scenario: 'wasting_treatment'
+        scenario: 'sqlns'
 
     child_wasting:
         mild_child_wasting_untreated_recovery_time: 30

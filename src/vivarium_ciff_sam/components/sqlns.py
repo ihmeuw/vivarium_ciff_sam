@@ -27,7 +27,7 @@ class SQLNSTreatment:
 
         required_columns = [
             'age',
-            self.propensity_column_name
+            self.propensity_column_name,
         ]
 
         self.propensity = builder.value.register_value_producer(

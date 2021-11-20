@@ -200,7 +200,7 @@ class Risk:
 class WastingTreatment(Risk):
 
     def __init__(self, treatment_type: str):
-        super().__init__(f'risk_factor.{treatment_type}')
+        super().__init__(treatment_type)
 
         self.previous_wasting_column = DiseaseObserver.get_previous_state_column_name(data_keys.WASTING.name)
         self.wasting_column = data_keys.WASTING.name
