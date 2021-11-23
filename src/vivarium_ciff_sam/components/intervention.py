@@ -5,12 +5,12 @@ import pandas as pd
 from vivarium.framework.engine import Builder
 from vivarium.framework.lookup import LookupTable
 from vivarium.framework.values import Pipeline
-from vivarium_public_health.treatment import LinearScaleUpIntervention
+from vivarium_public_health.treatment import LinearScaleUp
 
 from vivarium_ciff_sam.constants import data_keys, data_values, scenarios
 
 
-class SQLNSIntervention(LinearScaleUpIntervention):
+class SQLNSIntervention(LinearScaleUp):
 
     def __init__(self):
         super().__init__('treatment.sqlns')
@@ -82,7 +82,7 @@ class SQLNSIntervention(LinearScaleUpIntervention):
         return target | effect
 
 
-class WastingTreatmentIntervention(LinearScaleUpIntervention):
+class WastingTreatmentIntervention(LinearScaleUp):
 
     def __init__(self, treatment: str):
         super().__init__(treatment)
