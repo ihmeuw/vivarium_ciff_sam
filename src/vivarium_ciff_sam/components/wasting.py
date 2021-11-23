@@ -183,7 +183,7 @@ def ChildWasting():
     return RiskModel(
         models.WASTING.MODEL_NAME,
         get_data_functions={'cause_specific_mortality_rate': lambda *_: 0},
-        states=[tmrel, mild, moderate, severe]
+        states=[severe, moderate, mild, tmrel]
     )
 
 

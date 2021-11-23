@@ -85,10 +85,10 @@ configuration:
         scenario: 'baseline'
 
     child_wasting:
-        mild_child_wasting_untreated_recovery_time: 27
+        mild_child_wasting_untreated_recovery_time: 30
 
     x_factor:
-        exposure: 0.32
+        exposure: 0.5
 
     effect_of_x_factor_on_mild_child_wasting:
         incidence_rate:
