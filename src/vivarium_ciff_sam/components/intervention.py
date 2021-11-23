@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import pandas as pd
 
@@ -17,32 +17,39 @@ class SQLNSIntervention(LinearScaleUpIntervention):
         self.sqlns_propensity_pipeline_name = data_keys.SQ_LNS.PROPENSITY_PIPELINE
         self.sqlns_coverage_pipeline_name = data_keys.SQ_LNS.COVERAGE_PIPELINE
 
-    def get_configuration_defaults(self) -> Dict[str, Dict]:
+    ##############
+    # Properties #
+    ##############
+
+    @property
+    def configuration_defaults(self) -> Dict[str, Dict]:
         return {
-            "scale_up_interventions": {
-                f"{self.treatment.name}": {
-                    "start": {
+            f"{self.treatment.name}_scale_up": {
+                "start": {
+                    "date": {
                         "year": data_values.SCALE_UP_START_DT.year,
                         "month": data_values.SCALE_UP_START_DT.month,
                         "day": data_values.SCALE_UP_START_DT.day,
                     },
-                    "end": {
+                    "value": data_values.SQ_LNS.COVERAGE_BASELINE,
+                },
+                "end": {
+                    "date": {
                         "year": data_values.SCALE_UP_END_DT.year,
                         "month": data_values.SCALE_UP_END_DT.month,
                         "day": data_values.SCALE_UP_END_DT.day,
                     },
-                    "start_value": data_values.SQ_LNS.COVERAGE_BASELINE,
-                    "end_value": data_values.SQ_LNS.COVERAGE_RAMP_UP,
+                    "value": data_values.SQ_LNS.COVERAGE_RAMP_UP,
                 }
             }
         }
 
+    #################
+    # Setup methods #
+    #################
+
     def get_is_intervention_scenario(self, builder: Builder) -> bool:
         return scenarios.SCENARIOS[builder.configuration.intervention.scenario].has_sqlns
-
-    def get_scale_up_value_endpoints(self, builder: Builder) -> Tuple[LookupTable, LookupTable]:
-        return (builder.lookup.build_table(data_values.SQ_LNS.COVERAGE_BASELINE),
-                builder.lookup.build_table(data_values.SQ_LNS.COVERAGE_RAMP_UP))
 
     def get_required_columns(self) -> List[str]:
         return ["age"]
@@ -58,6 +65,10 @@ class SQLNSIntervention(LinearScaleUpIntervention):
             requires_columns=['age'],
             requires_values=[self.sqlns_propensity_pipeline_name]
         )
+
+    ##################
+    # Helper methods #
+    ##################
 
     def apply_scale_up(self, idx: pd.Index, target: pd.Series, scale_up_progress: float) -> pd.Series:
         # todo simply use idx rather than target.index once sqlns treatment sub-classes Risk
@@ -81,32 +92,47 @@ class WastingTreatmentIntervention(LinearScaleUpIntervention):
             data_keys.MAM_TREATMENT.name: data_keys.MAM_TREATMENT
         }[self.treatment.name]
 
-    def get_configuration_defaults(self) -> Dict[str, Dict]:
+    ##############
+    # Properties #
+    ##############
+
+    @property
+    def configuration_defaults(self) -> Dict[str, Dict]:
         return {
-            "scale_up_interventions": {
-                f"{self.treatment.name}": {
-                    "start": {
+            f"{self.treatment.name}_scale_up": {
+                "start": {
+                    "date": {
                         "year": data_values.SCALE_UP_START_DT.year,
                         "month": data_values.SCALE_UP_START_DT.month,
                         "day": data_values.SCALE_UP_START_DT.day,
                     },
-                    "end": {
+                    "value": 'data',
+                },
+                "end": {
+                    "date": {
                         "year": data_values.SCALE_UP_END_DT.year,
                         "month": data_values.SCALE_UP_END_DT.month,
                         "day": data_values.SCALE_UP_END_DT.day,
                     },
-                    "start_value": 'data',
-                    "end_value": data_values.WASTING.ALTERNATIVE_TX_COVERAGE,
+                    "value": data_values.WASTING.ALTERNATIVE_TX_COVERAGE,
                 }
             }
         }
 
+    #################
+    # Setup methods #
+    #################
+
     def get_is_intervention_scenario(self, builder: Builder) -> bool:
         return scenarios.SCENARIOS[builder.configuration.intervention.scenario].has_alternative_wasting_treatment
 
+    ##################
+    # Helper methods #
+    ##################
+
     def get_endpoint_value_from_data(self, builder: Builder, endpoint_type: str) -> LookupTable:
-        if endpoint_type != 'start_value':
-            raise ValueError(f'Invalid endpoint type {endpoint_type}. "start_value" is the only allowed type.')
+        if endpoint_type != 'start':
+            raise ValueError(f'Invalid endpoint type {endpoint_type}. "start" is the only allowed type.')
 
         baseline_coverage = builder.data.load(self.treatment_keys.EXPOSURE)
         baseline_coverage = (
@@ -115,14 +141,8 @@ class WastingTreatmentIntervention(LinearScaleUpIntervention):
         )
         return builder.lookup.build_table(baseline_coverage, key_columns=['sex'], parameter_columns=['age', 'year'])
 
-    def register_intervention_modifiers(self, builder: Builder):
-        # NOTE: this operation is NOT commutative. This pipeline must not be modified in any other component.
-        builder.value.register_value_modifier(
-            f'risk_factor.{self.treatment.name}.exposure_parameters',
-            modifier=self.coverage_effect,
-        )
-
     def apply_scale_up(self, idx: pd.Index, target: pd.Series, scale_up_progress: float) -> pd.Series:
+        # NOTE: this operation is NOT commutative. This pipeline must not be modified in any other component.
         start_value = self.scale_up_start_value(idx)
         end_value = self.scale_up_end_value(idx)
 
