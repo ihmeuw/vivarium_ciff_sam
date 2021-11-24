@@ -17,12 +17,7 @@ class SQLNSIntervention(LinearScaleUp):
         self.sqlns_propensity_pipeline_name = data_keys.SQ_LNS.PROPENSITY_PIPELINE
         self.sqlns_coverage_pipeline_name = data_keys.SQ_LNS.COVERAGE_PIPELINE
 
-    ##############
-    # Properties #
-    ##############
-
-    @property
-    def configuration_defaults(self) -> Dict[str, Dict]:
+    def get_configuration_defaults(self) -> Dict[str, Dict]:
         return {
             f"{self.treatment.name}_scale_up": {
                 "start": {
@@ -92,12 +87,7 @@ class WastingTreatmentIntervention(LinearScaleUp):
             data_keys.MAM_TREATMENT.name: data_keys.MAM_TREATMENT
         }[self.treatment.name]
 
-    ##############
-    # Properties #
-    ##############
-
-    @property
-    def configuration_defaults(self) -> Dict[str, Dict]:
+    def get_configuration_defaults(self) -> Dict[str, Dict]:
         return {
             f"{self.treatment.name}_scale_up": {
                 "start": {
