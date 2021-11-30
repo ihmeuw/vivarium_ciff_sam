@@ -13,7 +13,6 @@ from vivarium_public_health.utilities import EntityString
 from vivarium_public_health.risks.distributions import SimulationDistribution
 from vivarium_public_health.risks.data_transformations import get_exposure_post_processor
 
-from vivarium_ciff_sam.components import DiseaseObserver
 from vivarium_ciff_sam.constants import data_keys, data_values, models
 from vivarium_ciff_sam.utilities import get_random_variable
 
@@ -21,57 +20,60 @@ from vivarium_ciff_sam.utilities import get_random_variable
 class SQLNSTreatment:
     """Manages SQ-LNS prevention"""
 
-    @property
-    def name(self) -> str:
-        """The name of this component."""
-        return 'prevention_algorithm'
+    def __init__(self):
+        self.name = 'sq_lns'
+        self._randomness_stream_name = f'initial_{self.name}_propensity'
+        self.propensity_column_name = data_keys.SQ_LNS.PROPENSITY_COLUMN
+        self.propensity_pipeline_name = data_keys.SQ_LNS.PROPENSITY_PIPELINE
+        self.coverage_pipeline_name = data_keys.SQ_LNS.COVERAGE_PIPELINE
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
         draw = builder.configuration.input_data.input_draw_number
-        self.randomness = builder.randomness.get_stream('initial_sq_lns_propensity')
+        self.randomness = builder.randomness.get_stream(self._randomness_stream_name)
 
         self.wasting_risk_ratio = get_random_variable(draw, *data_values.SQ_LNS.RISK_RATIO_WASTING)
         self.severe_stunting_risk_ratio = get_random_variable(draw, *data_values.SQ_LNS.RISK_RATIO_STUNTING_SEVERE)
         self.moderate_stunting_risk_ratio = get_random_variable(draw, *data_values.SQ_LNS.RISK_RATIO_STUNTING_MODERATE)
 
-        propensity_col = 'sq_lns_propensity'
         required_columns = [
             'age',
-            propensity_col,
+            self.propensity_column_name,
         ]
 
         self.propensity = builder.value.register_value_producer(
-            data_keys.SQ_LNS.PROPENSITY,
-            source=lambda index: self.population_view.get(index)[propensity_col],
-            requires_columns=[propensity_col]
+            self.propensity_pipeline_name,
+            source=lambda index: self.population_view.get(index)[self.propensity_column_name],
+            requires_columns=[self.propensity_column_name]
         )
 
         self.coverage = builder.value.register_value_producer(
-            data_keys.SQ_LNS.COVERAGE,
+            self.coverage_pipeline_name,
             source=self.get_current_coverage,
             requires_columns=['age'],
-            requires_values=[data_keys.SQ_LNS.PROPENSITY],
+            requires_values=[self.propensity_pipeline_name],
         )
 
         builder.value.register_value_modifier(
             f'{models.WASTING.MILD_STATE_NAME}_to_{models.WASTING.MODERATE_STATE_NAME}.transition_rate',
             modifier=self.apply_wasting_treatment,
-            requires_values=[data_keys.SQ_LNS.COVERAGE]
+            requires_values=[self.coverage_pipeline_name]
         )
 
         builder.value.register_value_modifier(
             'risk_factor.child_stunting.exposure_parameters',
             modifier=self.apply_stunting_treatment,
-            requires_values=[data_keys.SQ_LNS.COVERAGE]
+            requires_values=[self.coverage_pipeline_name]
         )
 
         self.population_view = builder.population.get_view(required_columns)
-        builder.population.initializes_simulants(self.on_initialize_simulants, creates_columns=[propensity_col],
-                                                 requires_streams=['initial_sq_lns_propensity'])
+        builder.population.initializes_simulants(self.on_initialize_simulants,
+                                                 creates_columns=[self.propensity_column_name],
+                                                 requires_streams=[self._randomness_stream_name])
 
     def on_initialize_simulants(self, pop_data):
-        self.population_view.update(pd.Series(self.randomness.get_draw(pop_data.index), name='sq_lns_propensity'))
+        self.population_view.update(pd.Series(self.randomness.get_draw(pop_data.index),
+                                              name=self.propensity_column_name))
 
     def get_current_coverage(self, index: pd.Index) -> pd.Series:
         age = self.population_view.get(index)['age']
@@ -283,9 +285,9 @@ class Risk:
 class WastingTreatment(Risk):
 
     def __init__(self, treatment_type: str):
-        super().__init__(f'risk_factor.{treatment_type}')
+        super().__init__(treatment_type)
 
-        self.previous_wasting_column = DiseaseObserver.get_previous_state_column_name(data_keys.WASTING.name)
+        self.previous_wasting_column = f'previous_{data_keys.WASTING.name}'
         self.wasting_column = data_keys.WASTING.name
 
         self.treated_state = self.get_treated_state()

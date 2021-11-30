@@ -195,8 +195,9 @@ STUNTING = __Stunting()
 
 
 class __SQLNS(NamedTuple):
-    COVERAGE = 'sq_lns.coverage'
-    PROPENSITY = 'sq_lns.propensity'
+    PROPENSITY_COLUMN = 'sq_lns_propensity'
+    PROPENSITY_PIPELINE = 'sq_lns.propensity'
+    COVERAGE_PIPELINE = 'sq_lns.coverage'
 
     @property
     def name(self):

@@ -18,7 +18,7 @@ class __Scenarios(NamedTuple):
     WASTING_TREATMENT: Scenario = Scenario('wasting_treatment', True, False)
     SQLNS: Scenario = Scenario('sqlns', True, True)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> Scenario:
         for scenario in self:
             if scenario.name == item:
                 return scenario
