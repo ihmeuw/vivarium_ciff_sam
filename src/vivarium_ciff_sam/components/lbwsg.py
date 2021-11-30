@@ -1,15 +1,13 @@
 from abc import abstractmethod, ABC
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import pandas as pd
 
 from vivarium.framework.engine import Builder
-from vivarium.framework.population import PopulationView
-from vivarium.framework.randomness import RandomnessStream
 from vivarium.framework.values import Pipeline
 from vivarium_public_health.risks import Risk
 from vivarium_public_health.risks.data_transformations import get_exposure_post_processor
-from vivarium_public_health.utilities import EntityString
+from vivarium_public_health.risks.distributions import SimulationDistribution
 
 from vivarium_ciff_sam.constants import data_keys
 
@@ -20,65 +18,46 @@ class LBWSGRisk(Risk, ABC):
     `risk_factor.low_birth_weight_and_short_gestation` must exist.
     """
 
-    LBWSG_EXPOSURE_PIPELINE_NAME = f'{data_keys.LBWSG.name}.exposure'
-
     def __init__(self, risk: str):
-        """
-        Parameters
-        ----------
-        risk :
-            the type and name of a risk, specified as "type.name". Type is singular.
-        """
-        self.risk = EntityString(risk)
-        self.configuration_defaults = {f'{self.risk.name}': Risk.configuration_defaults['risk']}
-        self.exposure_distribution = None
-        self._sub_components = []
+        super(LBWSGRisk, self).__init__(risk)
+        self.lbwsg_exposure_pipeline_name = f'{data_keys.LBWSG.name}.exposure'
+
+    ##########################
+    # Initialization methods #
+    ##########################
+
+    def get_exposure_distribution(self) -> SimulationDistribution:
+        return None
+
+    ##############
+    # Properties #
+    ##############
 
     @property
-    def propensity_column_name(self) -> str:
-        return f'{self.risk.name}_propensity'
+    def sub_components(self) -> List:
+        return []
 
-    @property
-    def propensity_randomness_stream_name(self) -> str:
-        return f'initial_{self.risk.name}_propensity'
-
-    @property
-    def propensity_pipeline_name(self) -> str:
-        return f'{self.risk.name}.propensity'
-
-    @property
-    def exposure_pipeline_name(self) -> str:
-        return f'{self.risk.name}.exposure'
+    #################
+    # Setup methods #
+    #################
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
-        self.randomness = self.get_propensity_randomness_stream(builder)
-        self.propensity = self.get_propensity_pipeline(builder)
-        self.exposure = self.get_exposure_pipeline(builder)
-        self.lbwsg_exposure = LBWSGRisk.get_lbwsg_exposure_pipeline(builder)
+        super().setup(builder)
+        self.lbwsg_exposure = self.get_lbwsg_exposure_pipeline(builder)
         self.category_endpoints = self.get_category_endpoints(builder)
-
-        self.population_view = self.get_population_view(builder)
-        self.register_simulant_initializer(builder)
-
-    def get_propensity_randomness_stream(self, builder: Builder) -> RandomnessStream:
-        return builder.randomness.get_stream(self.propensity_randomness_stream_name)
-
-    def get_propensity_pipeline(self, builder: Builder) -> Pipeline:
-        return builder.value.register_value_producer(
-            self.propensity_pipeline_name,
-            source=lambda index: self.population_view.get(index)[self.propensity_column_name],
-            requires_columns=[self.propensity_column_name]
-        )
 
     def get_exposure_pipeline(self, builder: Builder) -> Pipeline:
         return builder.value.register_value_producer(
             self.exposure_pipeline_name,
             source=self.get_current_exposure,
             requires_columns=['age', 'sex'],
-            requires_values=[self.propensity_pipeline_name, LBWSGRisk.LBWSG_EXPOSURE_PIPELINE_NAME],
+            requires_values=[self.propensity_pipeline_name, self.lbwsg_exposure_pipeline_name],
             preferred_post_processor=get_exposure_post_processor(builder, self.risk)
         )
+
+    def get_lbwsg_exposure_pipeline(self, builder: Builder) -> Pipeline:
+        return builder.value.get_value(self.lbwsg_exposure_pipeline_name)
 
     def get_category_endpoints(self, builder: Builder) -> Dict[str, Tuple[float, float]]:
         category_endpoints = {cat: self.parse_description(description)
@@ -86,15 +65,9 @@ class LBWSGRisk(Risk, ABC):
                               in builder.data.load(f'risk_factor.{data_keys.LBWSG.name}.categories').items()}
         return category_endpoints
 
-    def get_population_view(self, builder: Builder) -> PopulationView:
-        return builder.population.get_view([self.propensity_column_name])
-
-    def register_simulant_initializer(self, builder: Builder) -> None:
-        builder.population.initializes_simulants(
-            self.on_initialize_simulants,
-            creates_columns=[self.propensity_column_name],
-            requires_streams=[self.propensity_randomness_stream_name]
-        )
+    ##################################
+    # Pipeline sources and modifiers #
+    ##################################
 
     def get_current_exposure(self, index):
         propensities = self.propensity(index)
@@ -109,9 +82,9 @@ class LBWSGRisk(Risk, ABC):
         exposures.name = f'{self.risk}.exposure'
         return exposures
 
-    @staticmethod
-    def get_lbwsg_exposure_pipeline(builder: Builder) -> Pipeline:
-        return builder.value.get_value(LBWSGRisk.LBWSG_EXPOSURE_PIPELINE_NAME)
+    ##################
+    # Helper methods #
+    ##################
 
     @staticmethod
     @abstractmethod

@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Dict, Union
 
 import numpy as np
 import pandas as pd
@@ -30,12 +30,16 @@ class RiskModel(DiseaseModel):
         }
     }
 
+    ##########################
+    # Initialization methods #
+    ##########################
+
     def __init__(self, risk, **kwargs):
         super().__init__(risk, **kwargs)
-        self.configuration_defaults = {
-            f'{self.state_column}': {**Risk.configuration_defaults['risk'],
-                                     **RiskModel.configuration_defaults['risk']},
-        }
+        self.configuration_defaults = self.get_configuration_defaults()
+
+    def get_configuration_defaults(self) -> Dict[str, Dict]:
+        return {self.state_column: {**Risk.configuration_defaults['risk'], **RiskModel.configuration_defaults['risk']}}
 
     # This would be a preferable name, but the generic DiseaseObserver works with no modifications if we use the
     # standard naming from DiseaseModel. Extending to DiseaseObserver to RiskObserver would provide no functional gain
@@ -43,6 +47,10 @@ class RiskModel(DiseaseModel):
     # @property
     # def name(self):
     #     return f"risk_model.{self.state_column}"
+
+    #################
+    # Setup methods #
+    #################
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
@@ -77,10 +85,18 @@ class RiskModel(DiseaseModel):
                                                                  EntityString(f'risk_factor.{self.state_column}'))
         )
 
+    ########################
+    # Event-driven methods #
+    ########################
+
     def on_initialize_simulants(self, pop_data):
         super().on_initialize_simulants(pop_data)
         initial_propensity = self.randomness.get_draw(pop_data.index).rename(f'initial_{self.state_column}_propensity')
         self.population_view.update(initial_propensity)
+
+    ##################################
+    # Pipeline sources and modifiers #
+    ##################################
 
     def get_current_exposure(self, index: pd.Index) -> pd.Series:
         wasting_state = self.population_view.subview([self.state_column]).get(index)[self.state_column]
