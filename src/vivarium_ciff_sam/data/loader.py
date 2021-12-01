@@ -430,6 +430,7 @@ def load_lbwsg_rr(key: str, location: str) -> pd.DataFrame:
         data = data[data['year_id'] == 2019].drop(columns='year_id')
         data = utilities.process_relative_risk(data, key, entity, location, metadata.GBD_2019_ROUND_ID,
                                                metadata.GBD_2020_AGE_GROUPS, whitelist_sids=True)
+        data = data[data.index.get_level_values('year_start') == 2019]
         return data
     else:
         raise ValueError(f'Unrecognized key {key}')
