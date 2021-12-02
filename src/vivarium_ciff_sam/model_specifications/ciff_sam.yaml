@@ -98,7 +98,7 @@ configuration:
         transition_rate:
             relative_risk: 3.16
     effect_of_x_factor_on_moderate_acute_malnutrition_to_severe_acute_malnutrition:
-        conditional_exposure: 0.77
+        conditional_exposure: 0.78
         transition_rate:
             relative_risk: 3.16
 
