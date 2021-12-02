@@ -94,9 +94,11 @@ configuration:
         incidence_rate:
             relative_risk: 1.0
     effect_of_x_factor_on_mild_child_wasting_to_moderate_acute_malnutrition:
+        conditional_exposure: 0.54
         transition_rate:
             relative_risk: 3.16
     effect_of_x_factor_on_moderate_acute_malnutrition_to_severe_acute_malnutrition:
+        conditional_exposure: 0.77
         transition_rate:
             relative_risk: 3.16
 
