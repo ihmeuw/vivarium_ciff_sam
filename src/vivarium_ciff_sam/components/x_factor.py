@@ -50,8 +50,10 @@ class XFactorEffect(RiskEffect):
     def get_configuration_defaults(self) -> Dict[str, Dict]:
         return {
             f'effect_of_{self.risk.name}_on_{self.target.name}': {
-                'conditional_exposure': XFactorEffect.configuration_defaults['effect_of_risk_on_target']['exposure'],
-                self.target.measure: XFactorEffect.configuration_defaults['effect_of_risk_on_target']['measure']
+                'conditional_exposure':
+                    XFactorEffect.configuration_defaults['effect_of_risk_on_target']['conditional_exposure'],
+                self.target.measure:
+                    XFactorEffect.configuration_defaults['effect_of_risk_on_target']['measure']
             }
         }
 
