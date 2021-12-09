@@ -67,7 +67,7 @@ class LBWSGRisk(Risk, ABC):
 
     @classmethod
     def _get_category_intervals(cls, builder: Builder) -> pd.Series:
-        return cls._get_intervals_from_categories(builder.data.load(f'risk_factor.{data_keys.LBWSG.name}.categories'))
+        return cls.get_intervals_from_categories(builder.data.load(f'risk_factor.{data_keys.LBWSG.name}.categories'))
 
     ##################################
     # Pipeline sources and modifiers #
@@ -92,7 +92,7 @@ class LBWSGRisk(Risk, ABC):
     ##################
 
     @classmethod
-    def _get_intervals_from_categories(cls, categories: Dict[str, str]) -> pd.Series:
+    def get_intervals_from_categories(cls, categories: Dict[str, str]) -> pd.Series:
         category_endpoints = pd.Series(
             {cat: cls.parse_description(description) for cat, description in categories.items()},
             name=f'{cls.RISK_NAME}.endpoints'
@@ -216,7 +216,8 @@ class LBWSGRiskEffect(RiskEffect):
                            & (interpolators['age_end'] < 0.5)])
             .drop(columns=['affected_entity', 'affected_measure', 'age_end', 'year_start', 'year_end'])
             .set_index(['sex', 'value'])
-            .apply(lambda row: 2 if row['age_start'] == 0.0 else 3, axis=1)
+            .apply(lambda row: (metadata.AGE_GROUP.EARLY_NEONATAL_ID if row['age_start'] == 0.0
+                                else metadata.AGE_GROUP.LATE_NEONATAL_ID), axis=1)
             .rename('age_group_id')
             .reset_index()
             .set_index(['sex', 'age_group_id'])
