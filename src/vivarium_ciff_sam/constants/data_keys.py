@@ -258,6 +258,8 @@ class __LowBirthWeightShortGestation(NamedTuple):
     DISTRIBUTION: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.distribution'
     CATEGORIES: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.categories'
     RELATIVE_RISK: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.relative_risk'
+    RELATIVE_RISK_INTERPOLATOR: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.relative_risk_interpolator'
+
     PAF: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.population_attributable_fraction'
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
