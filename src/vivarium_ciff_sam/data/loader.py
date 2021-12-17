@@ -12,6 +12,7 @@ for an example.
 
    No logging is done here. Logging is done in vivarium inputs itself and forwarded.
 """
+import pickle
 from typing import Tuple, Type
 
 import numpy as np
@@ -411,17 +412,18 @@ def load_mam_treatment_rr(key: str, location: str) -> pd.DataFrame:
 
 
 def load_lbwsg_exposure(key: str, location: str) -> pd.DataFrame:
-    if key == data_keys.LBWSG.EXPOSURE:
-        key = EntityKey(key)
-        entity = utilities.get_entity(key)
-        data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE, 'rei_id',
-                                  metadata.AGE_GROUP.GBD_2019_LBWSG_EXPOSURE, metadata.GBD_2019_ROUND_ID, 'step4')
-        data = data[data['year_id'] == 2019].drop(columns='year_id')
-        data = utilities.process_exposure(data, key, entity, location, metadata.GBD_2019_ROUND_ID,
-                                          metadata.AGE_GROUP.GBD_2019_LBWSG_EXPOSURE | metadata.AGE_GROUP.GBD_2020)
-        return data
-    else:
+    if key != data_keys.LBWSG.EXPOSURE:
         raise ValueError(f'Unrecognized key {key}')
+
+    key = EntityKey(key)
+    entity = utilities.get_entity(key)
+    data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE, 'rei_id',
+                              metadata.AGE_GROUP.GBD_2019_LBWSG_EXPOSURE, metadata.GBD_2019_ROUND_ID, 'step4')
+    data = data[data['year_id'] == 2019].drop(columns='year_id')
+    data = utilities.process_exposure(data, key, entity, location, metadata.GBD_2019_ROUND_ID,
+                                      metadata.AGE_GROUP.GBD_2019_LBWSG_EXPOSURE | metadata.AGE_GROUP.GBD_2020)
+    data = data[data.index.get_level_values('year_start') == 2019]
+    return data
 
 
 def load_lbwsg_rr(key: str, location: str) -> pd.DataFrame:
@@ -444,13 +446,10 @@ def load_lbwsg_interpolated_rr(key: str, location: str) -> pd.DataFrame:
         raise ValueError(f'Unrecognized key {key}')
 
     rr = get_data(data_keys.LBWSG.RELATIVE_RISK, location).reset_index()
-    rr['age'] = rr.apply(lambda row: pd.Interval(row['age_start'], row['age_end']), axis=1)
-    rr['year'] = rr.apply(lambda row: pd.Interval(row['year_start'], row['year_end']), axis=1)
     rr['parameter'] = pd.Categorical(rr['parameter'], [f'cat{i}' for i in range(1000)])
     rr = (
-        rr.drop(columns=['age_start', 'age_end', 'year_start', 'year_end'])
-        .sort_values('parameter')
-        .set_index(['sex', 'age', 'year', 'affected_entity', 'affected_measure', 'parameter'])
+        rr.sort_values('parameter')
+        .set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['affected_entity', 'affected_measure', 'parameter'])
         .stack()
         .unstack('parameter')
         .apply(np.log)
@@ -487,6 +486,7 @@ def load_lbwsg_interpolated_rr(key: str, location: str) -> pd.DataFrame:
 
     log_rr_interpolator = (
         rr.apply(make_interpolator, axis='columns')
+        .apply(lambda x: pickle.dumps(x).hex())
         .unstack()
     )
     return log_rr_interpolator
