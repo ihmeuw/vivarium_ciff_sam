@@ -1,4 +1,5 @@
 from abc import abstractmethod, ABC
+import pickle
 from typing import Callable, Dict, List, Tuple
 
 import numpy as np
@@ -137,8 +138,6 @@ class ShortGestation(LBWSGRisk):
 class LBWSGRiskEffect(RiskEffect):
     # calculate individual's RRs on simulant initialization and store in a column which is source of RR
 
-    TMREL_CATEGORIES = {'cat53', 'cat54', 'cat55', 'cat56'}
-
     def __init__(self, target: str):
         super().__init__('risk_factor.low_birth_weight_and_short_gestation', target)
         self.lbwsg_exposure_pipeline_name = f'{data_keys.LBWSG.name}.exposure'
@@ -214,11 +213,15 @@ class LBWSGRiskEffect(RiskEffect):
             # isolate RRs for target and drop non-neonatal age groups since they have RR == 1.0
             (interpolators[(interpolators['affected_entity'] == self.target.name)
                            & (interpolators['affected_measure'] == self.target.measure)
-                           & (interpolators['age'] < pd.Interval(0.5, 1.0))])
-            .drop(columns=['affected_entity', 'affected_measure', 'year'])
-            .set_index('sex', 'age')
+                           & (interpolators['age_end'] < 0.5)])
+            .drop(columns=['affected_entity', 'affected_measure', 'age_end', 'year_start', 'year_end'])
+            .set_index(['sex', 'value'])
+            .apply(lambda row: 2 if row['age_start'] == 0.0 else 3, axis=1)
+            .rename('age_group_id')
+            .reset_index()
+            .set_index(['sex', 'age_group_id'])
         )['value']
-
+        interpolators = interpolators.apply(lambda x: pickle.loads(bytes.fromhex(x)))
         return interpolators
 
     def register_simulant_initializer(self, builder: Builder) -> None:
@@ -238,7 +241,8 @@ class LBWSGRiskEffect(RiskEffect):
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
         is_male = self.population_view.subview(['sex']).get(pop_data.index)['sex'] == 'Male'
-        is_tmrel = self.pipelines[self.lbwsg_exposure_pipeline_name](pop_data.index).isin(self.TMREL_CATEGORIES)
+        is_tmrel = (self.pipelines[self.lbwsg_exposure_pipeline_name](pop_data.index)
+                    .isin(data_keys.LBWSG.TMREL_CATEGORIES))
         gestational_age = self.pipelines[self.short_gestation_pipeline_name](pop_data.index)
         birth_weight = self.pipelines[self.low_birth_weight_pipeline_name](pop_data.index)
 

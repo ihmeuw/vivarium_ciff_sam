@@ -12,14 +12,17 @@ for an example.
 
    No logging is done here. Logging is done in vivarium inputs itself and forwarded.
 """
-from typing import Tuple, Type
+import pickle
+from typing import Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 from scipy.interpolate import griddata, RectBivariateSpline
 
 from gbd_mapping import sequelae, Cause
 from vivarium.framework.artifact import EntityKey
+from vivarium.framework.randomness import get_hash
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_inputs import interface
 
@@ -411,17 +414,18 @@ def load_mam_treatment_rr(key: str, location: str) -> pd.DataFrame:
 
 
 def load_lbwsg_exposure(key: str, location: str) -> pd.DataFrame:
-    if key == data_keys.LBWSG.EXPOSURE:
-        key = EntityKey(key)
-        entity = utilities.get_entity(key)
-        data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE, 'rei_id',
-                                  metadata.AGE_GROUP.GBD_2019_LBWSG_EXPOSURE, metadata.GBD_2019_ROUND_ID, 'step4')
-        data = data[data['year_id'] == 2019].drop(columns='year_id')
-        data = utilities.process_exposure(data, key, entity, location, metadata.GBD_2019_ROUND_ID,
-                                          metadata.AGE_GROUP.GBD_2019_LBWSG_EXPOSURE | metadata.AGE_GROUP.GBD_2020)
-        return data
-    else:
+    if key != data_keys.LBWSG.EXPOSURE:
         raise ValueError(f'Unrecognized key {key}')
+
+    key = EntityKey(key)
+    entity = utilities.get_entity(key)
+    data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE, 'rei_id',
+                              metadata.AGE_GROUP.GBD_2019_LBWSG_EXPOSURE, metadata.GBD_2019_ROUND_ID, 'step4')
+    data = data[data['year_id'] == 2019].drop(columns='year_id')
+    data = utilities.process_exposure(data, key, entity, location, metadata.GBD_2019_ROUND_ID,
+                                      metadata.AGE_GROUP.GBD_2019_LBWSG_EXPOSURE | metadata.AGE_GROUP.GBD_2020)
+    data = data[data.index.get_level_values('year_start') == 2019]
+    return data
 
 
 def load_lbwsg_rr(key: str, location: str) -> pd.DataFrame:
@@ -444,13 +448,10 @@ def load_lbwsg_interpolated_rr(key: str, location: str) -> pd.DataFrame:
         raise ValueError(f'Unrecognized key {key}')
 
     rr = get_data(data_keys.LBWSG.RELATIVE_RISK, location).reset_index()
-    rr['age'] = rr.apply(lambda row: pd.Interval(row['age_start'], row['age_end']), axis=1)
-    rr['year'] = rr.apply(lambda row: pd.Interval(row['year_start'], row['year_end']), axis=1)
     rr['parameter'] = pd.Categorical(rr['parameter'], [f'cat{i}' for i in range(1000)])
     rr = (
-        rr.drop(columns=['age_start', 'age_end', 'year_start', 'year_end'])
-        .sort_values('parameter')
-        .set_index(['sex', 'age', 'year', 'affected_entity', 'affected_measure', 'parameter'])
+        rr.sort_values('parameter')
+        .set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['affected_entity', 'affected_measure', 'parameter'])
         .stack()
         .unstack('parameter')
         .apply(np.log)
@@ -487,6 +488,7 @@ def load_lbwsg_interpolated_rr(key: str, location: str) -> pd.DataFrame:
 
     log_rr_interpolator = (
         rr.apply(make_interpolator, axis='columns')
+        .apply(lambda x: pickle.dumps(x).hex())
         .unstack()
     )
     return log_rr_interpolator
@@ -496,8 +498,151 @@ def load_lbwsg_paf(key: str, location: str) -> pd.DataFrame:
     if key != data_keys.LBWSG.PAF:
         raise ValueError(f'Unrecognized key {key}')
 
-    # todo paf = (mean_rr - 1) / mean_rr
-    pass
+    interpolators = get_data(data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR, location)
+    full_rr_index = interpolators.index
+    interpolators.columns.name = 'draws'
+    # filter out interpolators for age groups with uniform RRs of 1.0
+    interpolators = interpolators[(interpolators.index.get_level_values('age_end') < 0.5)
+                                  & (interpolators.index.get_level_values('affected_entity') == 'diarrheal_diseases')]
+    interpolators = (
+        interpolators
+        .droplevel(['affected_entity', 'affected_measure'])
+        .applymap(lambda x: pickle.loads(bytes.fromhex(x)))
+        .stack()
+        .reorder_levels(metadata.ARTIFACT_INDEX_COLUMNS + ['draws'])
+    )
+    interpolators.name = 'interpolator'
+
+    def get_propensities(seed: str, size: int) -> np.ndarray:
+        np.random.seed(get_hash(seed))
+        return stats.uniform.rvs(size=size)
+
+    population_size = 100_000
+    exposure_data = get_data(data_keys.LBWSG.EXPOSURE, location).reset_index()
+    # filter down to most recent year and remove birth prevalence
+    exposure_data = exposure_data[(exposure_data['year_start'] == 2019) & (exposure_data['age_start'] >= 0.0)]
+
+    # replace age_start/age_end with an IntervalIndex making index a cartesian product of all level values
+    exposure_data['age'] = exposure_data.apply(lambda x: pd.Interval(x['age_start'], x['age_end']), axis=1)
+    exposure_data = (
+        exposure_data.drop(columns=['age_start', 'age_end'])
+        .set_index(['sex', 'age', 'year_start', 'year_end', 'parameter'])
+    )
+
+    # replace exposures with a cumulative sum
+    category_order = exposure_data.index.get_level_values('parameter').unique()
+    exposure_data = exposure_data.groupby(['sex', 'age', 'year_start', 'year_end']).cumsum()
+
+    # build index from cartesian product of binned exposure index and an index of N propensity values
+    idx = pd.MultiIndex.from_product(
+        [exposure_data.index.get_level_values(col).unique() for col in exposure_data.index.names]
+        + [pd.Index(get_propensities('lbwsg_propensity', population_size), name='lbwsg_propensity')]
+    )
+
+    # broadcast exposure across new index with N propensity values (representing individuals)
+    exposure_data = exposure_data.reindex(idx)
+    exposure_data['prop'] = exposure_data.index.get_level_values('lbwsg_propensity')
+
+    # get categorical exposure for each individual
+    categorical_exposure = (
+        exposure_data.apply(lambda x: x < x['prop'], axis=1)
+        .drop(columns='prop')
+        .groupby(['sex', 'age', 'year_start', 'year_end', 'lbwsg_propensity'])
+        .sum()
+        .apply(lambda x: category_order[x])
+    )
+
+    def get_continuous_exposure(lbwsg_type: str) -> pd.DataFrame:
+
+        # get category interval metadata
+        categories = get_data(data_keys.LBWSG.CATEGORIES, location)
+        intervals = {
+            'birth_weight': LowBirthWeight.get_intervals_from_categories(categories),
+            'gestational_age': ShortGestation.get_intervals_from_categories(categories)
+        }
+
+        def interpolate(propensity: float, lbwsg_category: Union[str, float]) -> Union[Tuple[float, float], float]:
+            interval = intervals[lbwsg_type][lbwsg_category]
+            return interval.left + propensity * (interval.right - interval.left)
+
+        # convert categorical exposure to a tuple of continuous exposures
+        exposure = categorical_exposure.copy()
+        exposure['propensity'] = get_propensities(f'{lbwsg_type}_propensity', categorical_exposure.shape[0])
+        exposure = (
+            exposure.apply(
+                lambda row: row[row.index.values != 'propensity'].apply(lambda x: interpolate(row.propensity, x)),
+                axis=1
+            )
+        )
+        # manipulate index to match RR interpolator index and build combined DataFrame
+        exposure.columns.name = 'draws'
+        exposure = (
+            exposure.stack()
+            .unstack('lbwsg_propensity')
+        )
+        exposure = (
+            exposure.set_index(
+                [pd.Index(exposure.index.get_level_values('age').left, name='age_start'),
+                 pd.Index(exposure.index.get_level_values('age').right, name='age_end')], append=True
+            ).droplevel('age')
+            .reorder_levels(metadata.ARTIFACT_INDEX_COLUMNS + ['draws'])
+            .stack()
+        )
+        exposure.name = lbwsg_type
+        return exposure
+
+    # get continuous exposure
+    bw_exposure = get_continuous_exposure('birth_weight')
+    ga_exposure = get_continuous_exposure('gestational_age')
+    continuous_exposure = pd.concat([bw_exposure, ga_exposure], axis=1)
+
+    # get boolean mask of individuals at the tmrel
+    is_tmrel = (
+        (data_keys.LBWSG.TMREL_GESTATIONAL_AGE_INTERVAL.left < continuous_exposure.gestational_age)
+        & (continuous_exposure.gestational_age < data_keys.LBWSG.TMREL_GESTATIONAL_AGE_INTERVAL.right)
+        & (data_keys.LBWSG.TMREL_BIRTH_WEIGHT_INTERVAL.left < continuous_exposure.birth_weight)
+        & (continuous_exposure.birth_weight < data_keys.LBWSG.TMREL_BIRTH_WEIGHT_INTERVAL.right)
+    )
+
+    # get all individuals who are not at the tmrel
+    non_tmrel_exposure = continuous_exposure.loc[~is_tmrel, :]
+    non_tmrel_exposure.columns.name = 'lbwsg_type'
+    non_tmrel_exposure = non_tmrel_exposure.unstack()
+    non_tmrel_exposure = pd.concat([interpolators, non_tmrel_exposure], axis=1)
+
+    # get rr for each individual not at the tmrel
+    non_tmrel_rr = non_tmrel_exposure.apply(
+        lambda row: pd.Series(
+            row.interpolator(row.loc[[i for i in row.index if i[0] == 'gestational_age']],
+                             row.loc[[i for i in row.index if i[0] == 'birth_weight']],
+                             grid=False),
+            index=[i[1] for i in row.index if i[0] == 'birth_weight']
+        ), axis=1
+    )
+    non_tmrel_rr = np.exp(non_tmrel_rr)
+    non_tmrel_rr.columns.name = 'lbwsg_propensity'
+    non_tmrel_rr = non_tmrel_rr.stack()
+
+    # get rr for all individuals
+    rr = pd.Series(1.0, index=continuous_exposure.index)
+    rr.loc[~is_tmrel] = non_tmrel_rr
+
+    # calculate mean rr
+    mean_rr = (
+        rr.unstack()
+        .mean(axis=1)
+    )
+
+    paf = (
+        # calculate paf
+        ((mean_rr - 1) / mean_rr)
+        # reshape to match full RR index
+        .unstack('draws')
+        .reindex(full_rr_index)
+        .fillna(0.0)
+    )
+    paf.columns.name = None
+    return paf
 
 
 def load_sids_csmr(key: str, location: str) -> pd.DataFrame:
