@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 import pickle
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -26,6 +26,7 @@ class LBWSGRisk(Risk, ABC):
 
     def __init__(self, risk: str):
         super(LBWSGRisk, self).__init__(risk)
+        self._sub_components = []
         self.lbwsg_exposure_pipeline_name = f'{data_keys.LBWSG.name}.exposure'
 
     ##########################
@@ -34,14 +35,6 @@ class LBWSGRisk(Risk, ABC):
 
     def _get_exposure_distribution(self) -> SimulationDistribution:
         return None
-
-    ##############
-    # Properties #
-    ##############
-
-    @property
-    def sub_components(self) -> List:
-        return []
 
     #################
     # Setup methods #
