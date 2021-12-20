@@ -103,13 +103,13 @@ class WastingTreatment(Risk):
         self.previous_wasting_column = f'previous_{data_keys.WASTING.name}'
         self.wasting_column = data_keys.WASTING.name
 
-        self.treated_state = self.get_treated_state()
+        self.treated_state = self._get_treated_state()
 
     ##########################
     # Initialization methods #
     ##########################
 
-    def get_treated_state(self) -> str:
+    def _get_treated_state(self) -> str:
         return self.risk.name.split('_treatment')[0]
 
     #################
@@ -118,14 +118,14 @@ class WastingTreatment(Risk):
 
     def setup(self, builder: Builder):
         super().setup(builder)
-        self.register_on_time_step_prepare_listener(builder)
+        self._register_on_time_step_prepare_listener(builder)
 
-    def get_population_view(self, builder: Builder) -> PopulationView:
+    def _get_population_view(self, builder: Builder) -> PopulationView:
         return builder.population.get_view([self.propensity_column_name,
                                             self.previous_wasting_column,
                                             self.wasting_column])
 
-    def register_on_time_step_prepare_listener(self, builder: Builder) -> None:
+    def _register_on_time_step_prepare_listener(self, builder: Builder) -> None:
         builder.event.register_listener('time_step__cleanup', self.on_time_step_cleanup)
 
     ########################

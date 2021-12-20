@@ -36,9 +36,9 @@ class RiskModel(DiseaseModel):
 
     def __init__(self, risk, **kwargs):
         super().__init__(risk, **kwargs)
-        self.configuration_defaults = self.get_configuration_defaults()
+        self.configuration_defaults = self._get_configuration_defaults()
 
-    def get_configuration_defaults(self) -> Dict[str, Dict]:
+    def _get_configuration_defaults(self) -> Dict[str, Dict]:
         return {self.state_column: {**Risk.configuration_defaults['risk'], **RiskModel.configuration_defaults['risk']}}
 
     # This would be a preferable name, but the generic DiseaseObserver works with no modifications if we use the

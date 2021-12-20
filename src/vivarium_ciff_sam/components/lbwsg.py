@@ -26,7 +26,7 @@ class LBWSGRisk(Risk, ABC):
     # Initialization methods #
     ##########################
 
-    def get_exposure_distribution(self) -> SimulationDistribution:
+    def _get_exposure_distribution(self) -> SimulationDistribution:
         return None
 
     ##############
@@ -44,22 +44,22 @@ class LBWSGRisk(Risk, ABC):
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
         super().setup(builder)
-        self.lbwsg_exposure = self.get_lbwsg_exposure_pipeline(builder)
-        self.category_endpoints = self.get_category_endpoints(builder)
+        self.lbwsg_exposure = self._get_lbwsg_exposure_pipeline(builder)
+        self.category_endpoints = self._get_category_endpoints(builder)
 
-    def get_exposure_pipeline(self, builder: Builder) -> Pipeline:
+    def _get_exposure_pipeline(self, builder: Builder) -> Pipeline:
         return builder.value.register_value_producer(
             self.exposure_pipeline_name,
-            source=self.get_current_exposure,
+            source=self._get_current_exposure,
             requires_columns=['age', 'sex'],
             requires_values=[self.propensity_pipeline_name, self.lbwsg_exposure_pipeline_name],
             preferred_post_processor=get_exposure_post_processor(builder, self.risk)
         )
 
-    def get_lbwsg_exposure_pipeline(self, builder: Builder) -> Pipeline:
+    def _get_lbwsg_exposure_pipeline(self, builder: Builder) -> Pipeline:
         return builder.value.get_value(self.lbwsg_exposure_pipeline_name)
 
-    def get_category_endpoints(self, builder: Builder) -> Dict[str, Tuple[float, float]]:
+    def _get_category_endpoints(self, builder: Builder) -> Dict[str, Tuple[float, float]]:
         category_endpoints = {cat: self.parse_description(description)
                               for cat, description
                               in builder.data.load(f'risk_factor.{data_keys.LBWSG.name}.categories').items()}
@@ -69,7 +69,7 @@ class LBWSGRisk(Risk, ABC):
     # Pipeline sources and modifiers #
     ##################################
 
-    def get_current_exposure(self, index):
+    def _get_current_exposure(self, index):
         propensities = self.propensity(index)
         lbwsg_categories = self.lbwsg_exposure(index)
 
