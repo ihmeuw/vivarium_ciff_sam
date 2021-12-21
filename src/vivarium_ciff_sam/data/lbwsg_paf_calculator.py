@@ -76,7 +76,7 @@ def get_age_bin(config: Path, age_group_id: int) -> pd.Interval:
 def get_paf_for_age_group(config: Path, input_draw: int, random_seed: int, age_group_id: int) -> pd.DataFrame:
     age_bin = get_age_bin(config, age_group_id)
     relative_risks = pd.concat([get_relative_risks(config, input_draw, seed, age_group_id)
-                                for seed in range(random_seed, random_seed + 2)])
+                                for seed in range(random_seed, random_seed + 10)])
 
     def calculate_paf_by_sex(sex: str) -> float:
         mean_rr = relative_risks.loc[relative_risks['sex'] == sex, 'relative_risk'].mean()

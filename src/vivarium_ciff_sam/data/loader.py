@@ -25,7 +25,7 @@ from vivarium_gbd_access import constants as gbd_constants
 from vivarium_inputs import interface
 
 from vivarium_ciff_sam.components import LBWSGRisk, LowBirthWeight, ShortGestation
-from vivarium_ciff_sam.constants import data_keys, data_values, metadata
+from vivarium_ciff_sam.constants import data_keys, data_values, metadata, paths
 from vivarium_ciff_sam.data import utilities
 
 from vivarium_ciff_sam.utilities import get_random_variable_draws
@@ -496,8 +496,22 @@ def load_lbwsg_paf(key: str, location: str) -> pd.DataFrame:
     if key != data_keys.LBWSG.PAF:
         raise ValueError(f'Unrecognized key {key}')
 
-    # todo paf = (mean_rr - 1) / mean_rr
-    pass
+    paf_files = paths.TEMPORARY_PAF_DIR.glob('*.hdf')
+    paf_data = (
+        pd.concat([pd.read_hdf(paf_file) for paf_file in paf_files])
+        .sort_values(metadata.ARTIFACT_INDEX_COLUMNS + ['draw'])
+    )
+
+    paf_data['draw'] = paf_data['draw'].apply(lambda draw: f'draw_{draw}')
+
+    paf_data = (
+        paf_data.set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['draw'])
+        .unstack()
+    )
+
+    paf_data.columns = paf_data.columns.droplevel(0)
+    paf_data.columns.name = None
+    return paf_data
 
 
 def load_sids_csmr(key: str, location: str) -> pd.DataFrame:

@@ -165,9 +165,8 @@ class LBWSGRiskEffect(RiskEffect):
         )
 
     def _get_population_attributable_fraction_source(self, builder: Builder) -> LookupTable:
-        # todo - need to calculate paf from continuous distributions of exposure and rr (use monte carlo methods)
-        #   use paf = (mean_rr -1) /(mean_rr)
-        return builder.lookup.build_table(0)
+        paf_data = builder.data.load(data_keys.LBWSG.PAF)
+        return builder.lookup.build_table(paf_data, key_columns=['sex'], parameter_columns=['age', 'year'])
 
     def _get_target_modifier(self, builder: Builder) -> Callable[[pd.Index, pd.Series], pd.Series]:
 
