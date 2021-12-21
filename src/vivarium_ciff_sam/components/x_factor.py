@@ -17,10 +17,10 @@ class XFactorExposure(Risk):
     # Setup methods #
     #################
 
-    def get_randomness_stream(self, builder) -> RandomnessStream:
+    def _get_randomness_stream(self, builder) -> RandomnessStream:
         return None
 
-    def register_simulant_initializer(self, builder: Builder) -> None:
+    def _register_simulant_initializer(self, builder: Builder) -> None:
         pass
 
 
@@ -47,7 +47,7 @@ class XFactorEffect(RiskEffect):
     # Initialization methods #
     ##########################
 
-    def get_configuration_defaults(self) -> Dict[str, Dict]:
+    def _get_configuration_defaults(self) -> Dict[str, Dict]:
         return {
             f'effect_of_{self.risk.name}_on_{self.target.name}': {
                 'conditional_exposure':
@@ -61,7 +61,7 @@ class XFactorEffect(RiskEffect):
     # Setup methods #
     #################
 
-    def get_population_attributable_fraction_source(self, builder: Builder) -> LookupTable:
+    def _get_population_attributable_fraction_source(self, builder: Builder) -> LookupTable:
         source_key = f'effect_of_{self.risk.name}_on_{self.target.name}'
         exposure = builder.configuration[source_key]['conditional_exposure']
         rr = builder.configuration[source_key][self.target.measure]['relative_risk']
