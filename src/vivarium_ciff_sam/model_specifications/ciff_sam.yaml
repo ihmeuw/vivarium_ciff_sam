@@ -6,51 +6,51 @@ components:
             - FertilityCrudeBirthRate()
         disease:
             - SIS('diarrheal_diseases')
-#            - SIS_fixed_duration('measles', '10.0')
-#            - SIS('lower_respiratory_infections')
+            - SIS_fixed_duration('measles', '10.0')
+            - SIS('lower_respiratory_infections')
         risks:
-#            - RiskEffect('risk_factor.child_wasting', 'cause.diarrheal_diseases.incidence_rate')
-#            - RiskEffect('risk_factor.child_wasting', 'cause.measles.incidence_rate')
-#            - RiskEffect('risk_factor.child_wasting', 'cause.lower_respiratory_infections.incidence_rate')
-#
-#            - Risk('risk_factor.child_stunting')
-#            - RiskEffect('risk_factor.child_stunting', 'cause.diarrheal_diseases.incidence_rate')
-#            - RiskEffect('risk_factor.child_stunting', 'cause.measles.incidence_rate')
-#            - RiskEffect('risk_factor.child_stunting', 'cause.lower_respiratory_infections.incidence_rate')
-#
-#            - RiskEffect('risk_factor.severe_acute_malnutrition_treatment', 'risk_factor.severe_acute_malnutrition_to_mild_child_wasting.transition_rate')
-#            - RiskEffect('risk_factor.severe_acute_malnutrition_treatment', 'risk_factor.severe_acute_malnutrition_to_moderate_acute_malnutrition.transition_rate')
-#
-#            - RiskEffect('risk_factor.moderate_acute_malnutrition_treatment', 'risk_factor.moderate_acute_malnutrition_to_mild_child_wasting.transition_rate')
+            - RiskEffect('risk_factor.child_wasting', 'cause.diarrheal_diseases.incidence_rate')
+            - RiskEffect('risk_factor.child_wasting', 'cause.measles.incidence_rate')
+            - RiskEffect('risk_factor.child_wasting', 'cause.lower_respiratory_infections.incidence_rate')
+
+            - Risk('risk_factor.child_stunting')
+            - RiskEffect('risk_factor.child_stunting', 'cause.diarrheal_diseases.incidence_rate')
+            - RiskEffect('risk_factor.child_stunting', 'cause.measles.incidence_rate')
+            - RiskEffect('risk_factor.child_stunting', 'cause.lower_respiratory_infections.incidence_rate')
+
+            - RiskEffect('risk_factor.severe_acute_malnutrition_treatment', 'risk_factor.severe_acute_malnutrition_to_mild_child_wasting.transition_rate')
+            - RiskEffect('risk_factor.severe_acute_malnutrition_treatment', 'risk_factor.severe_acute_malnutrition_to_moderate_acute_malnutrition.transition_rate')
+
+            - RiskEffect('risk_factor.moderate_acute_malnutrition_treatment', 'risk_factor.moderate_acute_malnutrition_to_mild_child_wasting.transition_rate')
 
             - Risk('risk_factor.low_birth_weight_and_short_gestation')
 
     vivarium_ciff_sam:
         components:
-#            - ChildWasting()
+            - ChildWasting()
             - LowBirthWeight()
             - ShortGestation()
             - LBWSGRiskEffect('cause.diarrheal_diseases.excess_mortality_rate')
 
-#            - XFactorExposure()
-#            - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
-#            - XFactorEffect('risk_factor.moderate_acute_malnutrition_to_severe_acute_malnutrition.transition_rate')
-#
-#            - WastingTreatment('risk_factor.severe_acute_malnutrition_treatment')
-#            - WastingTreatment('risk_factor.moderate_acute_malnutrition_treatment')
-#            - SQLNSTreatment()
-#
-#            - WastingTreatmentIntervention('risk_factor.severe_acute_malnutrition_treatment')
-#            - WastingTreatmentIntervention('risk_factor.moderate_acute_malnutrition_treatment')
-#            - SQLNSIntervention()
-#
-#            - DisabilityObserver('wasting')
-#            - MortalityObserver('wasting')
-#            - DiseaseObserver('diarrheal_diseases', 'wasting')
-#            - DiseaseObserver('measles', 'wasting')
-#            - DiseaseObserver('lower_respiratory_infections', 'wasting')
-#            - DiseaseObserver('child_wasting', 'False', 'sq_lns', 'wasting_treatment', 'x_factor')
-#            - CategoricalRiskObserver('child_stunting', 'False', 'sq_lns')
+            - XFactorExposure()
+            - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
+            - XFactorEffect('risk_factor.moderate_acute_malnutrition_to_severe_acute_malnutrition.transition_rate')
+
+            - WastingTreatment('risk_factor.severe_acute_malnutrition_treatment')
+            - WastingTreatment('risk_factor.moderate_acute_malnutrition_treatment')
+            - SQLNSTreatment()
+
+            - WastingTreatmentIntervention('risk_factor.severe_acute_malnutrition_treatment')
+            - WastingTreatmentIntervention('risk_factor.moderate_acute_malnutrition_treatment')
+            - SQLNSIntervention()
+
+            - DisabilityObserver('wasting')
+            - MortalityObserver('wasting')
+            - DiseaseObserver('diarrheal_diseases', 'wasting')
+            - DiseaseObserver('measles', 'wasting')
+            - DiseaseObserver('lower_respiratory_infections', 'wasting')
+            - DiseaseObserver('child_wasting', 'False', 'sq_lns', 'wasting_treatment', 'x_factor')
+            - CategoricalRiskObserver('child_stunting', 'False', 'sq_lns')
 
 configuration:
     input_data:
