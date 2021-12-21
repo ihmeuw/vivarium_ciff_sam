@@ -2,6 +2,7 @@ components:
     vivarium_public_health:
         population:
             - BasePopulation()
+            - Mortality()
             - FertilityCrudeBirthRate()
         disease:
             - SIS('diarrheal_diseases')
@@ -26,25 +27,24 @@ components:
 
     vivarium_ciff_sam:
         components:
-            - Mortality()
+#            - Mortality()
 
             - ChildWasting()
 
             - LowBirthWeight()
             - ShortGestation()
             - LBWSGRiskEffect('cause.diarrheal_diseases.excess_mortality_rate')
-            - LBWSGRiskEffect('cause.measles.excess_mortality_rate')
             - LBWSGRiskEffect('cause.lower_respiratory_infections.excess_mortality_rate')
-            - LBWSGRiskEffect('cause.upper_respiratory_infections.cause_specific_mortality_rate')
-            - LBWSGRiskEffect('cause.otitis_media.cause_specific_mortality_rate')
-            - LBWSGRiskEffect('cause.meningitis.cause_specific_mortality_rate')
-            - LBWSGRiskEffect('cause.encephalitis.cause_specific_mortality_rate')
-            - LBWSGRiskEffect('cause.neonatal_preterm_birth.cause_specific_mortality_rate')
-            - LBWSGRiskEffect('cause.neonatal_encephalopathy_due_to_birth_asphyxia_and_trauma.cause_specific_mortality_rate')
-            - LBWSGRiskEffect('cause.neonatal_sepsis_and_other_neonatal_infections.cause_specific_mortality_rate')
-            - LBWSGRiskEffect('cause.hemolytic_disease_and_other_neonatal_jaundice.cause_specific_mortality_rate')
-            - LBWSGRiskEffect('cause.other_neonatal_disorders.cause_specific_mortality_rate')
-            - LBWSGRiskEffect('cause.sudden_infant_death_syndrome.cause_specific_mortality_rate')
+#            - LBWSGRiskEffect('cause.upper_respiratory_infections.cause_specific_mortality_rate')
+#            - LBWSGRiskEffect('cause.otitis_media.cause_specific_mortality_rate')
+#            - LBWSGRiskEffect('cause.meningitis.cause_specific_mortality_rate')
+#            - LBWSGRiskEffect('cause.encephalitis.cause_specific_mortality_rate')
+#            - LBWSGRiskEffect('cause.neonatal_preterm_birth.cause_specific_mortality_rate')
+#            - LBWSGRiskEffect('cause.neonatal_encephalopathy_due_to_birth_asphyxia_and_trauma.cause_specific_mortality_rate')
+#            - LBWSGRiskEffect('cause.neonatal_sepsis_and_other_neonatal_infections.cause_specific_mortality_rate')
+#            - LBWSGRiskEffect('cause.hemolytic_disease_and_other_neonatal_jaundice.cause_specific_mortality_rate')
+#            - LBWSGRiskEffect('cause.other_neonatal_disorders.cause_specific_mortality_rate')
+#            - LBWSGRiskEffect('cause.sudden_infant_death_syndrome.cause_specific_mortality_rate')
 
             - XFactorExposure()
             - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
