@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from vivarium import Artifact, InteractiveContext
+from vivarium_cluster_tools.utilities import mkdir
 
 from vivarium_ciff_sam.constants import data_keys, metadata
 
@@ -72,10 +73,12 @@ def write_pafs_to_hdf(config: str, output_dir: str, input_draw: str, random_seed
     input_draw = int(input_draw)
     random_seed = int(random_seed)
 
+    mkdir(output_dir, exists_ok=True)
+
     pafs = pd.concat([get_pafs(config, input_draw, random_seed, age_group_id)
                       for age_group_id in metadata.AGE_GROUP.GBD_2019_LBWSG_RELATIVE_RISK])
 
-    pafs.to_hdf(output_dir / f'draw_{input_draw}.hdf', 'paf')
+    pafs.to_hdf(str(output_dir / f'draw_{input_draw}.hdf'), 'paf')
 
 
 if __name__ == "__main__":
