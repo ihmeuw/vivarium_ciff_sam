@@ -1,6 +1,6 @@
 from abc import abstractmethod, ABC
 import pickle
-from typing import Callable, Dict, List, Tuple
+from typing import Callable, Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -26,6 +26,7 @@ class LBWSGRisk(Risk, ABC):
 
     def __init__(self, risk: str):
         super(LBWSGRisk, self).__init__(risk)
+        self._sub_components = []
         self.lbwsg_exposure_pipeline_name = f'{data_keys.LBWSG.name}.exposure'
 
     ##########################
@@ -34,14 +35,6 @@ class LBWSGRisk(Risk, ABC):
 
     def _get_exposure_distribution(self) -> SimulationDistribution:
         return None
-
-    ##############
-    # Properties #
-    ##############
-
-    @property
-    def sub_components(self) -> List:
-        return []
 
     #################
     # Setup methods #
@@ -67,7 +60,7 @@ class LBWSGRisk(Risk, ABC):
 
     @classmethod
     def _get_category_intervals(cls, builder: Builder) -> pd.Series:
-        return cls._get_intervals_from_categories(builder.data.load(f'risk_factor.{data_keys.LBWSG.name}.categories'))
+        return cls.get_intervals_from_categories(builder.data.load(f'risk_factor.{data_keys.LBWSG.name}.categories'))
 
     ##################################
     # Pipeline sources and modifiers #
@@ -92,7 +85,7 @@ class LBWSGRisk(Risk, ABC):
     ##################
 
     @classmethod
-    def _get_intervals_from_categories(cls, categories: Dict[str, str]) -> pd.Series:
+    def get_intervals_from_categories(cls, categories: Dict[str, str]) -> pd.Series:
         category_endpoints = pd.Series(
             {cat: cls.parse_description(description) for cat, description in categories.items()},
             name=f'{cls.RISK_NAME}.endpoints'
@@ -172,9 +165,8 @@ class LBWSGRiskEffect(RiskEffect):
         )
 
     def _get_population_attributable_fraction_source(self, builder: Builder) -> LookupTable:
-        # todo - need to calculate paf from continuous distributions of exposure and rr (use monte carlo methods)
-        #   use paf = (mean_rr -1) /(mean_rr)
-        return builder.lookup.build_table(0)
+        paf_data = builder.data.load(data_keys.LBWSG.PAF)
+        return builder.lookup.build_table(paf_data, key_columns=['sex'], parameter_columns=['age', 'year'])
 
     def _get_target_modifier(self, builder: Builder) -> Callable[[pd.Index, pd.Series], pd.Series]:
 
@@ -216,7 +208,8 @@ class LBWSGRiskEffect(RiskEffect):
                            & (interpolators['age_end'] < 0.5)])
             .drop(columns=['affected_entity', 'affected_measure', 'age_end', 'year_start', 'year_end'])
             .set_index(['sex', 'value'])
-            .apply(lambda row: 2 if row['age_start'] == 0.0 else 3, axis=1)
+            .apply(lambda row: (metadata.AGE_GROUP.EARLY_NEONATAL_ID if row['age_start'] == 0.0
+                                else metadata.AGE_GROUP.LATE_NEONATAL_ID), axis=1)
             .rename('age_group_id')
             .reset_index()
             .set_index(['sex', 'age_group_id'])
