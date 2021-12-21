@@ -11,7 +11,7 @@ from vivarium_cluster_tools.utilities import mkdir
 from vivarium_ciff_sam.constants import data_keys, metadata
 
 
-def get_pafs(config: Path, input_draw: int, random_seed: int, age_group_id: int) -> pd.DataFrame:
+def get_relative_risks(config: Path, input_draw: int, random_seed: int, age_group_id: int) -> pd.DataFrame:
 
     sim = InteractiveContext(config, setup=False)
 
@@ -45,24 +45,51 @@ def get_pafs(config: Path, input_draw: int, random_seed: int, age_group_id: int)
 
     interpolators = artifact.load(data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR)
 
-    def calculate_paf_by_sex(sex: str) -> float:
+    def calculate_rr_by_sex(sex: str) -> float:
         sex_mask = pop['sex'] == sex
+        row_index = (sex, age_start, age_end, year_start, year_end, 'diarrheal_diseases', 'excess_mortality_rate')
         interpolator = pickle.loads(bytes.fromhex(
-            interpolators.loc[(sex, age_start, age_end, year_start, year_end,
-                               'diarrheal_diseases', 'excess_mortality_rate'),
-                              f'draw_{input_draw}']
+            interpolators.loc[row_index, f'draw_{input_draw}']
         ))
         rrs = np.exp(interpolator(gestational_ages[sex_mask], birth_weights[sex_mask], grid=False))
-        mean_rr = rrs.mean()
+        return rrs
+
+    lbwsg_rrs = pd.DataFrame({'relative_risk': 1.0}, index=pop.index)
+    lbwsg_rrs['sex'] = pop['sex']
+    lbwsg_rrs.loc[lbwsg_rrs['sex'] == 'Female', 'relative_risk'] = calculate_rr_by_sex('Female')
+    lbwsg_rrs.loc[lbwsg_rrs['sex'] == 'Male', 'relative_risk'] = calculate_rr_by_sex('Male')
+
+    return lbwsg_rrs
+
+
+def get_age_bin(config: Path, age_group_id: int) -> pd.Interval:
+    sim = InteractiveContext(config, setup=False)
+
+    artifact_path = sim.configuration.input_data.artifact_path
+    artifact = Artifact(artifact_path)
+
+    age_bins = artifact.load(data_keys.POPULATION.AGE_BINS).reset_index().set_index('age_group_id')
+    age_bin = pd.Interval(age_bins.loc[age_group_id, 'age_start'], age_bins.loc[age_group_id, 'age_end'])
+    return age_bin
+
+
+def get_paf_for_age_group(config: Path, input_draw: int, random_seed: int, age_group_id: int) -> pd.DataFrame:
+    age_bin = get_age_bin(config, age_group_id)
+    relative_risks = pd.concat([get_relative_risks(config, input_draw, seed, age_group_id)
+                                for seed in range(random_seed, random_seed + 2)])
+
+    def calculate_paf_by_sex(sex: str) -> float:
+        mean_rr = relative_risks.loc[relative_risks['sex'] == sex, 'relative_risk'].mean()
         paf = (mean_rr - 1) / mean_rr
         return paf
 
     pafs = pd.DataFrame([{'sex': sex,
-                          'age_start': age_start,
-                          'age_end': age_end,
-                          'year_start': year_start,
-                          'year_end': year_end,
-                          f'draw_{input_draw}': calculate_paf_by_sex(sex)}
+                          'age_start': age_bin.left,
+                          'age_end': age_bin.right,
+                          'year_start': 2019,
+                          'year_end': 2020,
+                          'draw': input_draw,
+                          'paf': calculate_paf_by_sex(sex)}
                          for sex in ['Female', 'Male']])
     return pafs
 
@@ -75,7 +102,7 @@ def write_pafs_to_hdf(config: str, output_dir: str, input_draw: str, random_seed
 
     mkdir(output_dir, exists_ok=True)
 
-    pafs = pd.concat([get_pafs(config, input_draw, random_seed, age_group_id)
+    pafs = pd.concat([get_paf_for_age_group(config, input_draw, random_seed, age_group_id)
                       for age_group_id in metadata.AGE_GROUP.GBD_2019_LBWSG_RELATIVE_RISK])
 
     pafs.to_hdf(str(output_dir / f'draw_{input_draw}.hdf'), 'paf')
