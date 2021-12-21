@@ -42,6 +42,7 @@ from vivarium_ciff_sam.constants import data_keys
 class Mortality(_Mortality):
 
     def __init__(self):
+        super().__init__()
         self.unmodeled_csmr_pipeline_name = 'unmodeled.csmr'
         self.unmodeled_csmr_paf_pipeline_name = 'unmodeled.csmr.population_attributable_fraction'
         self.all_cause_mortality_hazard_pipeline_name = 'all_causes.mortality_hazard'
