@@ -75,8 +75,8 @@ def write_pafs_to_hdf(config: str, output_dir: str, input_draw: str, random_seed
     pafs = pd.concat([get_pafs(config, input_draw, random_seed, age_group_id)
                       for age_group_id in metadata.AGE_GROUP.GBD_2019_LBWSG_RELATIVE_RISK])
 
-    pafs.to_hdf(output_dir / f'draw_{input_draw}.csv', 'paf')
+    pafs.to_hdf(output_dir / f'draw_{input_draw}.hdf', 'paf')
 
 
 if __name__ == "__main__":
-    write_pafs_to_hdf(*sys.argv[1:])
+    write_pafs_to_hdf(*sys.argv[1:5])
