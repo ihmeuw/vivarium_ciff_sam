@@ -511,6 +511,17 @@ def load_lbwsg_paf(key: str, location: str) -> pd.DataFrame:
 
     paf_data.columns = paf_data.columns.droplevel(0)
     paf_data.columns.name = None
+
+    full_index = (
+        get_data(data_keys.LBWSG.RELATIVE_RISK, location).index
+        .droplevel('parameter')
+        .drop_duplicates()
+    )
+
+    paf_data = (
+        paf_data.reindex(full_index)
+        .fillna(0.0)
+    )
     return paf_data
 
 
