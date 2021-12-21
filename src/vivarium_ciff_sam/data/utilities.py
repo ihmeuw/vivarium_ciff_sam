@@ -14,8 +14,8 @@ from vivarium_inputs import globals as vi_globals, utilities as vi_utils, utilit
 from vivarium_inputs.mapping_extension import alternative_risk_factors, AlternativeRiskFactor
 from vivarium_inputs.validation.raw import check_metadata
 
-from vivarium_ciff_sam.constants import data_keys, data_values, scenarios
-from vivarium_ciff_sam.constants.metadata import ARTIFACT_INDEX_COLUMNS, GBD_2020_AGE_GROUPS, GBD_2020_ROUND_ID
+from vivarium_ciff_sam.constants import data_keys, data_values
+from vivarium_ciff_sam.constants.metadata import ARTIFACT_INDEX_COLUMNS, AGE_GROUP, GBD_2020_ROUND_ID
 from vivarium_ciff_sam.utilities import get_random_variable_draws
 
 
@@ -94,13 +94,13 @@ def get_gbd_2020_entity(key: str) -> ModelableEntity:
     if isinstance(entity, RiskFactor) or isinstance(entity, Cause):
         # Set risk factor age restrictions for GBD 2020
         if 'yll_age_group_id_start' in entity.restrictions:
-            entity.restrictions.yll_age_group_id_start = min(GBD_2020_AGE_GROUPS)
+            entity.restrictions.yll_age_group_id_start = min(AGE_GROUP.GBD_2020)
         if 'yld_age_group_id_start' in entity.restrictions:
-            entity.restrictions.yld_age_group_id_start = min(GBD_2020_AGE_GROUPS)
+            entity.restrictions.yld_age_group_id_start = min(AGE_GROUP.GBD_2020)
         if 'yll_age_group_id_end' in entity.restrictions:
-            entity.restrictions.yll_age_group_id_end = max(GBD_2020_AGE_GROUPS)
+            entity.restrictions.yll_age_group_id_end = max(AGE_GROUP.GBD_2020)
         if 'yld_age_group_id_end' in entity.restrictions:
-            entity.restrictions.yld_age_group_id_end = max(GBD_2020_AGE_GROUPS)
+            entity.restrictions.yld_age_group_id_end = max(AGE_GROUP.GBD_2020)
 
     return entity
 
@@ -155,7 +155,7 @@ def validate_and_reshape_gbd_data(data: pd.DataFrame, entity: ModelableEntity, k
 def normalize_age_and_years(data: pd.DataFrame, fill_value: Real = None,
                             cols_to_fill: List[str] = vi_globals.DRAW_COLUMNS,
                             gbd_round_id: int = GBD_2020_ROUND_ID,
-                            age_group_ids: List[int] = GBD_2020_AGE_GROUPS) -> pd.DataFrame:
+                            age_group_ids: List[int] = AGE_GROUP.GBD_2020) -> pd.DataFrame:
     data = vi_utils.normalize_sex(data, fill_value, cols_to_fill)
 
     # vi_inputs.normalize_year(data)
@@ -216,7 +216,7 @@ def _normalize_age(data: pd.DataFrame, fill_value: Real, cols_to_fill: List[str]
 def get_gbd_2020_demographic_dimensions() -> pd.DataFrame:
     estimation_years = get_gbd_estimation_years(GBD_2020_ROUND_ID)
     year_starts = range(estimation_years[0], estimation_years[-1] + 1)
-    age_bins = get_gbd_age_bins(GBD_2020_AGE_GROUPS)
+    age_bins = get_gbd_age_bins(AGE_GROUP.GBD_2020)
 
     unique_index_data = (pd.DataFrame(product(['Female', 'Male'], age_bins.age_start, year_starts))
                          .rename(columns={0: 'sex', 1: 'age_start', 2: 'year_start'}))
@@ -232,7 +232,7 @@ def apply_artifact_index(data: pd.DataFrame) -> pd.DataFrame:
     if 'year_end' not in data.columns:
         data['year_end'] = data['year_start'] + 1
     if 'age_end' not in data.columns:
-        age_bins = get_gbd_age_bins(GBD_2020_AGE_GROUPS)
+        age_bins = get_gbd_age_bins(AGE_GROUP.GBD_2020)
         data['age_end'] = data['age_start'].apply(lambda x: {start: end for start, end
                                                              in zip(age_bins.age_start, age_bins.age_end)}[x])
     data = data.set_index(ARTIFACT_INDEX_COLUMNS)

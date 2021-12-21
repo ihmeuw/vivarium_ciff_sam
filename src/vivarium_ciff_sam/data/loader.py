@@ -12,14 +12,19 @@ for an example.
 
    No logging is done here. Logging is done in vivarium inputs itself and forwarded.
 """
+import pickle
+from typing import Tuple, Type
+
 import numpy as np
 import pandas as pd
+from scipy.interpolate import griddata, RectBivariateSpline
 
 from gbd_mapping import sequelae, Cause
 from vivarium.framework.artifact import EntityKey
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_inputs import interface
 
+from vivarium_ciff_sam.components import LBWSGRisk, LowBirthWeight, ShortGestation
 from vivarium_ciff_sam.constants import data_keys, data_values, metadata
 from vivarium_ciff_sam.data import utilities
 
@@ -110,7 +115,8 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.LBWSG.CATEGORIES: load_metadata,
         data_keys.LBWSG.EXPOSURE: load_lbwsg_exposure,
         data_keys.LBWSG.RELATIVE_RISK: load_lbwsg_rr,
-        data_keys.LBWSG.PAF: load_paf,
+        data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR: load_lbwsg_interpolated_rr,
+        data_keys.LBWSG.PAF: load_lbwsg_paf,
 
         data_keys.UNMODELED_CAUSES.URI_CSMR: load_standard_data,
         data_keys.UNMODELED_CAUSES.OTITIS_MEDIA_CSMR: load_standard_data,
@@ -141,7 +147,7 @@ def load_population_structure(key: str, location: str) -> pd.DataFrame:
 # noinspection PyUnusedLocal
 def load_age_bins(key: str, location: str) -> pd.DataFrame:
     all_age_bins = (
-        utilities.get_gbd_age_bins(metadata.GBD_2020_AGE_GROUPS)
+        utilities.get_gbd_age_bins(metadata.AGE_GROUP.GBD_2020)
         .set_index(['age_start', 'age_end', 'age_group_name'])
         .sort_index()
     )
@@ -214,9 +220,9 @@ def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
     entity = utilities.get_gbd_2020_entity(key)
 
     data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE, 'rei_id',
-                              metadata.GBD_2020_AGE_GROUPS, metadata.GBD_2020_ROUND_ID)
+                              metadata.AGE_GROUP.GBD_2020, metadata.GBD_2020_ROUND_ID)
     data = utilities.process_exposure(data, key, entity, location, metadata.GBD_2020_ROUND_ID,
-                                      metadata.GBD_2020_AGE_GROUPS)
+                                      metadata.AGE_GROUP.GBD_2020)
 
     if key == data_keys.STUNTING.EXPOSURE:
         # Remove neonatal exposure
@@ -231,10 +237,10 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
     key = EntityKey(key)
     entity = utilities.get_gbd_2020_entity(key)
 
-    data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.RR, 'rei_id', metadata.GBD_2020_AGE_GROUPS,
+    data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.RR, 'rei_id', metadata.AGE_GROUP.GBD_2020,
                               metadata.GBD_2020_ROUND_ID)
     data = utilities.process_relative_risk(data, key, entity, location, metadata.GBD_2020_ROUND_ID,
-                                           metadata.GBD_2020_AGE_GROUPS)
+                                           metadata.AGE_GROUP.GBD_2020)
 
     if key == data_keys.STUNTING.RELATIVE_RISK:
         # Remove neonatal relative risks
@@ -254,7 +260,6 @@ def load_paf(key: str, location: str) -> pd.DataFrame:
             data_keys.STUNTING.PAF: data_keys.STUNTING,
             data_keys.SAM_TREATMENT.PAF: data_keys.SAM_TREATMENT,
             data_keys.MAM_TREATMENT.PAF: data_keys.MAM_TREATMENT,
-            data_keys.LBWSG.PAF: data_keys.LBWSG,
         }[key]
     except KeyError:
         raise ValueError(f'Unrecognized key {key}')
@@ -407,32 +412,92 @@ def load_mam_treatment_rr(key: str, location: str) -> pd.DataFrame:
 
 
 def load_lbwsg_exposure(key: str, location: str) -> pd.DataFrame:
-    if key == data_keys.LBWSG.EXPOSURE:
-        key = EntityKey(key)
-        entity = utilities.get_entity(key)
-        data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE, 'rei_id',
-                                  metadata.GBD_2019_LBWSG_AGE_GROUPS, metadata.GBD_2019_ROUND_ID, 'step4')
-        data = data[data['year_id'] == 2019].drop(columns='year_id')
-        data = utilities.process_exposure(data, key, entity, location, metadata.GBD_2019_ROUND_ID,
-                                          metadata.GBD_2019_LBWSG_AGE_GROUPS | metadata.GBD_2020_AGE_GROUPS)
-        return data
-    else:
+    if key != data_keys.LBWSG.EXPOSURE:
         raise ValueError(f'Unrecognized key {key}')
+
+    key = EntityKey(key)
+    entity = utilities.get_entity(key)
+    data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE, 'rei_id',
+                              metadata.AGE_GROUP.GBD_2019_LBWSG_EXPOSURE, metadata.GBD_2019_ROUND_ID, 'step4')
+    data = data[data['year_id'] == 2019].drop(columns='year_id')
+    data = utilities.process_exposure(data, key, entity, location, metadata.GBD_2019_ROUND_ID,
+                                      metadata.AGE_GROUP.GBD_2019_LBWSG_EXPOSURE | metadata.AGE_GROUP.GBD_2020)
+    data = data[data.index.get_level_values('year_start') == 2019]
+    return data
 
 
 def load_lbwsg_rr(key: str, location: str) -> pd.DataFrame:
-    if key == data_keys.LBWSG.RELATIVE_RISK:
-        key = EntityKey(key)
-        entity = utilities.get_entity(key)
-        data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.RR, 'rei_id',
-                                  metadata.GBD_2020_AGE_GROUPS & metadata.GBD_2019_LBWSG_AGE_GROUPS,
-                                  metadata.GBD_2019_ROUND_ID, 'step4')
-        data = data[data['year_id'] == 2019].drop(columns='year_id')
-        data = utilities.process_relative_risk(data, key, entity, location, metadata.GBD_2019_ROUND_ID,
-                                               metadata.GBD_2020_AGE_GROUPS, whitelist_sids=True)
-        return data
-    else:
+    if key != data_keys.LBWSG.RELATIVE_RISK:
         raise ValueError(f'Unrecognized key {key}')
+
+    key = EntityKey(key)
+    entity = utilities.get_entity(key)
+    data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.RR, 'rei_id',
+                              metadata.AGE_GROUP.GBD_2019_LBWSG_RELATIVE_RISK, metadata.GBD_2019_ROUND_ID, 'step4')
+    data = data[data['year_id'] == 2019].drop(columns='year_id')
+    data = utilities.process_relative_risk(data, key, entity, location, metadata.GBD_2019_ROUND_ID,
+                                           metadata.AGE_GROUP.GBD_2020, whitelist_sids=True)
+    data = data[data.index.get_level_values('year_start') == 2019]
+    return data
+
+
+def load_lbwsg_interpolated_rr(key: str, location: str) -> pd.DataFrame:
+    if key != data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR:
+        raise ValueError(f'Unrecognized key {key}')
+
+    rr = get_data(data_keys.LBWSG.RELATIVE_RISK, location).reset_index()
+    rr['parameter'] = pd.Categorical(rr['parameter'], [f'cat{i}' for i in range(1000)])
+    rr = (
+        rr.sort_values('parameter')
+        .set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['affected_entity', 'affected_measure', 'parameter'])
+        .stack()
+        .unstack('parameter')
+        .apply(np.log)
+    )
+
+    # get category midpoints
+    def get_category_midpoints(lbwsg_type: Type[LBWSGRisk]) -> pd.Series:
+        categories = get_data(f'risk_factor.{data_keys.LBWSG.name}.categories', location)
+        return lbwsg_type.get_intervals_from_categories(categories).apply(lambda x: x.mid)
+
+    gestational_age_midpoints = get_category_midpoints(ShortGestation)
+    birth_weight_midpoints = get_category_midpoints(LowBirthWeight)
+
+    # build grid of gestational age and birth weight
+    def get_grid(midpoints: pd.Series, endpoints: Tuple[float, float]) -> np.array:
+        grid = np.append(np.unique(midpoints), endpoints)
+        grid.sort()
+        return grid
+
+    gestational_age_grid = get_grid(gestational_age_midpoints, (0.0, 42.0))
+    birth_weight_grid = get_grid(birth_weight_midpoints, (0.0, 4500.0))
+
+    def make_interpolator(log_rr_for_age_sex_draw: pd.Series) -> RectBivariateSpline:
+        # Use scipy.interpolate.griddata to extrapolate to grid using nearest neighbor interpolation
+        log_rr_grid_nearest = griddata(
+            (gestational_age_midpoints, birth_weight_midpoints),
+            log_rr_for_age_sex_draw,
+            (gestational_age_grid[:, None], birth_weight_grid[None, :]),
+            method='nearest',
+            rescale=True
+        )
+        # return a RectBivariateSpline object from the extrapolated values on grid
+        return RectBivariateSpline(gestational_age_grid, birth_weight_grid, log_rr_grid_nearest, kx=1, ky=1)
+
+    log_rr_interpolator = (
+        rr.apply(make_interpolator, axis='columns')
+        .apply(lambda x: pickle.dumps(x).hex())
+        .unstack()
+    )
+    return log_rr_interpolator
+
+
+def load_lbwsg_paf(key: str, location: str) -> pd.DataFrame:
+    if key != data_keys.LBWSG.PAF:
+        raise ValueError(f'Unrecognized key {key}')
+
+    # todo paf = (mean_rr - 1) / mean_rr
+    pass
 
 
 def load_sids_csmr(key: str, location: str) -> pd.DataFrame:
@@ -442,8 +507,8 @@ def load_sids_csmr(key: str, location: str) -> pd.DataFrame:
 
         # get around the validation rejecting yll only causes
         entity.restrictions.yll_only = False
-        entity.restrictions.yld_age_group_id_start = 3
-        entity.restrictions.yld_age_group_id_end = 3
+        entity.restrictions.yld_age_group_id_start = metadata.AGE_GROUP.GBD_2019_SIDS
+        entity.restrictions.yld_age_group_id_end = metadata.AGE_GROUP.GBD_2019_SIDS
 
         data = interface.get_measure(entity, key.measure, location).droplevel('location')
         return data

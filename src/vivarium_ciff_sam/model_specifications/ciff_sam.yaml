@@ -30,6 +30,7 @@ components:
             - ChildWasting()
             - LowBirthWeight()
             - ShortGestation()
+            - LBWSGRiskEffect('cause.diarrheal_diseases.excess_mortality_rate')
 
             - XFactorExposure()
             - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
