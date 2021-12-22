@@ -143,12 +143,12 @@ PEM = __ProteinEnergyMalnutrition()
 class __Wasting(NamedTuple):
 
     # Keys that will be loaded into the artifact. must have a colon type declaration
-    DISTRIBUTION: TargetString = 'risk_factor.child_wasting.distribution'
-    ALT_DISTRIBUTION: TargetString = 'alternative_risk_factor.child_wasting.distribution'
-    CATEGORIES: TargetString = 'risk_factor.child_wasting.categories'
-    EXPOSURE: TargetString = 'risk_factor.child_wasting.exposure'
-    RELATIVE_RISK: TargetString = 'risk_factor.child_wasting.relative_risk'
-    PAF: TargetString = 'risk_factor.child_wasting.population_attributable_fraction'
+    DISTRIBUTION: TargetString = TargetString('risk_factor.child_wasting.distribution')
+    ALT_DISTRIBUTION: TargetString = TargetString('alternative_risk_factor.child_wasting.distribution')
+    CATEGORIES: TargetString = TargetString('risk_factor.child_wasting.categories')
+    EXPOSURE: TargetString = TargetString('risk_factor.child_wasting.exposure')
+    RELATIVE_RISK: TargetString = TargetString('risk_factor.child_wasting.relative_risk')
+    PAF: TargetString = TargetString('risk_factor.child_wasting.population_attributable_fraction')
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
     CAT4 = 'cat4'
@@ -171,12 +171,12 @@ WASTING = __Wasting()
 class __Stunting(NamedTuple):
 
     # Keys that will be loaded into the artifact. must have a colon type declaration
-    DISTRIBUTION: TargetString = 'risk_factor.child_stunting.distribution'
-    ALT_DISTRIBUTION: TargetString = 'alternative_risk_factor.child_stunting.distribution'
-    CATEGORIES: TargetString = 'risk_factor.child_stunting.categories'
-    EXPOSURE: TargetString = 'risk_factor.child_stunting.exposure'
-    RELATIVE_RISK: TargetString = 'risk_factor.child_stunting.relative_risk'
-    PAF: TargetString = 'risk_factor.child_stunting.population_attributable_fraction'
+    DISTRIBUTION: TargetString = TargetString('risk_factor.child_stunting.distribution')
+    ALT_DISTRIBUTION: TargetString = TargetString('alternative_risk_factor.child_stunting.distribution')
+    CATEGORIES: TargetString = TargetString('risk_factor.child_stunting.categories')
+    EXPOSURE: TargetString = TargetString('risk_factor.child_stunting.exposure')
+    RELATIVE_RISK: TargetString = TargetString('risk_factor.child_stunting.relative_risk')
+    PAF: TargetString = TargetString('risk_factor.child_stunting.population_attributable_fraction')
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
     CAT4 = 'cat4'
@@ -256,13 +256,12 @@ MAM_TREATMENT = _get_wasting_treatment_keys('moderate_acute_malnutrition_treatme
 
 class __LowBirthWeightShortGestation(NamedTuple):
     # Keys that will be loaded into the artifact. must have a colon type declaration
-    EXPOSURE: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.exposure'
-    DISTRIBUTION: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.distribution'
-    CATEGORIES: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.categories'
-    RELATIVE_RISK: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.relative_risk'
-    RELATIVE_RISK_INTERPOLATOR: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.relative_risk_interpolator'
-
-    PAF: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.population_attributable_fraction'
+    EXPOSURE: TargetString = TargetString('risk_factor.low_birth_weight_and_short_gestation.exposure')
+    DISTRIBUTION: TargetString = TargetString('risk_factor.low_birth_weight_and_short_gestation.distribution')
+    CATEGORIES: TargetString = TargetString('risk_factor.low_birth_weight_and_short_gestation.categories')
+    RELATIVE_RISK: TargetString = TargetString('risk_factor.low_birth_weight_and_short_gestation.relative_risk')
+    RELATIVE_RISK_INTERPOLATOR: TargetString = TargetString('risk_factor.low_birth_weight_and_short_gestation.relative_risk_interpolator')
+    PAF: TargetString = TargetString('risk_factor.low_birth_weight_and_short_gestation.population_attributable_fraction')
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
     TMREL_CATEGORIES = {'cat53', 'cat54', 'cat55', 'cat56'}
@@ -283,16 +282,16 @@ LBWSG = __LowBirthWeightShortGestation()
 
 class __UnmodeledCauses(NamedTuple):
     # Keys that will be loaded into the artifact. must have a colon type declaration
-    URI_CSMR: TargetString = 'cause.upper_respiratory_infections.cause_specific_mortality_rate'
-    OTITIS_MEDIA_CSMR: TargetString = 'cause.otitis_media.cause_specific_mortality_rate'
-    MENINGITIS_CSMR: TargetString = 'cause.meningitis.cause_specific_mortality_rate'
-    ENCEPHALITIS_CSMR: TargetString = 'cause.encephalitis.cause_specific_mortality_rate'
-    NEONATAL_PRETERM_BIRTH_CSMR: TargetString = 'cause.neonatal_preterm_birth.cause_specific_mortality_rate'
-    NEONATAL_ENCEPHALOPATHY_CSMR: TargetString = 'cause.neonatal_encephalopathy_due_to_birth_asphyxia_and_trauma.cause_specific_mortality_rate'
-    NEONATAL_SEPSIS_CSMR: TargetString = 'cause.neonatal_sepsis_and_other_neonatal_infections.cause_specific_mortality_rate'
-    NEONATAL_JAUNDICE_CSMR: TargetString = 'cause.hemolytic_disease_and_other_neonatal_jaundice.cause_specific_mortality_rate'
-    OTHER_NEONATAL_DISORDERS_CSMR: TargetString = 'cause.other_neonatal_disorders.cause_specific_mortality_rate'
-    SIDS_CSMR: TargetString = 'cause.sudden_infant_death_syndrome.cause_specific_mortality_rate'
+    URI_CSMR: TargetString = TargetString('cause.upper_respiratory_infections.cause_specific_mortality_rate')
+    OTITIS_MEDIA_CSMR: TargetString = TargetString('cause.otitis_media.cause_specific_mortality_rate')
+    MENINGITIS_CSMR: TargetString = TargetString('cause.meningitis.cause_specific_mortality_rate')
+    ENCEPHALITIS_CSMR: TargetString = TargetString('cause.encephalitis.cause_specific_mortality_rate')
+    NEONATAL_PRETERM_BIRTH_CSMR: TargetString = TargetString('cause.neonatal_preterm_birth.cause_specific_mortality_rate')
+    NEONATAL_ENCEPHALOPATHY_CSMR: TargetString = TargetString('cause.neonatal_encephalopathy_due_to_birth_asphyxia_and_trauma.cause_specific_mortality_rate')
+    NEONATAL_SEPSIS_CSMR: TargetString = TargetString('cause.neonatal_sepsis_and_other_neonatal_infections.cause_specific_mortality_rate')
+    NEONATAL_JAUNDICE_CSMR: TargetString = TargetString('cause.hemolytic_disease_and_other_neonatal_jaundice.cause_specific_mortality_rate')
+    OTHER_NEONATAL_DISORDERS_CSMR: TargetString = TargetString('cause.other_neonatal_disorders.cause_specific_mortality_rate')
+    SIDS_CSMR: TargetString = TargetString('cause.sudden_infant_death_syndrome.cause_specific_mortality_rate')
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
 

@@ -438,6 +438,11 @@ def load_lbwsg_rr(key: str, location: str) -> pd.DataFrame:
     data = utilities.process_relative_risk(data, key, entity, location, metadata.GBD_2019_ROUND_ID,
                                            metadata.AGE_GROUP.GBD_2020, whitelist_sids=True)
     data = data[data.index.get_level_values('year_start') == 2019]
+
+    unmodeled_causes = [target.name for target in data_keys.UNMODELED_CAUSES]
+    data = data.reset_index()
+    data.loc[data['affected_entity'].isin(unmodeled_causes), 'affected_measure'] = 'cause_specific_mortality_rate'
+    data = data.set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['affected_entity', 'affected_measure'])
     return data
 
 
