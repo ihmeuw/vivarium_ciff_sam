@@ -442,7 +442,7 @@ def load_lbwsg_rr(key: str, location: str) -> pd.DataFrame:
     unmodeled_causes = [target.name for target in data_keys.UNMODELED_CAUSES]
     data = data.reset_index()
     data.loc[data['affected_entity'].isin(unmodeled_causes), 'affected_measure'] = 'cause_specific_mortality_rate'
-    data = data.set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['affected_entity', 'affected_measure'])
+    data = data.set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['affected_entity', 'affected_measure', 'parameter'])
     return data
 
 
