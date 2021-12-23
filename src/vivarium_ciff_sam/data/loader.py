@@ -13,7 +13,7 @@ for an example.
    No logging is done here. Logging is done in vivarium inputs itself and forwarded.
 """
 import pickle
-from typing import Tuple, Type
+from typing import Dict, Tuple, Type
 
 import numpy as np
 import pandas as pd
