@@ -50,6 +50,15 @@ class __WastingModel:
     )
 
 
+# noinspection PyPep8Naming
+class __SingleStateModel:
+    def __init__(self, name: str):
+        self.MODEL_NAME = name
+        self.STATE_NAME: str = self.MODEL_NAME
+        self.STATES: Tuple[str, ...] = tuple(self.STATE_NAME)
+        self.TRANSITIONS: Tuple[TransitionString, ...] = tuple()
+
+
 ###########################
 # Disease Model variables #
 ###########################
@@ -59,6 +68,7 @@ DIARRHEA = __SISModel(data_keys.DIARRHEA.name)
 LRI = __SISModel(data_keys.LRI.name)
 MEASLES = __SISModel(data_keys.MEASLES.name)
 WASTING = __WastingModel()
+LBWSG_AFFECTED_UNMODELED_CAUSES = __SingleStateModel(data_keys.UNMODELED_CAUSES.name)
 
 CAUSE_MODELS: List[__SISModel] = [
     DIARRHEA,

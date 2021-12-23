@@ -6,14 +6,49 @@ import numpy as np
 import pandas as pd
 
 from vivarium.framework.engine import Builder
-from vivarium.framework.lookup import LookupTable
 from vivarium.framework.population import PopulationView, SimulantData
 from vivarium.framework.values import Pipeline
+from vivarium_public_health.disease import DiseaseModel, DiseaseState
 from vivarium_public_health.risks import Risk, RiskEffect
 from vivarium_public_health.risks.data_transformations import get_exposure_post_processor
 from vivarium_public_health.risks.distributions import SimulationDistribution
 
-from vivarium_ciff_sam.constants import data_keys, metadata
+from vivarium_ciff_sam.constants import data_keys, metadata, models
+
+
+# noinspection PyPep8Naming
+def LBWSGAffectedUnmodeledCauses() -> DiseaseModel:
+
+    # noinspection PyUnusedLocal
+    def calculate_unmodeled_csmr(cause: str, builder: Builder) -> pd.DataFrame:
+        csmr = pd.concat(
+            [(
+                builder.data.load(k)
+                .rename(columns={'value': k.name})
+                .set_index(metadata.ARTIFACT_INDEX_COLUMNS)
+                .squeeze()
+            ) for k in data_keys.UNMODELED_CAUSES if k.measure == 'cause_specific_mortality_rate'],
+            axis=1
+        ).sum(axis=1)
+        return csmr.reset_index()
+
+    single_state = DiseaseState(
+        models.LBWSG_AFFECTED_UNMODELED_CAUSES.STATE_NAME,
+        cause_type='cause',
+        get_data_functions={
+            'prevalence': lambda *_: 1.0,
+            'disability_weight': lambda *_: 0,
+            'excess_mortality_rate': calculate_unmodeled_csmr,
+            'birth_prevalence': lambda *_: 1.0,
+        }
+    )
+
+    return DiseaseModel(
+        models.LBWSG_AFFECTED_UNMODELED_CAUSES.MODEL_NAME,
+        initial_state=single_state,
+        get_data_functions={'cause_specific_mortality_rate': calculate_unmodeled_csmr},
+        states=[single_state]
+    )
 
 
 class LBWSGRisk(Risk, ABC):
@@ -41,7 +76,7 @@ class LBWSGRisk(Risk, ABC):
     #################
 
     # noinspection PyAttributeOutsideInit
-    def setup(self, builder: Builder):
+    def setup(self, builder: Builder) -> None:
         super().setup(builder)
         self.lbwsg_exposure = self._get_lbwsg_exposure_pipeline(builder)
         self.category_intervals = self._get_category_intervals(builder)
@@ -164,12 +199,6 @@ class LBWSGRiskEffect(RiskEffect):
                               self.late_neonatal_relative_risk_column_name]
         )
 
-    def _get_population_attributable_fraction_source(self, builder: Builder) -> LookupTable:
-        paf_data = builder.data.load(data_keys.LBWSG.PAF,
-                                     affected_entity=self.target.name,
-                                     affected_measure='excess_mortality_rate')
-        return builder.lookup.build_table(paf_data, key_columns=['sex'], parameter_columns=['age', 'year'])
-
     def _get_target_modifier(self, builder: Builder) -> Callable[[pd.Index, pd.Series], pd.Series]:
 
         def adjust_target(index: pd.Index, target: pd.Series) -> pd.Series:
@@ -202,13 +231,13 @@ class LBWSGRiskEffect(RiskEffect):
 
     def _get_interpolator(self, builder: Builder) -> pd.Series:
         # get relative risk data for target
-        interpolators = builder.data.load(data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR)
+        interpolators = builder.data.load(data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR,
+                                          affected_entity=self.target.name,
+                                          affected_measure=self.target.measure)
         interpolators = (
             # isolate RRs for target and drop non-neonatal age groups since they have RR == 1.0
-            (interpolators[(interpolators['affected_entity'] == self.target.name)
-                           & (interpolators['affected_measure'] == self.target.measure)
-                           & (interpolators['age_end'] < 0.5)])
-            .drop(columns=['affected_entity', 'affected_measure', 'age_end', 'year_start', 'year_end'])
+            interpolators[interpolators['age_end'] < 0.5]
+            .drop(columns=['age_end', 'year_start', 'year_end'])
             .set_index(['sex', 'value'])
             .apply(lambda row: (metadata.AGE_GROUP.EARLY_NEONATAL_ID if row['age_start'] == 0.0
                                 else metadata.AGE_GROUP.LATE_NEONATAL_ID), axis=1)

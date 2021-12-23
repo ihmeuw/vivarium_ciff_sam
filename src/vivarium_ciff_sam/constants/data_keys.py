@@ -292,6 +292,7 @@ class __UnmodeledCauses(NamedTuple):
     NEONATAL_JAUNDICE_CSMR: TargetString = TargetString('cause.hemolytic_disease_and_other_neonatal_jaundice.cause_specific_mortality_rate')
     OTHER_NEONATAL_DISORDERS_CSMR: TargetString = TargetString('cause.other_neonatal_disorders.cause_specific_mortality_rate')
     SIDS_CSMR: TargetString = TargetString('cause.sudden_infant_death_syndrome.cause_specific_mortality_rate')
+    RESTRICTIONS: TargetString = TargetString('cause.unmodeled_causes.restrictions')
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
 
