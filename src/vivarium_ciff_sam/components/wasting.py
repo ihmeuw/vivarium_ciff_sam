@@ -104,7 +104,7 @@ class RiskModel(DiseaseModel):
 
 
 # noinspection PyPep8Naming
-def ChildWasting():
+def ChildWasting() -> RiskModel:
     tmrel = SusceptibleState(models.WASTING.MODEL_NAME)
     mild = RiskState(
         models.WASTING.MILD_STATE_NAME,

@@ -8,11 +8,39 @@ import pandas as pd
 from vivarium.framework.engine import Builder
 from vivarium.framework.population import PopulationView, SimulantData
 from vivarium.framework.values import Pipeline
+from vivarium_public_health.disease import DiseaseModel, DiseaseState
 from vivarium_public_health.risks import Risk, RiskEffect
 from vivarium_public_health.risks.data_transformations import get_exposure_post_processor
 from vivarium_public_health.risks.distributions import SimulationDistribution
 
 from vivarium_ciff_sam.constants import data_keys, metadata
+
+
+class AffectedUnmodeledCause(DiseaseModel):
+
+    def __init__(self, cause_name: str, cause_type='cause'):
+
+        def calculate_csmr(cause: str, builder: Builder) -> pd.DataFrame:
+            return builder.data.load(f'{cause_type}.{cause}.cause_specific_mortality_rate')
+
+        single_state = DiseaseState(
+            cause_name,
+            cause_type=cause_type,
+            get_data_functions={
+                'prevalence': lambda *_: 1.0,
+                'disability_weight': lambda *_: 0,
+                'excess_mortality_rate': calculate_csmr,
+                'birth_prevalence': lambda *_: 1.0,
+            }
+        )
+
+        super().__init__(
+            cause_name,
+            initial_state=single_state,
+            get_data_functions={'cause_specific_mortality_rate': calculate_csmr},
+            cause_type=cause_type,
+            states=[single_state]
+        )
 
 
 class LBWSGRisk(Risk, ABC):
