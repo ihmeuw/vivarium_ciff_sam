@@ -54,7 +54,6 @@ class __WastingModel:
 # Disease Model variables #
 ###########################
 
-
 DIARRHEA = __SISModel(data_keys.DIARRHEA.name)
 LRI = __SISModel(data_keys.LRI.name)
 MEASLES = __SISModel(data_keys.MEASLES.name)

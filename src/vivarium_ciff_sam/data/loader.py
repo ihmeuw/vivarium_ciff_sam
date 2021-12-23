@@ -128,6 +128,17 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.UNMODELED_CAUSES.NEONATAL_JAUNDICE_CSMR: load_standard_data,
         data_keys.UNMODELED_CAUSES.OTHER_NEONATAL_DISORDERS_CSMR: load_standard_data,
         data_keys.UNMODELED_CAUSES.SIDS_CSMR: load_sids_csmr,
+
+        data_keys.UNMODELED_CAUSES.URI_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.UNMODELED_CAUSES.OTITIS_MEDIA_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.UNMODELED_CAUSES.MENINGITIS_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.UNMODELED_CAUSES.ENCEPHALITIS_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.UNMODELED_CAUSES.NEONATAL_PRETERM_BIRTH_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.UNMODELED_CAUSES.NEONATAL_ENCEPHALOPATHY_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.UNMODELED_CAUSES.NEONATAL_SEPSIS_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.UNMODELED_CAUSES.NEONATAL_JAUNDICE_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.UNMODELED_CAUSES.OTHER_NEONATAL_DISORDERS_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.UNMODELED_CAUSES.SIDS_RESTRICTIONS: load_unmodeled_causes_restrictions,
     }
     return mapping[lookup_key](lookup_key, location)
 
@@ -532,10 +543,27 @@ def load_sids_csmr(key: str, location: str) -> pd.DataFrame:
 
         # get around the validation rejecting yll only causes
         entity.restrictions.yll_only = False
-        entity.restrictions.yld_age_group_id_start = metadata.AGE_GROUP.GBD_2019_SIDS
-        entity.restrictions.yld_age_group_id_end = metadata.AGE_GROUP.GBD_2019_SIDS
+        entity.restrictions.yld_age_group_id_start = min(metadata.AGE_GROUP.GBD_2019_SIDS)
+        entity.restrictions.yld_age_group_id_end = max(metadata.AGE_GROUP.GBD_2019_SIDS)
 
         data = interface.get_measure(entity, key.measure, location).droplevel('location')
         return data
     else:
         raise ValueError(f'Unrecognized key {key}')
+
+
+# noinspection PyUnusedLocal
+def load_unmodeled_causes_restrictions(key: str, location: str) -> Dict:
+    if key not in data_keys.UNMODELED_CAUSES or 'restrictions' not in key:
+        raise ValueError(f'Unrecognized key {key}')
+
+    return {
+        'male_only': False,
+        'female_only': False,
+        'yll_only': False,
+        'yld_only': False,
+        'yll_age_group_id_start': 2,
+        'yll_age_group_id_end': 235,
+        'yld_age_group_id_start': 2,
+        'yld_age_group_id_end': 235
+    }
