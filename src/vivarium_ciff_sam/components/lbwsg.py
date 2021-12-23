@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 
 from vivarium.framework.engine import Builder
-from vivarium.framework.lookup import LookupTable
 from vivarium.framework.population import PopulationView, SimulantData
 from vivarium.framework.values import Pipeline
 from vivarium_public_health.risks import Risk, RiskEffect
@@ -41,7 +40,7 @@ class LBWSGRisk(Risk, ABC):
     #################
 
     # noinspection PyAttributeOutsideInit
-    def setup(self, builder: Builder):
+    def setup(self, builder: Builder) -> None:
         super().setup(builder)
         self.lbwsg_exposure = self._get_lbwsg_exposure_pipeline(builder)
         self.category_intervals = self._get_category_intervals(builder)
@@ -164,10 +163,6 @@ class LBWSGRiskEffect(RiskEffect):
                               self.late_neonatal_relative_risk_column_name]
         )
 
-    def _get_population_attributable_fraction_source(self, builder: Builder) -> LookupTable:
-        paf_data = builder.data.load(data_keys.LBWSG.PAF)
-        return builder.lookup.build_table(paf_data, key_columns=['sex'], parameter_columns=['age', 'year'])
-
     def _get_target_modifier(self, builder: Builder) -> Callable[[pd.Index, pd.Series], pd.Series]:
 
         def adjust_target(index: pd.Index, target: pd.Series) -> pd.Series:
@@ -200,13 +195,13 @@ class LBWSGRiskEffect(RiskEffect):
 
     def _get_interpolator(self, builder: Builder) -> pd.Series:
         # get relative risk data for target
-        interpolators = builder.data.load(data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR)
+        interpolators = builder.data.load(data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR,
+                                          affected_entity=self.target.name,
+                                          affected_measure=self.target.measure)
         interpolators = (
             # isolate RRs for target and drop non-neonatal age groups since they have RR == 1.0
-            (interpolators[(interpolators['affected_entity'] == self.target.name)
-                           & (interpolators['affected_measure'] == self.target.measure)
-                           & (interpolators['age_end'] < 0.5)])
-            .drop(columns=['affected_entity', 'affected_measure', 'age_end', 'year_start', 'year_end'])
+            interpolators[interpolators['age_end'] < 0.5]
+            .drop(columns=['age_end', 'year_start', 'year_end'])
             .set_index(['sex', 'value'])
             .apply(lambda row: (metadata.AGE_GROUP.EARLY_NEONATAL_ID if row['age_start'] == 0.0
                                 else metadata.AGE_GROUP.LATE_NEONATAL_ID), axis=1)
@@ -234,19 +229,21 @@ class LBWSGRiskEffect(RiskEffect):
     ########################
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
-        is_male = self.population_view.subview(['sex']).get(pop_data.index)['sex'] == 'Male'
         is_tmrel = (self.pipelines[self.lbwsg_exposure_pipeline_name](pop_data.index)
                     .isin(data_keys.LBWSG.TMREL_CATEGORIES))
+        is_male = self.population_view.subview(['sex']).get(pop_data.index)['sex'] == 'Male'
         gestational_age = self.pipelines[self.short_gestation_pipeline_name](pop_data.index)
         birth_weight = self.pipelines[self.low_birth_weight_pipeline_name](pop_data.index)
 
         def get_relative_risk_for_age_group(column_name: str, age_group_id: int) -> pd.Series:
             log_relative_risk = pd.Series(0.0, index=pop_data.index, name=column_name)
             log_relative_risk[is_male & ~is_tmrel] = (
-                self.interpolator['Male', age_group_id](gestational_age[is_male], birth_weight[is_male], grid=False)
+                self.interpolator['Male', age_group_id](gestational_age[is_male & ~is_tmrel],
+                                                        birth_weight[is_male & ~is_tmrel], grid=False)
             )
             log_relative_risk[~is_male & ~is_tmrel] = (
-                self.interpolator['Female', age_group_id](gestational_age[~is_male], birth_weight[~is_male], grid=False)
+                self.interpolator['Female', age_group_id](gestational_age[~is_male & ~is_tmrel],
+                                                          birth_weight[~is_male & ~is_tmrel], grid=False)
             )
             return np.exp(log_relative_risk)
 
