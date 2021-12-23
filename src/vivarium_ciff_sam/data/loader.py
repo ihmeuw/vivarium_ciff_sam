@@ -538,8 +538,8 @@ def load_sids_csmr(key: str, location: str) -> pd.DataFrame:
 
         # get around the validation rejecting yll only causes
         entity.restrictions.yll_only = False
-        entity.restrictions.yld_age_group_id_start = metadata.AGE_GROUP.GBD_2019_SIDS
-        entity.restrictions.yld_age_group_id_end = metadata.AGE_GROUP.GBD_2019_SIDS
+        entity.restrictions.yld_age_group_id_start = min(metadata.AGE_GROUP.GBD_2019_SIDS)
+        entity.restrictions.yld_age_group_id_end = max(metadata.AGE_GROUP.GBD_2019_SIDS)
 
         data = interface.get_measure(entity, key.measure, location).droplevel('location')
         return data
