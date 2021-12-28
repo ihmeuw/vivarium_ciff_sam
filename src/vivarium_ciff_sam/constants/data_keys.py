@@ -281,7 +281,7 @@ class __LowBirthWeightShortGestation(NamedTuple):
 LBWSG = __LowBirthWeightShortGestation()
 
 
-class __UnmodeledCauses(NamedTuple):
+class __AffectedUnmodeledCauses(NamedTuple):
     # Keys that will be loaded into the artifact. must have a colon type declaration
     URI_CSMR: TargetString = TargetString('cause.upper_respiratory_infections.cause_specific_mortality_rate')
     OTITIS_MEDIA_CSMR: TargetString = TargetString('cause.otitis_media.cause_specific_mortality_rate')
@@ -309,14 +309,14 @@ class __UnmodeledCauses(NamedTuple):
 
     @property
     def name(self):
-        return 'unmodeled_causes'
+        return 'affected_unmodeled_causes'
 
     @property
     def log_name(self):
-        return 'unmodeled causes'
+        return 'affected unmodeled causes'
 
 
-UNMODELED_CAUSES = __UnmodeledCauses()
+AFFECTED_UNMODELED_CAUSES = __AffectedUnmodeledCauses()
 
 
 MAKE_ARTIFACT_KEY_GROUPS = [
@@ -331,5 +331,5 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     SAM_TREATMENT,
     MAM_TREATMENT,
     LBWSG,
-    UNMODELED_CAUSES,
+    AFFECTED_UNMODELED_CAUSES,
 ]
