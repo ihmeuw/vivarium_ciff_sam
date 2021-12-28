@@ -6,7 +6,7 @@ from vivarium import ConfigTree
 from vivarium.framework.engine import Builder
 from vivarium.framework.event import Event
 from vivarium.framework.population import PopulationView
-from vivarium.framework.time import Time
+from vivarium.framework.time import Time, get_time_stamp
 from vivarium.framework.values import Pipeline
 from vivarium_public_health.metrics import (utilities,
                                             MortalityObserver as MortalityObserver_,
@@ -404,7 +404,7 @@ class BirthObserver:
     def setup(self, builder: Builder) -> None:
         self.clock = self._get_clock(builder)
         self.configuration = self._get_configuration(builder)
-        self.start_time = self.clock()
+        self.start_time = self._get_start_time(builder)
         self.age_bins = self._get_age_bins(builder)
         self.pipelines = self._get_pipelines(builder)
         self.population_view = self._get_population_view(builder)
@@ -418,6 +418,10 @@ class BirthObserver:
     # noinspection PyMethodMayBeStatic
     def _get_configuration(self, builder: Builder) -> ConfigTree:
         return builder.configuration.metrics.birth
+
+    # noinspection PyMethodMayBeStatic
+    def _get_start_time(self, builder: Builder) -> pd.Timestamp:
+        return get_time_stamp(builder.configuration.time.start)
 
     # noinspection PyMethodMayBeStatic
     def _get_age_bins(self, builder: Builder) -> pd.DataFrame:
@@ -446,8 +450,7 @@ class BirthObserver:
     # noinspection PyUnusedLocal
     def _metrics(self, index: pd.Index, metrics: Dict) -> Dict:
         pop = pd.concat(
-            [self.population_view.get(index), self.pipelines[self.birth_weight_pipeline_name](index)],
-            axis=1
+            [self.population_view.get(index), self.pipelines[self.birth_weight_pipeline_name](index)], axis=1
         )
 
         measure_getters = (
@@ -456,51 +459,52 @@ class BirthObserver:
             (self._get_births, (results.LOW_BIRTH_WEIGHT_CUTOFF,)),
         )
 
+        config_dict = self.configuration.to_dict()
+        base_filter = QueryString(f'"{{start_time}}" <= {self.entrance_time_column_name} '
+                                  f'and {self.entrance_time_column_name} < "{{end_time}}"')
+        time_spans = utilities.get_time_iterable(config_dict, self.start_time, self.clock())
+
         for labels, pop_in_group in self.stratifier.group(pop):
-            args = (pop_in_group, self.configuration.to_dict(), self.start_time, self.clock(), self.age_bins)
+            args = (pop_in_group, base_filter, self.configuration.to_dict(), time_spans, self.age_bins)
 
             for measure_getter, extra_args in measure_getters:
                 measure_data = measure_getter(*args, *extra_args)
                 measure_data = self.stratifier.update_labels(measure_data, labels)
                 metrics.update(measure_data)
 
-    def _get_births(self, pop: pd.DataFrame, configuration: Dict, start_time: Time, end_time: Time,
-                    age_bins: pd.DataFrame, cutoff_weight: float = None) -> Dict[str, float]:
+    def _get_births(self, pop: pd.DataFrame, base_filter: QueryString, configuration: Dict,
+                    time_spans: List[Tuple[str, Tuple[pd.Timestamp, pd.Timestamp]]], age_bins: pd.DataFrame,
+                    cutoff_weight: float = None) -> Dict[str, float]:
         if cutoff_weight:
-            birth_weight_filter = (
+            base_filter += (
                 QueryString('{column} <= {cutoff}')
                 .format(column=f'`{self.birth_weight_pipeline_name}`', cutoff=cutoff_weight)
             )
             measure = 'low_weight_births'
         else:
-            birth_weight_filter = QueryString('tracked in (True, False)')
             measure = 'total_births'
 
         base_key = utilities.get_output_template(**configuration).substitute(measure=measure)
-        time_spans = utilities.get_time_iterable(configuration, start_time, end_time)
 
         births = {}
         for year, (year_start, year_end) in time_spans:
-            born_in_span = pop[(year_start <= pop.entrance_time) & (pop.entrance_time < year_end)]
+            year_filter = base_filter.format(start_time=year_start, end_time=year_end)
             year_key = base_key.substitute(year=year)
-            group_births = utilities.get_group_counts(born_in_span, birth_weight_filter, year_key, configuration,
-                                                      age_bins)
+            group_births = utilities.get_group_counts(pop, year_filter, year_key, configuration, age_bins)
             births.update(group_births)
         return births
 
-    def _get_birth_weight_sum(self, pop: pd.DataFrame, configuration: Dict, start_time: Time, end_time: Time,
+    def _get_birth_weight_sum(self, pop: pd.DataFrame, base_filter: QueryString, configuration: Dict,
+                              time_spans: List[Tuple[str, Tuple[pd.Timestamp, pd.Timestamp]]],
                               age_bins: pd.DataFrame) -> Dict[str, float]:
 
-        base_filter = QueryString('tracked in (True, False)')
         base_key = utilities.get_output_template(**configuration).substitute(measure='birth_weight_sum')
-        time_spans = utilities.get_time_iterable(configuration, start_time, end_time)
 
         birth_weight_sum = {}
         for year, (year_start, year_end) in time_spans:
-            born_in_span = pop[(year_start <= pop.entrance_time) & (pop.entrance_time < year_end)]
+            year_filter = base_filter.format(start_time=year_start, end_time=year_end)
             year_key = base_key.substitute(year=year)
-            group_birth_weight_sums = utilities.get_group_counts(born_in_span, base_filter, year_key, configuration,
-                                                                 age_bins,
+            group_birth_weight_sums = utilities.get_group_counts(pop, year_filter, year_key, configuration, age_bins,
                                                                  lambda df: df[self.birth_weight_pipeline_name].sum())
             birth_weight_sum.update(group_birth_weight_sums)
         return birth_weight_sum
