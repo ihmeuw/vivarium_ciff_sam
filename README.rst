@@ -23,7 +23,7 @@ Once you have all three installed, you should open up your normal shell
 You'll then make an environment, clone this repository, then install
 all necessary requirements as follows::
 
-  :~$ conda create --name=vivarium_ciff_sam python=3.6
+  :~$ conda create --name=vivarium_ciff_sam python=3.8
   ...conda will download python and base dependencies...
   :~$ conda activate vivarium_ciff_sam
   (vivarium_ciff_sam) :~$ git clone https://github.com/ihmeuw/vivarium_ciff_sam.git

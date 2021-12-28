@@ -15,15 +15,16 @@ from pathlib import Path
 from typing import Tuple, Union
 from loguru import logger
 
-import vivarium_cluster_tools as vct
-
 from vivarium_ciff_sam.constants import data_keys, metadata
 from vivarium_ciff_sam.utilities import sanitize_location, delete_if_exists, len_longest_location
 from vivarium_ciff_sam.tools.app_logging import add_logging_sink, decode_status
 
 
 def running_from_cluster() -> bool:
+
+    import vivarium_cluster_tools as vct
     on_cluster = True
+
     try:
         vct.get_cluster_name()
     except:
@@ -77,6 +78,8 @@ def build_artifacts(location: str, output_dir: str, append: bool, replace_keys: 
     verbose
         How noisy the logger should be.
     """
+
+    import vivarium_cluster_tools as vct
     output_dir = Path(output_dir)
     vct.mkdir(output_dir, parents=True, exists_ok=True)
 
