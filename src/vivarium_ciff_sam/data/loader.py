@@ -437,7 +437,11 @@ def load_lbwsg_rr(key: str, location: str) -> pd.DataFrame:
     data = data[data['year_id'] == 2019].drop(columns='year_id')
     data = utilities.process_relative_risk(data, key, entity, location, metadata.GBD_2019_ROUND_ID,
                                            metadata.AGE_GROUP.GBD_2020, whitelist_sids=True)
-    data = data[data.index.get_level_values('year_start') == 2019]
+    data = (
+        data.query('year_start == 2019')
+        .droplevel(['affected_entity', 'affected_measure'])
+    )
+    data = data[~data.index.duplicated()]
     return data
 
 
@@ -449,7 +453,7 @@ def load_lbwsg_interpolated_rr(key: str, location: str) -> pd.DataFrame:
     rr['parameter'] = pd.Categorical(rr['parameter'], [f'cat{i}' for i in range(1000)])
     rr = (
         rr.sort_values('parameter')
-        .set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['affected_entity', 'affected_measure', 'parameter'])
+        .set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['parameter'])
         .stack()
         .unstack('parameter')
         .apply(np.log)
