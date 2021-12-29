@@ -6,41 +6,14 @@ import numpy as np
 import pandas as pd
 
 from vivarium.framework.engine import Builder
+from vivarium.framework.lookup import LookupTable
 from vivarium.framework.population import PopulationView, SimulantData
 from vivarium.framework.values import Pipeline
-from vivarium_public_health.disease import DiseaseModel, DiseaseState
 from vivarium_public_health.risks import Risk, RiskEffect
-from vivarium_public_health.risks.data_transformations import get_exposure_post_processor
+from vivarium_public_health.risks import data_transformations
 from vivarium_public_health.risks.distributions import SimulationDistribution
 
 from vivarium_ciff_sam.constants import data_keys, metadata
-
-
-class AffectedUnmodeledCause(DiseaseModel):
-
-    def __init__(self, cause_name: str, cause_type='cause'):
-
-        def calculate_csmr(cause: str, builder: Builder) -> pd.DataFrame:
-            return builder.data.load(f'{cause_type}.{cause}.cause_specific_mortality_rate')
-
-        single_state = DiseaseState(
-            cause_name,
-            cause_type=cause_type,
-            get_data_functions={
-                'prevalence': lambda *_: 1.0,
-                'disability_weight': lambda *_: 0,
-                'excess_mortality_rate': calculate_csmr,
-                'birth_prevalence': lambda *_: 1.0,
-            }
-        )
-
-        super().__init__(
-            cause_name,
-            initial_state=single_state,
-            get_data_functions={'cause_specific_mortality_rate': calculate_csmr},
-            cause_type=cause_type,
-            states=[single_state]
-        )
 
 
 class LBWSGRisk(Risk):
@@ -88,7 +61,7 @@ class LBWSGSubRisk(Risk, ABC):
             source=self._get_current_exposure,
             requires_columns=['age', 'sex'],
             requires_values=[self.propensity_pipeline_name, self.lbwsg_exposure_pipeline_name],
-            preferred_post_processor=get_exposure_post_processor(builder, self.risk)
+            preferred_post_processor=data_transformations.get_exposure_post_processor(builder, self.risk)
         )
 
     def _get_population_view(self, builder: Builder) -> PopulationView:
@@ -203,6 +176,11 @@ class LBWSGRiskEffect(RiskEffect):
                               self.late_neonatal_relative_risk_column_name]
         )
 
+    def _get_population_attributable_fraction_source(self, builder: Builder) -> LookupTable:
+        paf_data = data_transformations.get_population_attributable_fraction_data(builder, self.risk,
+                                                                                  data_keys.DIARRHEA.EMR)
+        return builder.lookup.build_table(paf_data, key_columns=['sex'], parameter_columns=['age', 'year'])
+
     def _get_target_modifier(self, builder: Builder) -> Callable[[pd.Index, pd.Series], pd.Series]:
 
         def adjust_target(index: pd.Index, target: pd.Series) -> pd.Series:
@@ -233,11 +211,13 @@ class LBWSGRiskEffect(RiskEffect):
             for age_group_id in ['Early Neonatal', 'Late Neonatal']
         )
 
+    # noinspection PyMethodMayBeStatic
     def _get_interpolator(self, builder: Builder) -> pd.Series:
         # get relative risk data for target
+        # todo remove effected entity/measure columns from artifact
         interpolators = builder.data.load(data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR,
-                                          affected_entity=self.target.name,
-                                          affected_measure=self.target.measure)
+                                          affected_entity=data_keys.DIARRHEA.name,
+                                          affected_measure='excess_mortality_rate')
         interpolators = (
             # isolate RRs for target and drop non-neonatal age groups since they have RR == 1.0
             interpolators[interpolators['age_end'] < 0.5]

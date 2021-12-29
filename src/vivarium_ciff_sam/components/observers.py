@@ -201,9 +201,6 @@ class MortalityObserver(MortalityObserver_):
     def metrics(self, index: pd.Index, metrics: Dict[str, float]) -> Dict[str, float]:
         pop = self.population_view.get(index)
         pop.loc[pop.exit_time.isnull(), 'exit_time'] = self.clock()
-        pop.loc[
-            pop['cause_of_death'].isin(models.AFFECTED_UNMODELED_CAUSES), 'cause_of_death'
-        ] = data_keys.AFFECTED_UNMODELED_CAUSES.name
 
         measure_getters = (
             (utilities.get_deaths, (self.causes,)),

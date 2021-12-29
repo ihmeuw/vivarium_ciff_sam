@@ -13,7 +13,7 @@ for an example.
    No logging is done here. Logging is done in vivarium inputs itself and forwarded.
 """
 import pickle
-from typing import Dict, Tuple, Type
+from typing import Tuple, Type
 
 import numpy as np
 import pandas as pd
@@ -128,17 +128,6 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_JAUNDICE_CSMR: load_standard_data,
         data_keys.AFFECTED_UNMODELED_CAUSES.OTHER_NEONATAL_DISORDERS_CSMR: load_standard_data,
         data_keys.AFFECTED_UNMODELED_CAUSES.SIDS_CSMR: load_sids_csmr,
-
-        data_keys.AFFECTED_UNMODELED_CAUSES.URI_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.AFFECTED_UNMODELED_CAUSES.OTITIS_MEDIA_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.AFFECTED_UNMODELED_CAUSES.MENINGITIS_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.AFFECTED_UNMODELED_CAUSES.ENCEPHALITIS_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_PRETERM_BIRTH_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_ENCEPHALOPATHY_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_SEPSIS_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_JAUNDICE_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.AFFECTED_UNMODELED_CAUSES.OTHER_NEONATAL_DISORDERS_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.AFFECTED_UNMODELED_CAUSES.SIDS_RESTRICTIONS: load_unmodeled_causes_restrictions,
     }
     return mapping[lookup_key](lookup_key, location)
 
@@ -550,20 +539,3 @@ def load_sids_csmr(key: str, location: str) -> pd.DataFrame:
         return data
     else:
         raise ValueError(f'Unrecognized key {key}')
-
-
-# noinspection PyUnusedLocal
-def load_unmodeled_causes_restrictions(key: str, location: str) -> Dict:
-    if key not in data_keys.AFFECTED_UNMODELED_CAUSES or 'restrictions' not in key:
-        raise ValueError(f'Unrecognized key {key}')
-
-    return {
-        'male_only': False,
-        'female_only': False,
-        'yll_only': False,
-        'yld_only': False,
-        'yll_age_group_id_start': 2,
-        'yll_age_group_id_end': 235,
-        'yld_age_group_id_start': 2,
-        'yld_age_group_id_end': 235
-    }
