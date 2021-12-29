@@ -65,6 +65,8 @@ CAUSE_MODELS: List[__SISModel] = [
     MEASLES,
 ]
 
+AFFECTED_UNMODELED_CAUSES = {cause.name for cause in data_keys.AFFECTED_UNMODELED_CAUSES}
+
 
 def get_risk_category(state_name: str) -> str:
     return {

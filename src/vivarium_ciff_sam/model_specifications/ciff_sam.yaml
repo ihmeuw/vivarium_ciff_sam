@@ -23,8 +23,6 @@ components:
 
             - RiskEffect('risk_factor.moderate_acute_malnutrition_treatment', 'risk_factor.moderate_acute_malnutrition_to_mild_child_wasting.transition_rate')
 
-            - Risk('risk_factor.low_birth_weight_and_short_gestation')
-
     vivarium_ciff_sam:
         components:
             - ChildWasting()
@@ -40,6 +38,7 @@ components:
             - AffectedUnmodeledCause('other_neonatal_disorders')
             - AffectedUnmodeledCause('sudden_infant_death_syndrome')
 
+            - LBWSGRisk()
             - LowBirthWeight()
             - ShortGestation()
             - LBWSGRiskEffect('cause.diarrheal_diseases.excess_mortality_rate')
@@ -74,6 +73,7 @@ components:
             - DiseaseObserver('lower_respiratory_infections', 'wasting')
             - DiseaseObserver('child_wasting', 'False', 'sq_lns', 'wasting_treatment', 'x_factor')
             - CategoricalRiskObserver('child_stunting', 'False', 'sq_lns')
+            - BirthObserver()
 
 configuration:
     input_data:
@@ -148,5 +148,9 @@ configuration:
             by_year: True
         child_stunting:
             by_age: True
+            by_sex: True
+            by_year: True
+        birth:
+            by_age: False
             by_sex: True
             by_year: True

@@ -24,7 +24,7 @@ from vivarium.framework.artifact import EntityKey
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_inputs import interface
 
-from vivarium_ciff_sam.components import LBWSGRisk, LowBirthWeight, ShortGestation
+from vivarium_ciff_sam.components import LBWSGSubRisk, LowBirthWeight, ShortGestation
 from vivarium_ciff_sam.constants import data_keys, data_values, metadata, paths
 from vivarium_ciff_sam.data import utilities
 
@@ -118,27 +118,27 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR: load_lbwsg_interpolated_rr,
         data_keys.LBWSG.PAF: load_lbwsg_paf,
 
-        data_keys.UNMODELED_CAUSES.URI_CSMR: load_standard_data,
-        data_keys.UNMODELED_CAUSES.OTITIS_MEDIA_CSMR: load_standard_data,
-        data_keys.UNMODELED_CAUSES.MENINGITIS_CSMR: load_standard_data,
-        data_keys.UNMODELED_CAUSES.ENCEPHALITIS_CSMR: load_standard_data,
-        data_keys.UNMODELED_CAUSES.NEONATAL_PRETERM_BIRTH_CSMR: load_standard_data,
-        data_keys.UNMODELED_CAUSES.NEONATAL_ENCEPHALOPATHY_CSMR: load_standard_data,
-        data_keys.UNMODELED_CAUSES.NEONATAL_SEPSIS_CSMR: load_standard_data,
-        data_keys.UNMODELED_CAUSES.NEONATAL_JAUNDICE_CSMR: load_standard_data,
-        data_keys.UNMODELED_CAUSES.OTHER_NEONATAL_DISORDERS_CSMR: load_standard_data,
-        data_keys.UNMODELED_CAUSES.SIDS_CSMR: load_sids_csmr,
+        data_keys.AFFECTED_UNMODELED_CAUSES.URI_CSMR: load_standard_data,
+        data_keys.AFFECTED_UNMODELED_CAUSES.OTITIS_MEDIA_CSMR: load_standard_data,
+        data_keys.AFFECTED_UNMODELED_CAUSES.MENINGITIS_CSMR: load_standard_data,
+        data_keys.AFFECTED_UNMODELED_CAUSES.ENCEPHALITIS_CSMR: load_standard_data,
+        data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_PRETERM_BIRTH_CSMR: load_standard_data,
+        data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_ENCEPHALOPATHY_CSMR: load_standard_data,
+        data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_SEPSIS_CSMR: load_standard_data,
+        data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_JAUNDICE_CSMR: load_standard_data,
+        data_keys.AFFECTED_UNMODELED_CAUSES.OTHER_NEONATAL_DISORDERS_CSMR: load_standard_data,
+        data_keys.AFFECTED_UNMODELED_CAUSES.SIDS_CSMR: load_sids_csmr,
 
-        data_keys.UNMODELED_CAUSES.URI_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.UNMODELED_CAUSES.OTITIS_MEDIA_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.UNMODELED_CAUSES.MENINGITIS_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.UNMODELED_CAUSES.ENCEPHALITIS_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.UNMODELED_CAUSES.NEONATAL_PRETERM_BIRTH_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.UNMODELED_CAUSES.NEONATAL_ENCEPHALOPATHY_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.UNMODELED_CAUSES.NEONATAL_SEPSIS_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.UNMODELED_CAUSES.NEONATAL_JAUNDICE_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.UNMODELED_CAUSES.OTHER_NEONATAL_DISORDERS_RESTRICTIONS: load_unmodeled_causes_restrictions,
-        data_keys.UNMODELED_CAUSES.SIDS_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.AFFECTED_UNMODELED_CAUSES.URI_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.AFFECTED_UNMODELED_CAUSES.OTITIS_MEDIA_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.AFFECTED_UNMODELED_CAUSES.MENINGITIS_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.AFFECTED_UNMODELED_CAUSES.ENCEPHALITIS_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_PRETERM_BIRTH_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_ENCEPHALOPATHY_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_SEPSIS_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_JAUNDICE_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.AFFECTED_UNMODELED_CAUSES.OTHER_NEONATAL_DISORDERS_RESTRICTIONS: load_unmodeled_causes_restrictions,
+        data_keys.AFFECTED_UNMODELED_CAUSES.SIDS_RESTRICTIONS: load_unmodeled_causes_restrictions,
     }
     return mapping[lookup_key](lookup_key, location)
 
@@ -467,7 +467,7 @@ def load_lbwsg_interpolated_rr(key: str, location: str) -> pd.DataFrame:
     )
 
     # get category midpoints
-    def get_category_midpoints(lbwsg_type: Type[LBWSGRisk]) -> pd.Series:
+    def get_category_midpoints(lbwsg_type: Type[LBWSGSubRisk]) -> pd.Series:
         categories = get_data(f'risk_factor.{data_keys.LBWSG.name}.categories', location)
         return lbwsg_type.get_intervals_from_categories(categories).apply(lambda x: x.mid)
 
@@ -537,7 +537,7 @@ def load_lbwsg_paf(key: str, location: str) -> pd.DataFrame:
 
 
 def load_sids_csmr(key: str, location: str) -> pd.DataFrame:
-    if key == data_keys.UNMODELED_CAUSES.SIDS_CSMR:
+    if key == data_keys.AFFECTED_UNMODELED_CAUSES.SIDS_CSMR:
         key = EntityKey(key)
         entity: Cause = utilities.get_entity(key)
 
@@ -554,7 +554,7 @@ def load_sids_csmr(key: str, location: str) -> pd.DataFrame:
 
 # noinspection PyUnusedLocal
 def load_unmodeled_causes_restrictions(key: str, location: str) -> Dict:
-    if key not in data_keys.UNMODELED_CAUSES or 'restrictions' not in key:
+    if key not in data_keys.AFFECTED_UNMODELED_CAUSES or 'restrictions' not in key:
         raise ValueError(f'Unrecognized key {key}')
 
     return {

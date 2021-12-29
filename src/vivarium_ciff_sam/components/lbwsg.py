@@ -43,7 +43,16 @@ class AffectedUnmodeledCause(DiseaseModel):
         )
 
 
-class LBWSGRisk(Risk, ABC):
+class LBWSGRisk(Risk):
+
+    def __init__(self):
+        super().__init__('risk_factor.low_birth_weight_and_short_gestation')
+
+    def _get_population_view(self, builder: Builder) -> PopulationView:
+        return builder.population.get_view([self.propensity_column_name, 'tracked'])
+
+
+class LBWSGSubRisk(Risk, ABC):
     """"
     Risk component for the individual aspects of LBWSG (i.e. birth weight and gestational age).
     `risk_factor.low_birth_weight_and_short_gestation` must exist.
@@ -52,7 +61,7 @@ class LBWSGRisk(Risk, ABC):
     RISK_NAME = 'low_birth_weight_and_short_gestation'
 
     def __init__(self, risk: str):
-        super(LBWSGRisk, self).__init__(risk)
+        super(LBWSGSubRisk, self).__init__(risk)
         self._sub_components = []
         self.lbwsg_exposure_pipeline_name = f'{data_keys.LBWSG.name}.exposure'
 
@@ -82,6 +91,9 @@ class LBWSGRisk(Risk, ABC):
             preferred_post_processor=get_exposure_post_processor(builder, self.risk)
         )
 
+    def _get_population_view(self, builder: Builder) -> PopulationView:
+        return builder.population.get_view([self.propensity_column_name, 'tracked'])
+
     def _get_lbwsg_exposure_pipeline(self, builder: Builder) -> Pipeline:
         return builder.value.get_value(self.lbwsg_exposure_pipeline_name)
 
@@ -104,7 +116,7 @@ class LBWSGRisk(Risk, ABC):
             return exposure
 
         exposures = pd.concat([lbwsg_categories, propensities], axis=1).apply(get_exposure_from_category, axis=1)
-        exposures.name = f'{self.risk}.exposure'
+        exposures.name = self.exposure_pipeline_name
         return exposures
 
     ##################
@@ -127,7 +139,7 @@ class LBWSGRisk(Risk, ABC):
         pass
 
 
-class LowBirthWeight(LBWSGRisk):
+class LowBirthWeight(LBWSGSubRisk):
 
     RISK_NAME = 'low_birth_weight'
 
@@ -141,7 +153,7 @@ class LowBirthWeight(LBWSGRisk):
         return endpoints
 
 
-class ShortGestation(LBWSGRisk):
+class ShortGestation(LBWSGSubRisk):
 
     RISK_NAME = 'short_gestation'
 

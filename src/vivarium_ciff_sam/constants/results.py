@@ -1,6 +1,6 @@
 import itertools
 
-from vivarium_ciff_sam.constants import models
+from vivarium_ciff_sam.constants import data_keys, models
 
 #################################
 # Results columns and variables #
@@ -31,6 +31,7 @@ DISEASE_TRANSITION_COUNT_COLUMN_TEMPLATE = '{DISEASE_TRANSITION}_event_count_in_
 WASTING_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{WASTING_STATE}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_sam_treatment_{SAM_TREATMENT_STATE}_mam_treatment_{MAM_TREATMENT_STATE}_sq_lns_{SQLNS_STATE}_x_factor_{X_FACTOR_STATE}'
 WASTING_TRANSITION_COUNT_COLUMN_TEMPLATE = '{WASTING_TRANSITION}_event_count_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_sam_treatment_{SAM_TREATMENT_STATE}_mam_treatment_{MAM_TREATMENT_STATE}_sq_lns_{SQLNS_STATE}_x_factor_{X_FACTOR_STATE}'
 STUNTING_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{STUNTING_STATE}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_sq_lns_{SQLNS_STATE}'
+BIRTHS_COLUMN_TEMPLATE = '{BIRTH_METRIC}_in_{YEAR}_among_{SEX}'
 
 COLUMN_TEMPLATES = {
     'population': TOTAL_POPULATION_COLUMN_TEMPLATE,
@@ -42,6 +43,7 @@ COLUMN_TEMPLATES = {
     'wasting_state_person_time': WASTING_STATE_PERSON_TIME_COLUMN_TEMPLATE,
     'wasting_transition_count': WASTING_TRANSITION_COUNT_COLUMN_TEMPLATE,
     'stunting_state_person_time': STUNTING_STATE_PERSON_TIME_COLUMN_TEMPLATE,
+    'births': BIRTHS_COLUMN_TEMPLATE,
 }
 
 NON_COUNT_TEMPLATES = [
@@ -54,6 +56,7 @@ AGE_GROUPS = ('early_neonatal', 'late_neonatal', '1-5_months', '6-11_months', '1
 STUNTING_STATES = ('cat4', 'cat3', 'cat2', 'cat1')
 TREATMENT_STATES = ('covered', 'uncovered')
 X_FACTOR_STATE = ('cat2', 'cat1')
+BIRTH_METRICS = ('total_births', 'birth_weight_sum', 'low_weight_births')
 CAUSES_OF_DEATH = (
     'other_causes',
     models.DIARRHEA.STATE_NAME,
@@ -61,6 +64,7 @@ CAUSES_OF_DEATH = (
     models.LRI.STATE_NAME,
     models.WASTING.MODERATE_STATE_NAME,
     models.WASTING.SEVERE_STATE_NAME,
+    data_keys.AFFECTED_UNMODELED_CAUSES.name
 )
 CAUSES_OF_DISABILITY = (
     models.DIARRHEA.STATE_NAME,
@@ -86,7 +90,11 @@ TEMPLATE_FIELD_MAP = {
     'SAM_TREATMENT_STATE': TREATMENT_STATES,
     'MAM_TREATMENT_STATE': TREATMENT_STATES,
     'X_FACTOR_STATE': X_FACTOR_STATE,
+    'BIRTH_METRIC': BIRTH_METRICS,
 }
+
+
+LOW_BIRTH_WEIGHT_CUTOFF = 2500.0
 
 
 # noinspection PyPep8Naming
