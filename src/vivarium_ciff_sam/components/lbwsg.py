@@ -177,8 +177,7 @@ class LBWSGRiskEffect(RiskEffect):
         )
 
     def _get_population_attributable_fraction_source(self, builder: Builder) -> LookupTable:
-        paf_data = data_transformations.get_population_attributable_fraction_data(builder, self.risk,
-                                                                                  data_keys.DIARRHEA.EMR)
+        paf_data = builder.data.load(f'{self.risk}.population_attributable_fraction')
         return builder.lookup.build_table(paf_data, key_columns=['sex'], parameter_columns=['age', 'year'])
 
     def _get_target_modifier(self, builder: Builder) -> Callable[[pd.Index, pd.Series], pd.Series]:
@@ -214,10 +213,7 @@ class LBWSGRiskEffect(RiskEffect):
     # noinspection PyMethodMayBeStatic
     def _get_interpolator(self, builder: Builder) -> pd.Series:
         # get relative risk data for target
-        # todo remove effected entity/measure columns from artifact
-        interpolators = builder.data.load(data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR,
-                                          affected_entity=data_keys.DIARRHEA.name,
-                                          affected_measure='excess_mortality_rate')
+        interpolators = builder.data.load(data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR)
         interpolators = (
             # isolate RRs for target and drop non-neonatal age groups since they have RR == 1.0
             interpolators[interpolators['age_end'] < 0.5]
