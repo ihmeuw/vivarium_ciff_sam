@@ -469,6 +469,8 @@ class BirthObserver:
                 measure_data = self.stratifier.update_labels(measure_data, labels)
                 metrics.update(measure_data)
 
+        return metrics
+
     def _get_births(self, pop: pd.DataFrame, base_filter: QueryString, configuration: Dict,
                     time_spans: List[Tuple[str, Tuple[pd.Timestamp, pd.Timestamp]]], age_bins: pd.DataFrame,
                     cutoff_weight: float = None) -> Dict[str, float]:
