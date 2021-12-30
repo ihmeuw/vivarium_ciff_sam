@@ -201,9 +201,6 @@ class MortalityObserver(MortalityObserver_):
     def metrics(self, index: pd.Index, metrics: Dict[str, float]) -> Dict[str, float]:
         pop = self.population_view.get(index)
         pop.loc[pop.exit_time.isnull(), 'exit_time'] = self.clock()
-        pop.loc[
-            pop['cause_of_death'].isin(models.AFFECTED_UNMODELED_CAUSES), 'cause_of_death'
-        ] = data_keys.AFFECTED_UNMODELED_CAUSES.name
 
         measure_getters = (
             (utilities.get_deaths, (self.causes,)),
@@ -471,6 +468,8 @@ class BirthObserver:
                 measure_data = measure_getter(*args, *extra_args)
                 measure_data = self.stratifier.update_labels(measure_data, labels)
                 metrics.update(measure_data)
+
+        return metrics
 
     def _get_births(self, pop: pd.DataFrame, base_filter: QueryString, configuration: Dict,
                     time_spans: List[Tuple[str, Tuple[pd.Timestamp, pd.Timestamp]]], age_bins: pd.DataFrame,

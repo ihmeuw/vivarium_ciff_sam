@@ -1,6 +1,6 @@
 import itertools
 
-from vivarium_ciff_sam.constants import data_keys, models
+from vivarium_ciff_sam.constants import models
 
 #################################
 # Results columns and variables #
@@ -64,7 +64,6 @@ CAUSES_OF_DEATH = (
     models.LRI.STATE_NAME,
     models.WASTING.MODERATE_STATE_NAME,
     models.WASTING.SEVERE_STATE_NAME,
-    data_keys.AFFECTED_UNMODELED_CAUSES.name
 )
 CAUSES_OF_DISABILITY = (
     models.DIARRHEA.STATE_NAME,

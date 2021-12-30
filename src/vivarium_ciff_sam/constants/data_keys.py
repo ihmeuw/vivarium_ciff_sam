@@ -294,17 +294,6 @@ class __AffectedUnmodeledCauses(NamedTuple):
     OTHER_NEONATAL_DISORDERS_CSMR: TargetString = TargetString('cause.other_neonatal_disorders.cause_specific_mortality_rate')
     SIDS_CSMR: TargetString = TargetString('cause.sudden_infant_death_syndrome.cause_specific_mortality_rate')
 
-    URI_RESTRICTIONS: TargetString = TargetString('cause.upper_respiratory_infections.restrictions')
-    OTITIS_MEDIA_RESTRICTIONS: TargetString = TargetString('cause.otitis_media.restrictions')
-    MENINGITIS_RESTRICTIONS: TargetString = TargetString('cause.meningitis.restrictions')
-    ENCEPHALITIS_RESTRICTIONS: TargetString = TargetString('cause.encephalitis.restrictions')
-    NEONATAL_PRETERM_BIRTH_RESTRICTIONS: TargetString = TargetString('cause.neonatal_preterm_birth.restrictions')
-    NEONATAL_ENCEPHALOPATHY_RESTRICTIONS: TargetString = TargetString('cause.neonatal_encephalopathy_due_to_birth_asphyxia_and_trauma.restrictions')
-    NEONATAL_SEPSIS_RESTRICTIONS: TargetString = TargetString('cause.neonatal_sepsis_and_other_neonatal_infections.restrictions')
-    NEONATAL_JAUNDICE_RESTRICTIONS: TargetString = TargetString('cause.hemolytic_disease_and_other_neonatal_jaundice.restrictions')
-    OTHER_NEONATAL_DISORDERS_RESTRICTIONS: TargetString = TargetString('cause.other_neonatal_disorders.restrictions')
-    SIDS_RESTRICTIONS: TargetString = TargetString('cause.sudden_infant_death_syndrome.restrictions')
-
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
 
     @property
