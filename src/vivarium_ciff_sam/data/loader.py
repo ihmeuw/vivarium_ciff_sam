@@ -599,7 +599,7 @@ def load_maternal_malnutrition_excess_shift(key: str, location: str) -> pd.DataF
     column_index = pd.Index([f'draw_{i}' for i in range(0, 1000)])
 
     cat1_shift = get_random_variable_draws(
-        column_index, *data_keys.MATERNAL_MALNUTRITION.EXPOSED_BIRTH_WEIGHT_SHIFT
+        column_index, *data_values.MATERNAL_MALNUTRITION.EXPOSED_BIRTH_WEIGHT_SHIFT
     )
 
     cat1 = pd.DataFrame([cat1_shift], index=index)
