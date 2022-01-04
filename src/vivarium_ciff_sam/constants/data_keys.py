@@ -316,8 +316,8 @@ class __MaternalMalnutrition(NamedTuple):
     CATEGORIES: TargetString = 'risk_factor.maternal_malnutrition.categories'
     EXPOSURE: TargetString = 'risk_factor.maternal_malnutrition.exposure'
     RELATIVE_RISK: TargetString = 'risk_factor.maternal_malnutrition.relative_risk'
-    # PAF: TargetString = 'risk_factor.maternal_malnutrition.population_attributable_fraction'
-
+    PAF: TargetString = 'risk_factor.maternal_malnutrition.population_attributable_fraction'
+    
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
 
     @property
