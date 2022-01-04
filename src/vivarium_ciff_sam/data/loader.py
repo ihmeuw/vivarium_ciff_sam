@@ -575,10 +575,19 @@ def load_maternal_malnutrition_exposure(key: str, location: str) -> pd.DataFrame
     if key != data_keys.MATERNAL_MALNUTRITION.EXPOSURE:
         raise ValueError(f'Unrecognized key {key}')
 
-    idx = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
-    exposure = utilities.get_dichotomous_draws_from_distribution(
-        key, idx, data_values.MATERNAL_MALNUTRITION.EXPOSURE
+    index = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
+    cat1_exposure = get_random_variable_draws(
+        pd.Index([f'draw_{i}' for i in range(0, 1000)]),
+        *data_values.MATERNAL_MALNUTRITION.EXPOSURE
     )
+
+    cat1 = pd.DataFrame({f'draw_{i}': 1.0 for i in range(0, 1000)}, index=index) * cat1_exposure
+    cat2 = 1 - cat1
+
+    cat1['parameter'] = 'cat1'
+    cat2['parameter'] = 'cat2'
+
+    exposure = pd.concat([cat1, cat2]).set_index('parameter', append=True).sort_index()
     return exposure
 
 
@@ -586,16 +595,24 @@ def load_maternal_malnutrition_rr(key: str, location: str) -> pd.DataFrame:
     if key != data_keys.MATERNAL_MALNUTRITION.RELATIVE_RISK:
         raise ValueError(f'Unrecognized key {key}')
 
-    idx = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
-    rr = utilities.get_dichotomous_draws_from_distribution(
-        key, idx, data_values.MATERNAL_MALNUTRITION.EXPOSURE
+    index = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
+    cat1_rr = get_random_variable_draws(
+        pd.Index([f'draw_{i}' for i in range(0, 1000)]),
+        *data_values.MATERNAL_MALNUTRITION.RELATIVE_RISK
     )
 
+    cat1 = pd.DataFrame({f'draw_{i}': 1.0 for i in range(0, 1000)}, index=index) * cat1_rr
+    cat1['parameter'] = 'cat1'
+    cat2 = pd.DataFrame({f'draw_{i}': 1.0 for i in range(0, 1000)}, index=index)
+    cat2['parameter'] = 'cat2'
+
+    rr = pd.concat([cat1, cat2])
     rr['affected_entity'] = data_keys.LBWSG.BIRTH_WEIGHT_EXPOSURE.name
     rr['affected_measure'] = data_keys.LBWSG.BIRTH_WEIGHT_EXPOSURE.measure
+
     rr = (
         rr
-        .set_index(['affected_entity', 'affected_measure'], append=True)
+        .set_index(['affected_entity', 'affected_measure', 'parameter'], append=True)
         .sort_index()
     )
     return rr
