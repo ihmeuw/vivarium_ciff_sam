@@ -429,7 +429,8 @@ def filter_relative_risk_to_cause_restrictions(data: pd.DataFrame) -> pd.DataFra
     return data
 
 
-def get_dichotomous_draws_from_distribution(key: TargetString, index: pd.Index, distribution: Tuple) -> pd.DataFrame:
+def get_dichotomous_draws_from_distribution(key: str, index: pd.Index, distribution: Tuple) -> pd.DataFrame:
+    key = TargetString(key)
 
     data = get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]), *distribution)
 
