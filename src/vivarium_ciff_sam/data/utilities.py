@@ -13,7 +13,6 @@ from vivarium_gbd_access.utilities import get_draws, query
 from vivarium_inputs import globals as vi_globals, utilities as vi_utils, utility_data
 from vivarium_inputs.mapping_extension import alternative_risk_factors, AlternativeRiskFactor
 from vivarium_inputs.validation.raw import check_metadata
-from vivarium_public_health.utilities import TargetString
 
 from vivarium_ciff_sam.constants import data_keys, data_values
 from vivarium_ciff_sam.constants.metadata import ARTIFACT_INDEX_COLUMNS, AGE_GROUP, GBD_2020_ROUND_ID
@@ -426,20 +425,4 @@ def filter_relative_risk_to_cause_restrictions(data: pd.DataFrame) -> pd.DataFra
             start, end = vi_utils.get_age_group_ids_by_restriction(cause, 'yld')
         temp.append(df[df.age_group_id.isin(range(start, end + 1))])
     data = pd.concat(temp)
-    return data
-
-
-def get_dichotomous_draws_from_distribution(key: str, index: pd.Index, distribution: Tuple) -> pd.DataFrame:
-    key = TargetString(key)
-
-    data = get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]), *distribution)
-
-    cat2 = pd.DataFrame({f'draw_{i}': 1.0 for i in range(0, 1000)}, index=index) * data
-    cat1 = 1 - cat2
-
-    if key.type == 'risk_factor':
-        cat1['parameter'] = 'cat1'
-        cat2['parameter'] = 'cat2'
-
-    data = pd.concat([cat1, cat2]).set_index('parameter', append=True).sort_index()
     return data
