@@ -13,7 +13,7 @@ for an example.
    No logging is done here. Logging is done in vivarium inputs itself and forwarded.
 """
 import pickle
-from typing import Tuple, Type
+from typing import Dict, Tuple, Type
 
 import numpy as np
 import pandas as pd
@@ -128,6 +128,12 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.AFFECTED_UNMODELED_CAUSES.NEONATAL_JAUNDICE_CSMR: load_standard_data,
         data_keys.AFFECTED_UNMODELED_CAUSES.OTHER_NEONATAL_DISORDERS_CSMR: load_standard_data,
         data_keys.AFFECTED_UNMODELED_CAUSES.SIDS_CSMR: load_sids_csmr,
+
+        data_keys.MATERNAL_MALNUTRITION.DISTRIBUTION: load_maternal_malnutrition_distribution,
+        data_keys.MATERNAL_MALNUTRITION.CATEGORIES: load_maternal_malnutrition_categories,
+        data_keys.MATERNAL_MALNUTRITION.EXPOSURE: load_maternal_malnutrition_exposure,
+        data_keys.MATERNAL_MALNUTRITION.RELATIVE_RISK: load_maternal_malnutrition_rr,
+        data_keys.MATERNAL_MALNUTRITION.PAF: load_paf,
     }
     return mapping[lookup_key](lookup_key, location)
 
@@ -260,6 +266,7 @@ def load_paf(key: str, location: str) -> pd.DataFrame:
             data_keys.STUNTING.PAF: data_keys.STUNTING,
             data_keys.SAM_TREATMENT.PAF: data_keys.SAM_TREATMENT,
             data_keys.MAM_TREATMENT.PAF: data_keys.MAM_TREATMENT,
+            data_keys.MATERNAL_MALNUTRITION.PAF: data_keys.MATERNAL_MALNUTRITION,
         }[key]
     except KeyError:
         raise ValueError(f'Unrecognized key {key}')
@@ -543,3 +550,52 @@ def load_sids_csmr(key: str, location: str) -> pd.DataFrame:
         return data
     else:
         raise ValueError(f'Unrecognized key {key}')
+
+
+# noinspection PyUnusedLocal
+def load_maternal_malnutrition_distribution(key: str, location: str) -> str:
+    if key != data_keys.MATERNAL_MALNUTRITION.DISTRIBUTION:
+        raise ValueError(f'Unrecognized key {key}')
+
+    return 'dichotomous'
+
+
+# noinspection PyUnusedLocal
+def load_maternal_malnutrition_categories(key: str, location: str) -> Dict[str, str]:
+    if key != data_keys.MATERNAL_MALNUTRITION.CATEGORIES:
+        raise ValueError(f'Unrecognized key {key}')
+
+    return {
+        'cat1': 'BMI < 18.5',
+        'cat2': 'BMI >= 18.5',
+    }
+
+
+def load_maternal_malnutrition_exposure(key: str, location: str) -> pd.DataFrame:
+    if key != data_keys.MATERNAL_MALNUTRITION.EXPOSURE:
+        raise ValueError(f'Unrecognized key {key}')
+
+    idx = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
+    exposure = utilities.get_dichotomous_draws_from_distribution(
+        key, idx, data_values.MATERNAL_MALNUTRITION.EXPOSURE
+    )
+    return exposure
+
+
+def load_maternal_malnutrition_rr(key: str, location: str) -> pd.DataFrame:
+    if key != data_keys.MATERNAL_MALNUTRITION.RELATIVE_RISK:
+        raise ValueError(f'Unrecognized key {key}')
+
+    idx = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
+    rr = utilities.get_dichotomous_draws_from_distribution(
+        key, idx, data_values.MATERNAL_MALNUTRITION.EXPOSURE
+    )
+
+    rr['affected_entity'] = data_keys.LBWSG.BIRTH_WEIGHT_EXPOSURE.name
+    rr['affected_measure'] = data_keys.LBWSG.BIRTH_WEIGHT_EXPOSURE.measure
+    rr = (
+        rr
+        .set_index(['affected_entity', 'affected_measure'], append=True)
+        .sort_index()
+    )
+    return rr
