@@ -90,7 +90,7 @@ class __MaternalMalnutrition(NamedTuple):
         get_truncnorm_from_quantiles(mean=0.224, lower=0.217, upper=0.231)
     )
 
-    RELATIVE_RISK: Tuple = (
+    EXPOSED_BIRTH_WEIGHT_SHIFT: Tuple = (
         'maternal_malnutrition_effect_on_birth_weight',
         get_norm_from_quantiles(mean=-138.46, lower=-174.68, upper=-102.25)
     )

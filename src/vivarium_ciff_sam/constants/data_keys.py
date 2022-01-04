@@ -315,8 +315,10 @@ class __MaternalMalnutrition(NamedTuple):
     DISTRIBUTION: TargetString = 'risk_factor.maternal_malnutrition.distribution'
     CATEGORIES: TargetString = 'risk_factor.maternal_malnutrition.categories'
     EXPOSURE: TargetString = 'risk_factor.maternal_malnutrition.exposure'
-    RELATIVE_RISK: TargetString = 'risk_factor.maternal_malnutrition.relative_risk'
-    PAF: TargetString = 'risk_factor.maternal_malnutrition.population_attributable_fraction'
+    # analogous to excess mortality rate
+    EXCESS_SHIFT: TargetString = 'risk_factor.maternal_malnutrition.exposed_shift'
+    # analogous to cause specific mortality rate
+    RISK_SPECIFIC_SHIFT: TargetString = 'risk_factor.maternal_malnutrition.risk_specific_shift'
     
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
 

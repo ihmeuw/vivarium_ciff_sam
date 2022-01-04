@@ -132,8 +132,8 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.MATERNAL_MALNUTRITION.DISTRIBUTION: load_maternal_malnutrition_distribution,
         data_keys.MATERNAL_MALNUTRITION.CATEGORIES: load_maternal_malnutrition_categories,
         data_keys.MATERNAL_MALNUTRITION.EXPOSURE: load_maternal_malnutrition_exposure,
-        data_keys.MATERNAL_MALNUTRITION.RELATIVE_RISK: load_maternal_malnutrition_rr,
-        data_keys.MATERNAL_MALNUTRITION.PAF: load_paf,
+        data_keys.MATERNAL_MALNUTRITION.EXCESS_SHIFT: load_maternal_malnutrition_excess_shift,
+        data_keys.MATERNAL_MALNUTRITION.RISK_SPECIFIC_SHIFT: load_maternal_malnutrition_risk_specific_shift,
     }
     return mapping[lookup_key](lookup_key, location)
 
@@ -581,7 +581,7 @@ def load_maternal_malnutrition_exposure(key: str, location: str) -> pd.DataFrame
         *data_values.MATERNAL_MALNUTRITION.EXPOSURE
     )
 
-    cat1 = pd.DataFrame({f'draw_{i}': 1.0 for i in range(0, 1000)}, index=index) * cat1_exposure
+    cat1 = pd.DataFrame([cat1_exposure], index=index)
     cat2 = 1 - cat1
 
     cat1['parameter'] = 'cat1'
@@ -591,28 +591,49 @@ def load_maternal_malnutrition_exposure(key: str, location: str) -> pd.DataFrame
     return exposure
 
 
-def load_maternal_malnutrition_rr(key: str, location: str) -> pd.DataFrame:
-    if key != data_keys.MATERNAL_MALNUTRITION.RELATIVE_RISK:
+def load_maternal_malnutrition_excess_shift(key: str, location: str) -> pd.DataFrame:
+    if key != data_keys.MATERNAL_MALNUTRITION.EXCESS_SHIFT:
         raise ValueError(f'Unrecognized key {key}')
 
     index = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
-    cat1_rr = get_random_variable_draws(
-        pd.Index([f'draw_{i}' for i in range(0, 1000)]),
-        *data_values.MATERNAL_MALNUTRITION.RELATIVE_RISK
+    column_index = pd.Index([f'draw_{i}' for i in range(0, 1000)])
+
+    cat1_shift = get_random_variable_draws(
+        column_index, *data_keys.MATERNAL_MALNUTRITION.EXPOSED_BIRTH_WEIGHT_SHIFT
     )
 
-    cat1 = pd.DataFrame({f'draw_{i}': 1.0 for i in range(0, 1000)}, index=index) * cat1_rr
+    cat1 = pd.DataFrame([cat1_shift], index=index)
     cat1['parameter'] = 'cat1'
-    cat2 = pd.DataFrame({f'draw_{i}': 1.0 for i in range(0, 1000)}, index=index)
+    cat2 = pd.DataFrame([pd.Series(0.0, index=column_index)], index=index)
     cat2['parameter'] = 'cat2'
 
-    rr = pd.concat([cat1, cat2])
-    rr['affected_entity'] = data_keys.LBWSG.BIRTH_WEIGHT_EXPOSURE.name
-    rr['affected_measure'] = data_keys.LBWSG.BIRTH_WEIGHT_EXPOSURE.measure
+    excess_shift = pd.concat([cat1, cat2])
+    excess_shift['affected_entity'] = data_keys.LBWSG.BIRTH_WEIGHT_EXPOSURE.name
+    excess_shift['affected_measure'] = data_keys.LBWSG.BIRTH_WEIGHT_EXPOSURE.measure
 
-    rr = (
-        rr
+    excess_shift = (
+        excess_shift
         .set_index(['affected_entity', 'affected_measure', 'parameter'], append=True)
         .sort_index()
     )
-    return rr
+    return excess_shift
+
+
+def load_maternal_malnutrition_risk_specific_shift(key: str, location: str) -> pd.DataFrame:
+    if key != data_keys.MATERNAL_MALNUTRITION.RISK_SPECIFIC_SHIFT:
+        raise ValueError(f'Unrecognized key {key}')
+
+    # p_exposed * exposed_shift
+    exposure = (
+        get_data(data_keys.MATERNAL_MALNUTRITION.EXPOSURE, location)
+        .query('parameter == "cat1"')
+        .droplevel('parameter')
+    )
+    exposed_shift = (
+        get_data(data_keys.MATERNAL_MALNUTRITION.EXCESS_SHIFT, location)
+        .query('parameter == "cat1"')
+        .droplevel('parameter')
+    )
+
+    risk_specific_shift = exposure * exposed_shift
+    return risk_specific_shift
