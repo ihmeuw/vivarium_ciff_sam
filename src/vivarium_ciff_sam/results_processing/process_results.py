@@ -37,7 +37,8 @@ def make_measure_data(data):
         wasting_transition_count=get_transition_count_measure_data(data, 'wasting_transition_count', False, True, True,
                                                                    True),
         stunting_state_person_time=get_state_person_time_measure_data(data, 'stunting_state_person_time', False, False,
-                                                                      True)
+                                                                      True),
+        births=get_measure_data(data, 'births', False, False, False, False, False, False)
     )
     return measure_data
 
@@ -52,6 +53,7 @@ class MeasureData(NamedTuple):
     wasting_state_person_time: pd.DataFrame
     wasting_transition_count: pd.DataFrame
     stunting_state_person_time: pd.DataFrame
+    births: pd.DataFrame
 
     def dump(self, output_dir: Path):
         for key, df in self._asdict().items():
@@ -125,10 +127,14 @@ def sort_data(data: pd.DataFrame) -> pd.DataFrame:
     return data.reset_index(drop=True)
 
 
-def split_processing_column(data: pd.DataFrame, has_wasting_stratification: bool = True,
-                            has_wasting_treatment_stratification: bool = False, has_sqlns_stratification: bool = False,
-                            has_x_factor_stratification: bool = False,
-                            has_stunting_stratification: bool = False) -> pd.DataFrame:
+def split_processing_column(
+        data: pd.DataFrame, has_wasting_stratification: bool = True,
+        has_wasting_treatment_stratification: bool = False,
+        has_sqlns_stratification: bool = False,
+        has_x_factor_stratification: bool = False,
+        has_stunting_stratification: bool = False,
+        has_age_stratification: bool = True
+) -> pd.DataFrame:
     if has_stunting_stratification:
         data['process'], data['stunting_state'] = data.process.str.split(f'_stunting_state_').str
     if has_x_factor_stratification:
@@ -140,7 +146,8 @@ def split_processing_column(data: pd.DataFrame, has_wasting_stratification: bool
         data['process'], data['sam_treatment'] = data.process.str.split(f'_sam_treatment_').str
     if has_wasting_stratification:
         data['process'], data['wasting_state'] = data.process.str.split(f'_wasting_state_').str
-    data['process'], data['age'] = data.process.str.split('_in_age_group_').str
+    if has_age_stratification:
+        data['process'], data['age'] = data.process.str.split('_in_age_group_').str
     data['process'], data['sex'] = data.process.str.split('_among_').str
     data['year'] = data.process.str.split('_in_').str[-1]
     data['measure'] = data.process.str.split('_in_').str[:-1].apply(lambda x: '_in_'.join(x))
@@ -155,13 +162,25 @@ def get_population_data(data: pd.DataFrame) -> pd.DataFrame:
     return sort_data(total_pop)
 
 
-def get_measure_data(data: pd.DataFrame, measure: str, has_wasting_stratification: bool = True,
-                     has_wasting_treatment_stratification: bool = False, has_sqlns_stratification: bool = False,
-                     has_x_factor_stratification: bool = False,
-                     has_stunting_stratification: bool = False) -> pd.DataFrame:
+def get_measure_data(
+        data: pd.DataFrame, measure: str,
+        has_wasting_stratification: bool = True,
+        has_wasting_treatment_stratification: bool = False,
+        has_sqlns_stratification: bool = False,
+        has_x_factor_stratification: bool = False,
+        has_stunting_stratification: bool = False,
+        has_age_stratification: bool = True
+) -> pd.DataFrame:
     data = pivot_data(data[results.RESULT_COLUMNS(measure) + GROUPBY_COLUMNS])
-    data = split_processing_column(data, has_wasting_stratification, has_wasting_treatment_stratification,
-                                   has_sqlns_stratification, has_x_factor_stratification, has_stunting_stratification)
+    data = split_processing_column(
+        data,
+        has_wasting_stratification,
+        has_wasting_treatment_stratification,
+        has_sqlns_stratification,
+        has_x_factor_stratification,
+        has_stunting_stratification,
+        has_age_stratification
+    )
     return sort_data(data)
 
 
