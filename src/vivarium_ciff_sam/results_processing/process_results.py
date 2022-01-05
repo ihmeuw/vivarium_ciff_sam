@@ -37,7 +37,8 @@ def make_measure_data(data):
         wasting_transition_count=get_transition_count_measure_data(data, 'wasting_transition_count', False, True, True,
                                                                    True),
         stunting_state_person_time=get_state_person_time_measure_data(data, 'stunting_state_person_time', False, False,
-                                                                      True)
+                                                                      True),
+        births=get_measure_data(data, 'births', False, False, False, False, False)
     )
     return measure_data
 
@@ -52,6 +53,7 @@ class MeasureData(NamedTuple):
     wasting_state_person_time: pd.DataFrame
     wasting_transition_count: pd.DataFrame
     stunting_state_person_time: pd.DataFrame
+    births: pd.DataFrame
 
     def dump(self, output_dir: Path):
         for key, df in self._asdict().items():
