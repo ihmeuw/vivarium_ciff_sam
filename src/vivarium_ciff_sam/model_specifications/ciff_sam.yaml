@@ -37,7 +37,7 @@ components:
 #            - LBWSGRiskEffect('cause.lower_respiratory_infections.excess_mortality_rate')
 #            - LBWSGRiskEffect('cause.affected_unmodeled.cause_specific_mortality_rate')
 
-#            - AdditiveRiskEffect('risk_factor.maternal_malnutrition', 'risk_factor.low_birth_weight.exposure')
+            - AdditiveRiskEffect('risk_factor.maternal_malnutrition', 'risk_factor.low_birth_weight.exposure')
 
 #            - XFactorExposure()
 #            - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
