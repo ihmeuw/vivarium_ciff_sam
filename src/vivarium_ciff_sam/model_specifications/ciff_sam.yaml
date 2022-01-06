@@ -3,8 +3,8 @@ components:
         population:
             - BasePopulation()
             - FertilityCrudeBirthRate()
-#        disease:
-#            - SIS('diarrheal_diseases')
+        disease:
+            - SIS('diarrheal_diseases')
 #            - SIS_fixed_duration('measles', '10.0')
 #            - SIS('lower_respiratory_infections')
         risks:
@@ -33,11 +33,11 @@ components:
             - LBWSGRisk()
             - LowBirthWeight()
             - ShortGestation()
-#            - LBWSGRiskEffect('cause.diarrheal_diseases.excess_mortality_rate')
+            - LBWSGRiskEffect('cause.diarrheal_diseases.excess_mortality_rate')
 #            - LBWSGRiskEffect('cause.lower_respiratory_infections.excess_mortality_rate')
 #            - LBWSGRiskEffect('cause.affected_unmodeled.cause_specific_mortality_rate')
 
-            - AdditiveRiskEffect('risk_factor.maternal_malnutrition', 'risk_factor.low_birth_weight.exposure')
+#            - AdditiveRiskEffect('risk_factor.maternal_malnutrition', 'risk_factor.low_birth_weight.exposure')
 
 #            - XFactorExposure()
 #            - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')

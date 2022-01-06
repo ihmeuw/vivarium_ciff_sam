@@ -15,8 +15,10 @@ class AdditiveRiskEffect(RiskEffect):
         super().__init__(risk, target)
         self.target_risk_specific_shift_pipeline_name = f'{self.target.name}.risk_specific_shift'
 
+    # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder) -> None:
         super().setup(builder)
+        self.risk_specific_shift_source = self._get_risk_specific_shift_source(builder)
         self._register_risk_specific_shift_modifier(builder)
 
     def _get_target_modifier(self, builder: Builder) -> Callable[[pd.Index, pd.Series], pd.Series]:
@@ -42,7 +44,7 @@ class AdditiveRiskEffect(RiskEffect):
 
         return adjust_target
 
-    def _risk_specific_shift_source(self, builder: Builder) -> LookupTable:
+    def _get_risk_specific_shift_source(self, builder: Builder) -> LookupTable:
         risk_specific_shift_data = builder.data.load(
             data_keys.MATERNAL_MALNUTRITION.RISK_SPECIFIC_SHIFT,
             affected_entity=self.target.name,
@@ -60,10 +62,13 @@ class AdditiveRiskEffect(RiskEffect):
     def _register_risk_specific_shift_modifier(self, builder: Builder) -> None:
         builder.value.register_value_modifier(
             self.target_risk_specific_shift_pipeline_name,
-            modifier=self._risk_specific_shift_source,
+            modifier=self.risk_specific_shift_modifier,
             requires_columns=['age', 'sex']
         )
 
     ##################################
     # Pipeline sources and modifiers #
     ##################################
+
+    def risk_specific_shift_modifier(self, index: pd.Index, target: pd.Series) -> pd.Series:
+        return target + self.risk_specific_shift_source(index)
