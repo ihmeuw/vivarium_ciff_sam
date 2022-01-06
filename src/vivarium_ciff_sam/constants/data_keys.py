@@ -265,6 +265,7 @@ class __LowBirthWeightShortGestation(NamedTuple):
     PAF: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.population_attributable_fraction'
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
+    BIRTH_WEIGHT_EXPOSURE = TargetString('risk_factor.low_birth_weight.exposure')
     TMREL_CATEGORIES = {'cat53', 'cat54', 'cat55', 'cat56'}
     TMREL_GESTATIONAL_AGE_INTERVAL = pd.Interval(38.0, 42.0)
     TMREL_BIRTH_WEIGHT_INTERVAL = pd.Interval(3500.0, 4500.0)
@@ -308,6 +309,31 @@ class __AffectedUnmodeledCauses(NamedTuple):
 AFFECTED_UNMODELED_CAUSES = __AffectedUnmodeledCauses()
 
 
+class __MaternalMalnutrition(NamedTuple):
+
+    # Keys that will be loaded into the artifact. must have a colon type declaration
+    DISTRIBUTION: TargetString = 'risk_factor.maternal_malnutrition.distribution'
+    CATEGORIES: TargetString = 'risk_factor.maternal_malnutrition.categories'
+    EXPOSURE: TargetString = 'risk_factor.maternal_malnutrition.exposure'
+    # analogous to excess mortality rate
+    EXCESS_SHIFT: TargetString = 'risk_factor.maternal_malnutrition.exposed_shift'
+    # analogous to cause specific mortality rate
+    RISK_SPECIFIC_SHIFT: TargetString = 'risk_factor.maternal_malnutrition.risk_specific_shift'
+    
+    # Useful keys not for the artifact - distinguished by not using the colon type declaration
+
+    @property
+    def name(self):
+        return 'maternal_malnutrition'
+
+    @property
+    def log_name(self):
+        return 'maternal malnutrition'
+
+
+MATERNAL_MALNUTRITION = __MaternalMalnutrition()
+
+
 MAKE_ARTIFACT_KEY_GROUPS = [
     POPULATION,
     DIARRHEA,
@@ -321,4 +347,5 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     MAM_TREATMENT,
     LBWSG,
     AFFECTED_UNMODELED_CAUSES,
+    MATERNAL_MALNUTRITION,
 ]
