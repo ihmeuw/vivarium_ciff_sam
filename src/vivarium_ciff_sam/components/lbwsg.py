@@ -16,15 +16,6 @@ from vivarium_public_health.risks.distributions import SimulationDistribution
 from vivarium_ciff_sam.constants import data_keys, metadata
 
 
-class LBWSGRisk(Risk):
-
-    def __init__(self):
-        super().__init__('risk_factor.low_birth_weight_and_short_gestation')
-
-    def _get_population_view(self, builder: Builder) -> PopulationView:
-        return builder.population.get_view([self.propensity_column_name, 'tracked'])
-
-
 class LBWSGSubRisk(Risk, ABC):
     """"
     Risk component for the individual aspects of LBWSG (i.e. birth weight and gestational age).

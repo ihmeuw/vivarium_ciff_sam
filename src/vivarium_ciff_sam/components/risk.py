@@ -4,9 +4,16 @@ import pandas as pd
 
 from vivarium.framework.engine import Builder
 from vivarium.framework.lookup import LookupTable
-from vivarium_public_health.risks import RiskEffect
+from vivarium.framework.population import PopulationView
+from vivarium_public_health.risks import Risk, RiskEffect
 
 from vivarium_ciff_sam.constants import data_keys
+
+
+class RiskWithTracked(Risk):
+
+    def _get_population_view(self, builder: Builder) -> PopulationView:
+        return builder.population.get_view([self.propensity_column_name, 'tracked'])
 
 
 class AdditiveRiskEffect(RiskEffect):
@@ -72,3 +79,4 @@ class AdditiveRiskEffect(RiskEffect):
 
     def risk_specific_shift_modifier(self, index: pd.Index, target: pd.Series) -> pd.Series:
         return target + self.risk_specific_shift_source(index)
+
