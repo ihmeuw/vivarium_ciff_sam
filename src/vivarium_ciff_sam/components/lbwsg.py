@@ -128,7 +128,7 @@ class LowBirthWeight(LBWSGSubRisk):
     RISK_NAME = 'low_birth_weight'
 
     def __init__(self):
-        super().__init__('risk_factor.low_birth_weight')
+        super().__init__(f'risk_factor.{LowBirthWeight.RISK_NAME}')
 
     @staticmethod
     def parse_description(description: str) -> pd.Interval:
@@ -142,7 +142,7 @@ class ShortGestation(LBWSGSubRisk):
     RISK_NAME = 'short_gestation'
 
     def __init__(self):
-        super().__init__('risk_factor.short_gestation')
+        super().__init__(f'risk_factor.{ShortGestation.RISK_NAME}')
 
     @staticmethod
     def parse_description(description: str) -> pd.Interval:

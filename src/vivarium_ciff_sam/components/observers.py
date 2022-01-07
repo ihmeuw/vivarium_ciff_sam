@@ -530,9 +530,11 @@ class BirthObserver:
 
     # noinspection PyUnusedLocal
     def _metrics(self, index: pd.Index, metrics: Dict) -> Dict:
-        pop = pd.concat(
-            [self.population_view.get(index), self.pipelines[self.birth_weight_pipeline_name](index)], axis=1
-        )
+        pipelines = [
+            pd.Series(pipeline(index), name=pipeline_name)
+            for pipeline_name, pipeline in self.pipelines.items()
+        ]
+        pop = pd.concat([self.population_view.get(index)] + pipelines, axis=1)
 
         measure_getters = (
             (self._get_births, ()),
