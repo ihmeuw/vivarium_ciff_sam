@@ -13,7 +13,7 @@ for an example.
    No logging is done here. Logging is done in vivarium inputs itself and forwarded.
 """
 import pickle
-from typing import Dict, Tuple, Type
+from typing import Dict, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -131,9 +131,27 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
 
         data_keys.MATERNAL_MALNUTRITION.DISTRIBUTION: load_maternal_malnutrition_distribution,
         data_keys.MATERNAL_MALNUTRITION.CATEGORIES: load_maternal_malnutrition_categories,
-        data_keys.MATERNAL_MALNUTRITION.EXPOSURE: load_maternal_malnutrition_exposure,
-        data_keys.MATERNAL_MALNUTRITION.EXCESS_SHIFT: load_maternal_malnutrition_excess_shift,
-        data_keys.MATERNAL_MALNUTRITION.RISK_SPECIFIC_SHIFT: load_maternal_malnutrition_risk_specific_shift,
+        data_keys.MATERNAL_MALNUTRITION.EXPOSURE: load_dichotomous_risk_exposure,
+        data_keys.MATERNAL_MALNUTRITION.EXCESS_SHIFT: load_risk_excess_shift,
+        data_keys.MATERNAL_MALNUTRITION.RISK_SPECIFIC_SHIFT: load_risk_specific_shift,
+
+        data_keys.IFA_SUPPLEMENTATION.DISTRIBUTION: load_maternal_supplementation_distribution,
+        data_keys.IFA_SUPPLEMENTATION.CATEGORIES: load_maternal_supplementation_categories,
+        data_keys.IFA_SUPPLEMENTATION.EXPOSURE: load_dichotomous_treatment_exposure,
+        data_keys.IFA_SUPPLEMENTATION.EXCESS_SHIFT: load_treatment_excess_shift,
+        data_keys.IFA_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: load_risk_specific_shift,
+
+        data_keys.MMN_SUPPLEMENTATION.DISTRIBUTION: load_maternal_supplementation_distribution,
+        data_keys.MMN_SUPPLEMENTATION.CATEGORIES: load_maternal_supplementation_categories,
+        data_keys.MMN_SUPPLEMENTATION.EXPOSURE: load_dichotomous_treatment_exposure,
+        data_keys.MMN_SUPPLEMENTATION.EXCESS_SHIFT: load_treatment_excess_shift,
+        data_keys.MMN_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: load_risk_specific_shift,
+
+        data_keys.BEP_SUPPLEMENTATION.DISTRIBUTION: load_maternal_supplementation_distribution,
+        data_keys.BEP_SUPPLEMENTATION.CATEGORIES: load_maternal_supplementation_categories,
+        data_keys.BEP_SUPPLEMENTATION.EXPOSURE: load_dichotomous_treatment_exposure,
+        data_keys.BEP_SUPPLEMENTATION.EXCESS_SHIFT: load_treatment_excess_shift,
+        data_keys.BEP_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: load_risk_specific_shift,
     }
     return mapping[lookup_key](lookup_key, location)
 
@@ -571,41 +589,87 @@ def load_maternal_malnutrition_categories(key: str, location: str) -> Dict[str, 
     }
 
 
-def load_maternal_malnutrition_exposure(key: str, location: str) -> pd.DataFrame:
-    if key != data_keys.MATERNAL_MALNUTRITION.EXPOSURE:
+def load_dichotomous_risk_exposure(key: str, location: str) -> pd.DataFrame:
+    try:
+        distribution_data = {
+            data_keys.MATERNAL_MALNUTRITION.EXPOSURE: data_values.MATERNAL_MALNUTRITION.EXPOSURE,
+        }[key]
+    except KeyError:
         raise ValueError(f'Unrecognized key {key}')
+    return load_dichotomous_exposure(location, distribution_data, is_risk=True)
 
+
+def load_dichotomous_treatment_exposure(key: str, location: str) -> pd.DataFrame:
+    try:
+        distribution_data = {
+            data_keys.IFA_SUPPLEMENTATION.EXPOSURE: data_values.MATERNAL_SUPPLEMENTATION.BASELINE_IFA_COVERAGE,
+            data_keys.MMN_SUPPLEMENTATION.EXPOSURE: data_values.MATERNAL_SUPPLEMENTATION.BASELINE_MMN_COVERAGE,
+            data_keys.BEP_SUPPLEMENTATION.EXPOSURE: data_values.MATERNAL_SUPPLEMENTATION.BASELINE_BEP_COVERAGE,
+        }[key]
+    except KeyError:
+        raise ValueError(f'Unrecognized key {key}')
+    return load_dichotomous_exposure(location, distribution_data, is_risk=False)
+
+
+def load_dichotomous_exposure(
+        location: str, distribution_data: Union[float, Tuple], is_risk: bool
+) -> pd.DataFrame:
     index = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
-    cat1_exposure = get_random_variable_draws(
-        pd.Index([f'draw_{i}' for i in range(0, 1000)]),
-        *data_values.MATERNAL_MALNUTRITION.EXPOSURE
-    )
+    column_index = pd.Index([f'draw_{i}' for i in range(0, 1000)])
+    if type(distribution_data) == float:
+        base_exposure = pd.Series(distribution_data, index=column_index)
+    else:
+        base_exposure = get_random_variable_draws(column_index, *distribution_data)
 
-    cat1 = pd.DataFrame([cat1_exposure], index=index)
-    cat2 = 1 - cat1
+    exposed = pd.DataFrame([base_exposure], index=index)
+    unexposed = 1 - exposed
 
-    cat1['parameter'] = 'cat1'
-    cat2['parameter'] = 'cat2'
+    exposed['parameter'] = 'cat1' if is_risk else 'cat2'
+    unexposed['parameter'] = 'cat2' if is_risk else 'cat1'
 
-    exposure = pd.concat([cat1, cat2]).set_index('parameter', append=True).sort_index()
+    exposure = pd.concat([exposed, unexposed]).set_index('parameter', append=True).sort_index()
     return exposure
 
 
-def load_maternal_malnutrition_excess_shift(key: str, location: str) -> pd.DataFrame:
-    if key != data_keys.MATERNAL_MALNUTRITION.EXCESS_SHIFT:
+def load_risk_excess_shift(key: str, location: str) -> pd.DataFrame:
+    try:
+        distribution_data = {
+            data_keys.MATERNAL_MALNUTRITION.EXCESS_SHIFT:
+                data_values.MATERNAL_MALNUTRITION.EXPOSED_BIRTH_WEIGHT_SHIFT,
+        }[key]
+    except KeyError:
         raise ValueError(f'Unrecognized key {key}')
+    return load_dichotomous_excess_shift(location, distribution_data, is_risk=True)
+
+
+def load_treatment_excess_shift(key: str, location: str) -> pd.DataFrame:
+    try:
+        distribution_data = {
+            data_keys.IFA_SUPPLEMENTATION.EXCESS_SHIFT:
+                data_values.MATERNAL_SUPPLEMENTATION.IFA_BIRTH_WEIGHT_SHIFT,
+            data_keys.MMN_SUPPLEMENTATION.EXCESS_SHIFT:
+                data_values.MATERNAL_SUPPLEMENTATION.MMN_BIRTH_WEIGHT_SHIFT,
+            data_keys.BEP_SUPPLEMENTATION.EXCESS_SHIFT:
+                data_values.MATERNAL_SUPPLEMENTATION.BEP_BIRTH_WEIGHT_SHIFT,
+        }[key]
+    except KeyError:
+        raise ValueError(f'Unrecognized key {key}')
+    return load_dichotomous_excess_shift(location, distribution_data, is_risk=False)
+
+
+def load_dichotomous_excess_shift(
+        location: str, distribution_data: Tuple, is_risk: bool
+) -> pd.DataFrame:
 
     index = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
     column_index = pd.Index([f'draw_{i}' for i in range(0, 1000)])
 
-    cat1_shift = get_random_variable_draws(
-        column_index, *data_values.MATERNAL_MALNUTRITION.EXPOSED_BIRTH_WEIGHT_SHIFT
-    )
+    shift = get_random_variable_draws(column_index, *distribution_data)
 
-    cat1 = pd.DataFrame([cat1_shift], index=index)
-    cat1['parameter'] = 'cat1'
+    cat1 = pd.DataFrame([shift], index=index)
+    cat1['parameter'] = 'cat1' if is_risk else 'cat2'
     cat2 = pd.DataFrame([pd.Series(0.0, index=column_index)], index=index)
-    cat2['parameter'] = 'cat2'
+    cat2['parameter'] = 'cat2' if is_risk else 'cat1'
 
     excess_shift = pd.concat([cat1, cat2])
     excess_shift['affected_entity'] = data_keys.LBWSG.BIRTH_WEIGHT_EXPOSURE.name
@@ -619,21 +683,52 @@ def load_maternal_malnutrition_excess_shift(key: str, location: str) -> pd.DataF
     return excess_shift
 
 
-def load_maternal_malnutrition_risk_specific_shift(key: str, location: str) -> pd.DataFrame:
-    if key != data_keys.MATERNAL_MALNUTRITION.RISK_SPECIFIC_SHIFT:
+def load_risk_specific_shift(key: str, location: str) -> pd.DataFrame:
+    try:
+        key_group: data_keys.__AdditiveRisk = {
+            data_keys.MATERNAL_MALNUTRITION.RISK_SPECIFIC_SHIFT: data_keys.MATERNAL_MALNUTRITION,
+            data_keys.IFA_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: data_keys.IFA_SUPPLEMENTATION,
+            data_keys.MMN_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: data_keys.MMN_SUPPLEMENTATION,
+            data_keys.BEP_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: data_keys.BEP_SUPPLEMENTATION,
+        }[key]
+    except KeyError:
         raise ValueError(f'Unrecognized key {key}')
 
     # p_exposed * exposed_shift
     exposure = (
-        get_data(data_keys.MATERNAL_MALNUTRITION.EXPOSURE, location)
-        .query('parameter == "cat1"')
-        .droplevel('parameter')
+        get_data(key_group.EXPOSURE, location)
     )
-    exposed_shift = (
-        get_data(data_keys.MATERNAL_MALNUTRITION.EXCESS_SHIFT, location)
-        .query('parameter == "cat1"')
-        .droplevel('parameter')
+    excess_shift = (
+        get_data(key_group.EXCESS_SHIFT, location)
     )
 
-    risk_specific_shift = exposure * exposed_shift
+    risk_specific_shift = (
+        (exposure * excess_shift)
+        .groupby(metadata.ARTIFACT_INDEX_COLUMNS + ['affected_entity', 'affected_measure'])
+        .sum()
+    )
     return risk_specific_shift
+
+
+# noinspection PyUnusedLocal
+def load_maternal_supplementation_distribution(key: str, location: str) -> str:
+    if key not in [
+        data_keys.IFA_SUPPLEMENTATION.DISTRIBUTION,
+        data_keys.MMN_SUPPLEMENTATION.DISTRIBUTION,
+        data_keys.BEP_SUPPLEMENTATION.DISTRIBUTION,
+    ]:
+        raise ValueError(f'Unrecognized key {key}')
+
+    return 'dichotomous'
+
+
+# noinspection PyUnusedLocal
+def load_maternal_supplementation_categories(key: str, location: str) -> str:
+    if key not in [
+        data_keys.IFA_SUPPLEMENTATION.CATEGORIES,
+        data_keys.MMN_SUPPLEMENTATION.CATEGORIES,
+        data_keys.BEP_SUPPLEMENTATION.CATEGORIES,
+    ]:
+        raise ValueError(f'Unrecognized key {key}')
+
+    return data_values.MATERNAL_SUPPLEMENTATION.CATEGORIES

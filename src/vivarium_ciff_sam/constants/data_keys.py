@@ -309,29 +309,42 @@ class __AffectedUnmodeledCauses(NamedTuple):
 AFFECTED_UNMODELED_CAUSES = __AffectedUnmodeledCauses()
 
 
-class __MaternalMalnutrition(NamedTuple):
+class __AdditiveRisk(NamedTuple):
 
     # Keys that will be loaded into the artifact. must have a colon type declaration
-    DISTRIBUTION: TargetString = 'risk_factor.maternal_malnutrition.distribution'
-    CATEGORIES: TargetString = 'risk_factor.maternal_malnutrition.categories'
-    EXPOSURE: TargetString = 'risk_factor.maternal_malnutrition.exposure'
+    EXPOSURE: TargetString
+    DISTRIBUTION: TargetString
+    CATEGORIES: TargetString
     # analogous to excess mortality rate
-    EXCESS_SHIFT: TargetString = 'risk_factor.maternal_malnutrition.exposed_shift'
+    EXCESS_SHIFT: TargetString
     # analogous to cause specific mortality rate
-    RISK_SPECIFIC_SHIFT: TargetString = 'risk_factor.maternal_malnutrition.risk_specific_shift'
-    
+    RISK_SPECIFIC_SHIFT: TargetString
+
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
 
     @property
     def name(self):
-        return 'maternal_malnutrition'
+        return self.EXPOSURE.name
 
     @property
     def log_name(self):
-        return 'maternal malnutrition'
+        return self.name.replace('_', ' ')
 
 
-MATERNAL_MALNUTRITION = __MaternalMalnutrition()
+def _get_additive_risk_keys(treatment_type: str) -> __AdditiveRisk:
+    return __AdditiveRisk(
+        EXPOSURE=TargetString(f'risk_factor.{treatment_type}.exposure'),
+        DISTRIBUTION=TargetString(f'risk_factor.{treatment_type}.distribution'),
+        CATEGORIES=TargetString(f'risk_factor.{treatment_type}.categories'),
+        EXCESS_SHIFT=TargetString(f'risk_factor.{treatment_type}.excess_shift'),
+        RISK_SPECIFIC_SHIFT=TargetString(f'risk_factor.{treatment_type}.risk_specific_shift'),
+    )
+
+
+MATERNAL_MALNUTRITION = _get_additive_risk_keys('maternal_malnutrition')
+IFA_SUPPLEMENTATION = _get_additive_risk_keys('iron_folic_acid_supplementation')
+MMN_SUPPLEMENTATION = _get_additive_risk_keys('multiple_micronutrient_supplementation')
+BEP_SUPPLEMENTATION = _get_additive_risk_keys('balanced_energy_protein_supplementation')
 
 
 MAKE_ARTIFACT_KEY_GROUPS = [
@@ -348,4 +361,7 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     LBWSG,
     AFFECTED_UNMODELED_CAUSES,
     MATERNAL_MALNUTRITION,
+    IFA_SUPPLEMENTATION,
+    MMN_SUPPLEMENTATION,
+    BEP_SUPPLEMENTATION,
 ]

@@ -5,6 +5,7 @@ import warnings
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 from gbd_mapping import causes, covariates, risk_factors, Cause, ModelableEntity, RiskFactor
 from vivarium.framework.artifact import EntityKey
