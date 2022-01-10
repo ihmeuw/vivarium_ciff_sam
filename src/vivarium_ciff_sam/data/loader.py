@@ -666,12 +666,12 @@ def load_dichotomous_excess_shift(
 
     shift = get_random_variable_draws(column_index, *distribution_data)
 
-    cat1 = pd.DataFrame([shift], index=index)
-    cat1['parameter'] = 'cat1' if is_risk else 'cat2'
-    cat2 = pd.DataFrame([pd.Series(0.0, index=column_index)], index=index)
-    cat2['parameter'] = 'cat2' if is_risk else 'cat1'
+    exposed = pd.DataFrame([shift], index=index)
+    exposed['parameter'] = 'cat1' if is_risk else 'cat2'
+    unexposed = pd.DataFrame([pd.Series(0.0, index=column_index)], index=index)
+    unexposed['parameter'] = 'cat2' if is_risk else 'cat1'
 
-    excess_shift = pd.concat([cat1, cat2])
+    excess_shift = pd.concat([exposed, unexposed])
     excess_shift['affected_entity'] = data_keys.LBWSG.BIRTH_WEIGHT_EXPOSURE.name
     excess_shift['affected_measure'] = data_keys.LBWSG.BIRTH_WEIGHT_EXPOSURE.measure
 
