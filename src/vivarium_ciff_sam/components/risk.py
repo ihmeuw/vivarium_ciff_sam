@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Dict, List
 
 import pandas as pd
 
@@ -9,10 +9,13 @@ from vivarium.framework.randomness import RandomnessStream
 from vivarium.framework.values import Pipeline
 from vivarium_public_health.risks import Risk, RiskEffect
 from vivarium_public_health.risks.data_transformations import (
+    get_exposure_post_processor,
     pivot_categorical,
     rebin_relative_risk_data
 )
 from vivarium_public_health.risks.distributions import SimulationDistribution
+
+from vivarium_ciff_sam.constants import data_keys
 
 
 class RiskWithTracked(Risk):
@@ -56,6 +59,14 @@ class MaternalSupplementationType(Risk):
     def _get_randomness_stream(self, builder) -> RandomnessStream:
         return None
 
+    def _get_exposure_pipeline(self, builder: Builder) -> Pipeline:
+        return builder.value.register_value_producer(
+            self.exposure_pipeline_name,
+            source=self._get_current_exposure,
+            requires_columns=['age', 'sex', self.exposure_column_name],
+            preferred_post_processor=get_exposure_post_processor(builder, self.risk)
+        )
+
     def _get_population_view(self, builder: Builder) -> PopulationView:
         return builder.population.get_view(
             [self.propensity_column_name, 'tracked', self.exposure_column_name]
@@ -65,7 +76,7 @@ class MaternalSupplementationType(Risk):
         builder.population.initializes_simulants(
             self.on_initialize_simulants,
             creates_columns=[self.exposure_column_name],
-            requires_values=[self.exposure_pipeline_name]
+            requires_values=[self.propensity_pipeline_name]
         )
 
     ########################
@@ -73,7 +84,105 @@ class MaternalSupplementationType(Risk):
     ########################
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
-        exposure = pd.Series(self.exposure(pop_data.index), name=self.exposure_column_name)
+        propensity = self.propensity(pop_data.index)
+        exposure = pd.Series(
+            self.exposure_distribution.ppf(propensity),
+            index=pop_data.index,
+            name=self.exposure_column_name
+        )
+        self.population_view.update(exposure)
+
+    ##################################
+    # Pipeline sources and modifiers #
+    ##################################
+
+    def _get_current_exposure(self, index: pd.Index) -> pd.Series:
+        exposure = (
+            self.population_view
+            .subview([self.exposure_column_name])
+            .get(index)
+            .squeeze()
+        )
+        return exposure
+
+
+class BEPSupplementation(MaternalSupplementationType):
+
+    def __init__(self):
+        super().__init__(f'risk_factor.{data_keys.BEP_SUPPLEMENTATION.name}')
+        self.maternal_malnutrition_exposure_pipeline_name = (
+            f'{data_keys.MATERNAL_MALNUTRITION.name}.exposure'
+        )
+        self.mmn_exposure_pipeline_name = f'{data_keys.MMN_SUPPLEMENTATION.name}.exposure'
+
+    ##########################
+    # Initialization methods #
+    ##########################
+
+    def _get_exposure_distribution(self) -> SimulationDistribution:
+        return None
+
+    ##############
+    # Properties #
+    ##############
+
+    @property
+    def sub_components(self) -> List:
+        return []
+
+    #################
+    # Setup methods #
+    #################
+
+    # noinspection PyAttributeOutsideInit
+    def setup(self, builder: Builder) -> None:
+        super().setup(builder)
+        self.pipelines = self._get_pipelines(builder)
+
+    def _get_propensity_pipeline(self, builder: Builder) -> Pipeline:
+        return None
+
+    def _get_population_view(self, builder: Builder) -> PopulationView:
+        return builder.population.get_view(['tracked', self.exposure_column_name])
+
+    def _register_simulant_initializer(self, builder: Builder) -> None:
+        builder.population.initializes_simulants(
+            self.on_initialize_simulants,
+            creates_columns=[self.exposure_column_name],
+            requires_values=[
+                self.maternal_malnutrition_exposure_pipeline_name,
+                self.mmn_exposure_pipeline_name,
+            ]
+        )
+
+    def _get_pipelines(self, builder: Builder) -> Dict[str, Pipeline]:
+        return {
+            self.maternal_malnutrition_exposure_pipeline_name:
+                builder.value.get_value(self.maternal_malnutrition_exposure_pipeline_name),
+            self.mmn_exposure_pipeline_name:
+                builder.value.get_value(self.mmn_exposure_pipeline_name)
+        }
+
+    ########################
+    # Event-driven methods #
+    ########################
+
+    def on_initialize_simulants(self, pop_data: SimulantData) -> None:
+        maternal_malnutrition_exposure = (
+            self.pipelines[self.maternal_malnutrition_exposure_pipeline_name](pop_data.index)
+        )
+        mmn_exposure = self.pipelines[self.mmn_exposure_pipeline_name](pop_data.index)
+        bep_exposure_mask = (
+            (maternal_malnutrition_exposure == data_keys.MATERNAL_MALNUTRITION.CAT1)
+            & (mmn_exposure == data_keys.MMN_SUPPLEMENTATION.CAT2)
+        )
+
+        exposure = pd.Series(
+            data_keys.BEP_SUPPLEMENTATION.CAT1,
+            index=pop_data.index,
+            name=self.exposure_column_name
+        )
+        exposure[bep_exposure_mask] = data_keys.BEP_SUPPLEMENTATION.CAT2
         self.population_view.update(exposure)
 
 

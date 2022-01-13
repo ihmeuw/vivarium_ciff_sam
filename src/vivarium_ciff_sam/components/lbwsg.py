@@ -258,7 +258,7 @@ class LBWSGRiskEffect(RiskEffect):
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
         is_tmrel = (self.pipelines[self.lbwsg_exposure_pipeline_name](pop_data.index)
                     .isin(data_keys.LBWSG.TMREL_CATEGORIES))
-        is_male = self.population_view.subview(['sex']).get(pop_data.index)['sex'] == 'Male'
+        is_male = self.population_view.subview(['sex']).get(pop_data.index).squeeze() == 'Male'
         gestational_age = self.pipelines[self.short_gestation_pipeline_name](pop_data.index)
         birth_weight = self.pipelines[self.low_birth_weight_pipeline_name](pop_data.index)
 

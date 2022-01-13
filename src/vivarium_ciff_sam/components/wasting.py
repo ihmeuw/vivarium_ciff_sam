@@ -99,7 +99,7 @@ class RiskModel(DiseaseModel):
     ##################################
 
     def get_current_exposure(self, index: pd.Index) -> pd.Series:
-        wasting_state = self.population_view.subview([self.state_column]).get(index)[self.state_column]
+        wasting_state = self.population_view.subview([self.state_column]).get(index).squeeze()
         return wasting_state.apply(models.get_risk_category)
 
 

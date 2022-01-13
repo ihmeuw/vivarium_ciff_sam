@@ -19,6 +19,7 @@ from vivarium_ciff_sam.components.lbwsg import (
 )
 from vivarium_ciff_sam.components.risk import (
     AdditiveRiskEffect,
+    BEPSupplementation,
     MaternalSupplementation,
     MaternalSupplementationType,
     RiskWithTracked
