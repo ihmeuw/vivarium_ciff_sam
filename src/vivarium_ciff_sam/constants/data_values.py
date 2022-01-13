@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Dict, NamedTuple, Tuple
 
+from scipy import stats
+
 from vivarium_ciff_sam.utilities import (
     get_norm_from_quantiles,
     get_lognorm_from_quantiles,
@@ -115,6 +117,34 @@ class __SQLNS(NamedTuple):
 
 
 SQ_LNS = __SQLNS()
+
+
+class __MaternalSupplementation(NamedTuple):
+
+    CATEGORIES: Dict[str, str] = {
+        'cat1': 'uncovered',
+        'cat2': 'covered',
+    }
+
+    BASELINE_IFA_COVERAGE: Tuple[str, stats.truncnorm] = (
+        'ifa_coverage', get_truncnorm_from_quantiles(mean=0.598, lower=0.583, upper=0.613)
+    )
+    IFA_BIRTH_WEIGHT_SHIFT: Tuple[str, stats.norm] = (
+        'ifa_birth_weight_shift', get_norm_from_quantiles(mean=57.73, lower=7.66, upper=107.79)
+    )
+
+    BASELINE_MMN_COVERAGE: float = 0.0
+    MMN_BIRTH_WEIGHT_SHIFT: Tuple[str, stats.norm] = (
+        'mmn_birth_weight_shift', get_norm_from_quantiles(mean=45.16, lower=32.31, upper=58.02)
+    )
+
+    BASELINE_BEP_COVERAGE: float = 0.0
+    BEP_BIRTH_WEIGHT_SHIFT: Tuple[str, stats.norm] = (
+        'bep_birth_weight_shift', get_norm_from_quantiles(mean=66.96, lower=13.13, upper=120.78)
+    )
+
+
+MATERNAL_SUPPLEMENTATION = __MaternalSupplementation()
 
 
 ###################################
