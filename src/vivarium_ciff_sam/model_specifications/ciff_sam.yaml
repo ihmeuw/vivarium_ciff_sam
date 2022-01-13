@@ -45,6 +45,9 @@ components:
             - AdditiveRiskEffect('risk_factor.iron_folic_acid_supplementation', 'risk_factor.low_birth_weight.exposure')
             - AdditiveRiskEffect('risk_factor.multiple_micronutrient_supplementation', 'risk_factor.low_birth_weight.exposure')
             - AdditiveRiskEffect('risk_factor.balanced_energy_protein_supplementation', 'risk_factor.low_birth_weight.exposure')
+            - MaternalSupplementationIntervention('risk_factor.iron_folic_acid_supplementation')
+            - MaternalSupplementationIntervention('risk_factor.multiple_micronutrient_supplementation')
+            - MaternalSupplementationIntervention('risk_factor.balanced_energy_protein_supplementation')
 
             - XFactorExposure()
             - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
@@ -52,10 +55,10 @@ components:
 
             - WastingTreatment('risk_factor.severe_acute_malnutrition_treatment')
             - WastingTreatment('risk_factor.moderate_acute_malnutrition_treatment')
-            - SQLNSTreatment()
-
             - WastingTreatmentIntervention('risk_factor.severe_acute_malnutrition_treatment')
             - WastingTreatmentIntervention('risk_factor.moderate_acute_malnutrition_treatment')
+
+            - SQLNSTreatment()
             - SQLNSIntervention()
 
             - DisabilityObserver('wasting')

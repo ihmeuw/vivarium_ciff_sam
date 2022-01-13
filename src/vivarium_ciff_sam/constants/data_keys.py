@@ -321,6 +321,8 @@ class __AdditiveRisk(NamedTuple):
     RISK_SPECIFIC_SHIFT: TargetString
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
+    CAT1 = 'cat1'
+    CAT2 = 'cat2'
 
     @property
     def name(self):
