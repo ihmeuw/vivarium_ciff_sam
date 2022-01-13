@@ -37,6 +37,7 @@ class LBWSGSubRisk(Risk, ABC):
         super(LBWSGSubRisk, self).__init__(risk)
         self._sub_components = []
         self.lbwsg_exposure_pipeline_name = f'{data_keys.LBWSG.name}.exposure'
+        self.risk_specific_shift_pipeline_name = f'{self.risk.name}.risk_specific_shift'
 
     ##########################
     # Initialization methods #
@@ -54,13 +55,18 @@ class LBWSGSubRisk(Risk, ABC):
         super().setup(builder)
         self.lbwsg_exposure = self._get_lbwsg_exposure_pipeline(builder)
         self.category_intervals = self._get_category_intervals(builder)
+        self.risk_specific_shift = self._get_risk_specific_shift_pipeline(builder)
 
     def _get_exposure_pipeline(self, builder: Builder) -> Pipeline:
         return builder.value.register_value_producer(
             self.exposure_pipeline_name,
             source=self._get_current_exposure,
             requires_columns=['age', 'sex'],
-            requires_values=[self.propensity_pipeline_name, self.lbwsg_exposure_pipeline_name],
+            requires_values=[
+                self.propensity_pipeline_name,
+                self.lbwsg_exposure_pipeline_name,
+                self.risk_specific_shift_pipeline_name,
+            ],
             preferred_post_processor=data_transformations.get_exposure_post_processor(builder, self.risk)
         )
 
@@ -69,6 +75,12 @@ class LBWSGSubRisk(Risk, ABC):
 
     def _get_lbwsg_exposure_pipeline(self, builder: Builder) -> Pipeline:
         return builder.value.get_value(self.lbwsg_exposure_pipeline_name)
+
+    def _get_risk_specific_shift_pipeline(self, builder: Builder) -> Pipeline:
+        return builder.value.register_value_producer(
+            self.risk_specific_shift_pipeline_name,
+            source=builder.lookup.build_table(0),
+        )
 
     @classmethod
     def _get_category_intervals(cls, builder: Builder) -> pd.Series:
@@ -81,16 +93,24 @@ class LBWSGSubRisk(Risk, ABC):
     def _get_current_exposure(self, index: pd.Index) -> pd.Series:
         propensities = self.propensity(index)
         lbwsg_categories = self.lbwsg_exposure(index)
+        risk_specific_shift = self.risk_specific_shift(index)
 
         def get_exposure_from_category(row: pd.Series) -> float:
             category_interval = self.category_intervals[row[lbwsg_categories.name]]
-            exposure = (row[propensities.name] * (category_interval.right - category_interval.left)
-                        + category_interval.left)
+            exposure = (
+                row[propensities.name]
+                * (category_interval.right - category_interval.left)
+                + category_interval.left
+            )
             return exposure
 
-        exposures = pd.concat([lbwsg_categories, propensities], axis=1).apply(get_exposure_from_category, axis=1)
-        exposures.name = self.exposure_pipeline_name
-        return exposures
+        risk_deleted_exposure = (
+            pd.concat([lbwsg_categories, propensities], axis=1)
+            .apply(get_exposure_from_category, axis=1)
+            .sub(risk_specific_shift)
+        )
+        risk_deleted_exposure.name = self.exposure_pipeline_name
+        return risk_deleted_exposure
 
     ##################
     # Helper methods #

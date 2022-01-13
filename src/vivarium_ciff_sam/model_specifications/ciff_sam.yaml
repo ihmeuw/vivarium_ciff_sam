@@ -17,6 +17,8 @@ components:
             - RiskEffect('risk_factor.child_stunting', 'cause.measles.incidence_rate')
             - RiskEffect('risk_factor.child_stunting', 'cause.lower_respiratory_infections.incidence_rate')
 
+            - Risk('risk_factor.maternal_malnutrition')
+
             - RiskEffect('risk_factor.severe_acute_malnutrition_treatment', 'risk_factor.severe_acute_malnutrition_to_mild_child_wasting.transition_rate')
             - RiskEffect('risk_factor.severe_acute_malnutrition_treatment', 'risk_factor.severe_acute_malnutrition_to_moderate_acute_malnutrition.transition_rate')
 
@@ -34,6 +36,8 @@ components:
             - LBWSGRiskEffect('cause.diarrheal_diseases.excess_mortality_rate')
             - LBWSGRiskEffect('cause.lower_respiratory_infections.excess_mortality_rate')
             - LBWSGRiskEffect('cause.affected_unmodeled.cause_specific_mortality_rate')
+
+            - AdditiveRiskEffect('risk_factor.maternal_malnutrition', 'risk_factor.low_birth_weight.exposure')
 
             - XFactorExposure()
             - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
