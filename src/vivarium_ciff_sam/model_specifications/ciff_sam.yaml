@@ -30,13 +30,14 @@ components:
 
             - ChildWasting()
 
-            - LBWSGRisk()
+            - RiskWithTracked('risk_factor.low_birth_weight_and_short_gestation')
             - LowBirthWeight()
             - ShortGestation()
             - LBWSGRiskEffect('cause.diarrheal_diseases.excess_mortality_rate')
             - LBWSGRiskEffect('cause.lower_respiratory_infections.excess_mortality_rate')
             - LBWSGRiskEffect('cause.affected_unmodeled.cause_specific_mortality_rate')
 
+            - RiskWithTracked('risk_factor.maternal_malnutrition')
             - AdditiveRiskEffect('risk_factor.maternal_malnutrition', 'risk_factor.low_birth_weight.exposure')
 
             - XFactorExposure()

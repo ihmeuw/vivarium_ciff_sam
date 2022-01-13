@@ -31,7 +31,7 @@ DISEASE_TRANSITION_COUNT_COLUMN_TEMPLATE = '{DISEASE_TRANSITION}_event_count_in_
 WASTING_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{WASTING_STATE}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_sam_treatment_{SAM_TREATMENT_STATE}_mam_treatment_{MAM_TREATMENT_STATE}_sq_lns_{SQLNS_STATE}_x_factor_{X_FACTOR_STATE}'
 WASTING_TRANSITION_COUNT_COLUMN_TEMPLATE = '{WASTING_TRANSITION}_event_count_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_sam_treatment_{SAM_TREATMENT_STATE}_mam_treatment_{MAM_TREATMENT_STATE}_sq_lns_{SQLNS_STATE}_x_factor_{X_FACTOR_STATE}'
 STUNTING_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{STUNTING_STATE}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_sq_lns_{SQLNS_STATE}'
-BIRTHS_COLUMN_TEMPLATE = '{BIRTH_METRIC}_in_{YEAR}_among_{SEX}'
+BIRTHS_COLUMN_TEMPLATE = '{BIRTH_METRIC}_in_{YEAR}_among_{SEX}_maternal_malnutrition_{MATERNAL_MALNUTRITION_STATE}'
 
 COLUMN_TEMPLATES = {
     'population': TOTAL_POPULATION_COLUMN_TEMPLATE,
@@ -55,7 +55,7 @@ YEARS = tuple(range(2022, 2027))
 AGE_GROUPS = ('early_neonatal', 'late_neonatal', '1-5_months', '6-11_months', '12_to_23_months', '2_to_4')
 STUNTING_STATES = ('cat4', 'cat3', 'cat2', 'cat1')
 TREATMENT_STATES = ('covered', 'uncovered')
-X_FACTOR_STATE = ('cat2', 'cat1')
+DICHOTOMOUS_RISK_STATES = ('cat2', 'cat1')
 BIRTH_METRICS = ('total_births', 'birth_weight_sum', 'low_weight_births')
 CAUSES_OF_DEATH = (
     'other_causes',
@@ -88,8 +88,9 @@ TEMPLATE_FIELD_MAP = {
     'SQLNS_STATE': TREATMENT_STATES,
     'SAM_TREATMENT_STATE': TREATMENT_STATES,
     'MAM_TREATMENT_STATE': TREATMENT_STATES,
-    'X_FACTOR_STATE': X_FACTOR_STATE,
+    'X_FACTOR_STATE': DICHOTOMOUS_RISK_STATES,
     'BIRTH_METRIC': BIRTH_METRICS,
+    'MATERNAL_MALNUTRITION_STATE': DICHOTOMOUS_RISK_STATES,
 }
 
 

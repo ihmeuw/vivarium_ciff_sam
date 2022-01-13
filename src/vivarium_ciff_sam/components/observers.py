@@ -28,14 +28,23 @@ class ResultsStratifier:
 
     """
 
-    def __init__(self, observer_name: str = 'False', by_wasting: str = 'False', by_sqlns: str = 'False',
-                 by_wasting_treatment: str = 'False', by_x_factor: str = 'False', by_stunting: str = 'False'):
+    def __init__(
+            self,
+            observer_name: str = 'False',
+            by_wasting: str = 'False',
+            by_sqlns: str = 'False',
+            by_wasting_treatment: str = 'False',
+            by_x_factor: str = 'False',
+            by_stunting: str = 'False',
+            by_maternal_malnutrition: str = 'False',
+    ):
         self.name = f'{observer_name}_results_stratifier'
         self.by_wasting = by_wasting != 'False'
         self.by_sqlns = by_sqlns != 'False'
         self.by_wasting_treatment = by_wasting_treatment != 'False'
         self.by_x_factor = by_x_factor != 'False'
         self.by_stunting = by_stunting != 'False'
+        self.by_maternal_malnutrition = by_maternal_malnutrition != 'False'
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
@@ -84,7 +93,15 @@ class ResultsStratifier:
                                  {'covered': True, 'uncovered': False})
 
         if self.by_x_factor:
-            setup_stratification('x_factor.exposure', True, 'x_factor', ('cat2', 'cat1'))
+            setup_stratification('x_factor.exposure', True, 'x_factor', results.DICHOTOMOUS_RISK_STATES)
+
+        if self.by_maternal_malnutrition:
+            setup_stratification(
+                f'{data_keys.MATERNAL_MALNUTRITION.name}.exposure',
+                True,
+                'maternal_malnutrition',
+                results.DICHOTOMOUS_RISK_STATES
+            )
 
         self.population_view = builder.population.get_view(columns_required)
         self.stratification_groups: pd.Series = None
@@ -187,12 +204,25 @@ class ResultsStratifier:
 
 class MortalityObserver(MortalityObserver_):
 
-    def __init__(self, stratify_by_wasting: str = 'wasting', stratify_by_sq_lns: str = 'False',
-                 stratify_by_wasting_treatment: str = 'False', stratify_by_x_factor: str = 'False',
-                 stratify_by_stunting: str = 'False'):
+    def __init__(
+            self,
+            stratify_by_wasting: str = 'wasting',
+            stratify_by_sq_lns: str = 'False',
+            stratify_by_wasting_treatment: str = 'False',
+            stratify_by_x_factor: str = 'False',
+            stratify_by_stunting: str = 'False',
+            stratify_by_maternal_malnutrition: str = 'False'
+    ):
         super().__init__()
-        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting, stratify_by_sq_lns,
-                                            stratify_by_wasting_treatment, stratify_by_x_factor, stratify_by_stunting)
+        self.stratifier = ResultsStratifier(
+            self.name,
+            stratify_by_wasting,
+            stratify_by_sq_lns,
+            stratify_by_wasting_treatment,
+            stratify_by_x_factor,
+            stratify_by_stunting,
+            stratify_by_maternal_malnutrition
+        )
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:
@@ -228,12 +258,25 @@ class MortalityObserver(MortalityObserver_):
 
 class DisabilityObserver(DisabilityObserver_):
 
-    def __init__(self, stratify_by_wasting: str = 'wasting', stratify_by_sq_lns: str = 'False',
-                 stratify_by_wasting_treatment: str = 'False', stratify_by_x_factor: str = 'False',
-                 stratify_by_stunting: str = 'False'):
+    def __init__(
+            self,
+            stratify_by_wasting: str = 'wasting',
+            stratify_by_sq_lns: str = 'False',
+            stratify_by_wasting_treatment: str = 'False',
+            stratify_by_x_factor: str = 'False',
+            stratify_by_stunting: str = 'False',
+            stratify_by_maternal_malnutrition: str = 'False'
+    ):
         super().__init__()
-        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting, stratify_by_sq_lns,
-                                            stratify_by_wasting_treatment, stratify_by_x_factor, stratify_by_stunting)
+        self.stratifier = ResultsStratifier(
+            self.name,
+            stratify_by_wasting,
+            stratify_by_sq_lns,
+            stratify_by_wasting_treatment,
+            stratify_by_x_factor,
+            stratify_by_stunting,
+            stratify_by_maternal_malnutrition
+        )
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:
@@ -258,12 +301,26 @@ class DisabilityObserver(DisabilityObserver_):
 
 class DiseaseObserver(DiseaseObserver_):
 
-    def __init__(self, disease: str, stratify_by_wasting: str = 'wasting', stratify_by_sq_lns: str = 'False',
-                 stratify_by_wasting_treatment: str = 'False', stratify_by_x_factor: str = 'False',
-                 stratify_by_stunting: str = 'False'):
+    def __init__(
+            self,
+            disease: str,
+            stratify_by_wasting: str = 'wasting',
+            stratify_by_sq_lns: str = 'False',
+            stratify_by_wasting_treatment: str = 'False',
+            stratify_by_x_factor: str = 'False',
+            stratify_by_stunting: str = 'False',
+            stratify_by_maternal_malnutrition: str = 'False'
+    ):
         super().__init__(disease)
-        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting, stratify_by_sq_lns,
-                                            stratify_by_wasting_treatment, stratify_by_x_factor, stratify_by_stunting)
+        self.stratifier = ResultsStratifier(
+            self.name,
+            stratify_by_wasting,
+            stratify_by_sq_lns,
+            stratify_by_wasting_treatment,
+            stratify_by_x_factor,
+            stratify_by_stunting,
+            stratify_by_maternal_malnutrition
+        )
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:
@@ -316,12 +373,26 @@ class DiseaseObserver(DiseaseObserver_):
 
 class CategoricalRiskObserver(CategoricalRiskObserver_):
 
-    def __init__(self, risk: str, stratify_by_wasting: str = 'False', stratify_by_sq_lns: str = 'False',
-                 stratify_by_wasting_treatment: str = 'False', stratify_by_x_factor: str = 'False',
-                 stratify_by_stunting: str = 'False'):
+    def __init__(
+            self,
+            risk: str,
+            stratify_by_wasting: str = 'False',
+            stratify_by_sq_lns: str = 'False',
+            stratify_by_wasting_treatment: str = 'False',
+            stratify_by_x_factor: str = 'False',
+            stratify_by_stunting: str = 'False',
+            stratify_by_maternal_malnutrition: str = 'False'
+    ):
         super().__init__(risk)
-        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting, stratify_by_sq_lns,
-                                            stratify_by_wasting_treatment, stratify_by_x_factor, stratify_by_stunting)
+        self.stratifier = ResultsStratifier(
+            self.name,
+            stratify_by_wasting,
+            stratify_by_sq_lns,
+            stratify_by_wasting_treatment,
+            stratify_by_x_factor,
+            stratify_by_stunting,
+            stratify_by_maternal_malnutrition
+        )
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:
@@ -353,12 +424,25 @@ class BirthObserver:
         }
     }
 
-    def __init__(self, stratify_by_wasting: str = 'False', stratify_by_sq_lns: str = 'False',
-                 stratify_by_wasting_treatment: str = 'False', stratify_by_x_factor: str = 'False',
-                 stratify_by_stunting: str = 'False'):
+    def __init__(
+            self,
+            stratify_by_wasting: str = 'False',
+            stratify_by_sq_lns: str = 'False',
+            stratify_by_wasting_treatment: str = 'False',
+            stratify_by_x_factor: str = 'False',
+            stratify_by_stunting: str = 'False',
+            stratify_by_maternal_malnutrition: str = 'True'
+    ):
         self.configuration_defaults = self._get_configuration_defaults()
-        self.stratifier = ResultsStratifier(self.name, stratify_by_wasting, stratify_by_sq_lns,
-                                            stratify_by_wasting_treatment, stratify_by_x_factor, stratify_by_stunting)
+        self.stratifier = ResultsStratifier(
+            self.name,
+            stratify_by_wasting,
+            stratify_by_sq_lns,
+            stratify_by_wasting_treatment,
+            stratify_by_x_factor,
+            stratify_by_stunting,
+            stratify_by_maternal_malnutrition
+        )
 
         self.tracked_column_name = 'tracked'
         self.entrance_time_column_name = 'entrance_time'
@@ -446,9 +530,11 @@ class BirthObserver:
 
     # noinspection PyUnusedLocal
     def _metrics(self, index: pd.Index, metrics: Dict) -> Dict:
-        pop = pd.concat(
-            [self.population_view.get(index), self.pipelines[self.birth_weight_pipeline_name](index)], axis=1
-        )
+        pipelines = [
+            pd.Series(pipeline(index), name=pipeline_name)
+            for pipeline_name, pipeline in self.pipelines.items()
+        ]
+        pop = pd.concat([self.population_view.get(index)] + pipelines, axis=1)
 
         measure_getters = (
             (self._get_births, ()),
