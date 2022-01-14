@@ -143,6 +143,8 @@ class __MaternalSupplementation(NamedTuple):
         'bep_birth_weight_shift', get_norm_from_quantiles(mean=66.96, lower=13.13, upper=120.78)
     )
 
+    ALTERNATIVE_COVERAGE: float = 0.9
+
 
 MATERNAL_SUPPLEMENTATION = __MaternalSupplementation()
 

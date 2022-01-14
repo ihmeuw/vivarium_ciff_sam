@@ -1,5 +1,6 @@
 from typing import Dict, List
 
+import numpy as np
 import pandas as pd
 
 from vivarium.framework.engine import Builder
@@ -141,4 +142,59 @@ class WastingTreatmentIntervention(LinearScaleUp):
         target[self.treatment_keys.UNCOVERED] = 1 - coverage_value
         target[self.treatment_keys.BASELINE_COVERAGE] = (1 - scale_up_progress) * coverage_value
         target[self.treatment_keys.ALTERNATIVE_COVERAGE] = scale_up_progress * coverage_value
+        return target
+
+
+class MaternalSupplementationIntervention(LinearScaleUp):
+
+    def __init__(self, supplementation: str):
+        super().__init__(supplementation)
+
+        self.treatment_keys = {
+            data_keys.IFA_SUPPLEMENTATION.name: data_keys.IFA_SUPPLEMENTATION,
+            data_keys.MMN_SUPPLEMENTATION.name: data_keys.MMN_SUPPLEMENTATION,
+            data_keys.BEP_SUPPLEMENTATION.name: data_keys.BEP_SUPPLEMENTATION,
+        }[self.treatment.name]
+
+    def _get_configuration_defaults(self) -> Dict[str, Dict]:
+        return {
+            f"{self.treatment.name}_scale_up": {
+                "start": {
+                    "date": {
+                        "year": data_values.SCALE_UP_START_DT.year,
+                        "month": data_values.SCALE_UP_START_DT.month,
+                        "day": data_values.SCALE_UP_START_DT.day,
+                    },
+                    "value": 0.0,
+                },
+                "end": {
+                    "date": {
+                        "year": data_values.SCALE_UP_END_DT.year,
+                        "month": data_values.SCALE_UP_END_DT.month,
+                        "day": data_values.SCALE_UP_END_DT.day,
+                    },
+                    "value": data_values.MATERNAL_SUPPLEMENTATION.ALTERNATIVE_COVERAGE,
+                }
+            }
+        }
+
+    #################
+    # Setup methods #
+    #################
+
+    def _get_is_intervention_scenario(self, builder: Builder) -> bool:
+        return scenarios.SCENARIOS[builder.configuration.intervention.scenario].has_lbwsg
+
+    ##################
+    # Helper methods #
+    ##################
+
+    def _apply_scale_up(self, idx: pd.Index, target: pd.DataFrame, scale_up_progress: float) -> pd.Series:
+        # NOTE: this operation is NOT commutative. This pipeline must not be modified in any other component.
+        start_value = self.scale_up_start_value(idx)
+        end_value = self.scale_up_end_value(idx)
+
+        cat2_scale_up = scale_up_progress * (end_value - start_value) + start_value
+
+        target = np.minimum(1 - cat2_scale_up, target)
         return target

@@ -40,16 +40,26 @@ components:
             - RiskWithTracked('risk_factor.maternal_malnutrition')
             - AdditiveRiskEffect('risk_factor.maternal_malnutrition', 'risk_factor.low_birth_weight.exposure')
 
+            - MaternalSupplementation()
+            - MaternalSupplementationType('risk_factor.iron_folic_acid_supplementation')
+            - MaternalSupplementationType('risk_factor.multiple_micronutrient_supplementation')
+            - BEPSupplementation()
+            - AdditiveRiskEffect('risk_factor.iron_folic_acid_supplementation', 'risk_factor.low_birth_weight.exposure')
+            - AdditiveRiskEffect('risk_factor.multiple_micronutrient_supplementation', 'risk_factor.low_birth_weight.exposure')
+            - AdditiveRiskEffect('risk_factor.balanced_energy_protein_supplementation', 'risk_factor.low_birth_weight.exposure')
+            - MaternalSupplementationIntervention('risk_factor.iron_folic_acid_supplementation')
+            - MaternalSupplementationIntervention('risk_factor.multiple_micronutrient_supplementation')
+
             - XFactorExposure()
             - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
             - XFactorEffect('risk_factor.moderate_acute_malnutrition_to_severe_acute_malnutrition.transition_rate')
 
             - WastingTreatment('risk_factor.severe_acute_malnutrition_treatment')
             - WastingTreatment('risk_factor.moderate_acute_malnutrition_treatment')
-            - SQLNSTreatment()
-
             - WastingTreatmentIntervention('risk_factor.severe_acute_malnutrition_treatment')
             - WastingTreatmentIntervention('risk_factor.moderate_acute_malnutrition_treatment')
+
+            - SQLNSTreatment()
             - SQLNSIntervention()
 
             - DisabilityObserver('wasting')
@@ -84,7 +94,7 @@ configuration:
             day: 31
         step_size: 0.5 # Days
     population:
-        population_size: 1_000
+        population_size: 10_000
         age_start: 0
         age_end: 5
         exit_age: 5
