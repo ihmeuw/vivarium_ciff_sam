@@ -38,15 +38,15 @@ components:
             - LBWSGRiskEffect('cause.affected_unmodeled.cause_specific_mortality_rate')
 
             - RiskWithTracked('risk_factor.maternal_malnutrition')
-            - AdditiveRiskEffect('risk_factor.maternal_malnutrition', 'risk_factor.low_birth_weight.exposure')
+            - AdditiveRiskEffect('risk_factor.maternal_malnutrition', 'risk_factor.low_birth_weight.birth_exposure')
 
             - MaternalSupplementation()
             - MaternalSupplementationType('risk_factor.iron_folic_acid_supplementation')
             - MaternalSupplementationType('risk_factor.multiple_micronutrient_supplementation')
             - BEPSupplementation()
-            - AdditiveRiskEffect('risk_factor.iron_folic_acid_supplementation', 'risk_factor.low_birth_weight.exposure')
-            - AdditiveRiskEffect('risk_factor.multiple_micronutrient_supplementation', 'risk_factor.low_birth_weight.exposure')
-            - AdditiveRiskEffect('risk_factor.balanced_energy_protein_supplementation', 'risk_factor.low_birth_weight.exposure')
+            - AdditiveRiskEffect('risk_factor.iron_folic_acid_supplementation', 'risk_factor.low_birth_weight.birth_exposure')
+            - AdditiveRiskEffect('risk_factor.multiple_micronutrient_supplementation', 'risk_factor.low_birth_weight.birth_exposure')
+            - AdditiveRiskEffect('risk_factor.balanced_energy_protein_supplementation', 'risk_factor.low_birth_weight.birth_exposure')
             - MaternalSupplementationIntervention('risk_factor.iron_folic_acid_supplementation')
             - MaternalSupplementationIntervention('risk_factor.multiple_micronutrient_supplementation')
 

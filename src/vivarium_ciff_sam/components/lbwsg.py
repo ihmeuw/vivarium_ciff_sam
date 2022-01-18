@@ -27,7 +27,9 @@ class LBWSGSubRisk(Risk, ABC):
     def __init__(self, risk: str):
         super(LBWSGSubRisk, self).__init__(risk)
         self._sub_components = []
+        self.birth_exposure_pipeline_name = f'{self.risk.name}.birth_exposure'
         self.lbwsg_exposure_pipeline_name = f'{data_keys.LBWSG.name}.exposure'
+        self.exposure_column_name = f'{self.risk.name}_exposure'
         self.risk_specific_shift_pipeline_name = f'{self.risk.name}.risk_specific_shift'
 
     ##########################
@@ -47,11 +49,20 @@ class LBWSGSubRisk(Risk, ABC):
         self.lbwsg_exposure = self._get_lbwsg_exposure_pipeline(builder)
         self.category_intervals = self._get_category_intervals(builder)
         self.risk_specific_shift = self._get_risk_specific_shift_pipeline(builder)
+        self.birth_exposure_pipeline = self._get_birth_exposure_pipeline(builder)
 
     def _get_exposure_pipeline(self, builder: Builder) -> Pipeline:
         return builder.value.register_value_producer(
             self.exposure_pipeline_name,
             source=self._get_current_exposure,
+            requires_columns=[self.exposure_column_name],
+            preferred_post_processor=data_transformations.get_exposure_post_processor(builder, self.risk)
+        )
+
+    def _get_birth_exposure_pipeline(self, builder: Builder) -> Pipeline:
+        return builder.value.register_value_producer(
+            self.birth_exposure_pipeline_name,
+            source=self._get_birth_exposure,
             requires_columns=['age', 'sex'],
             requires_values=[
                 self.propensity_pipeline_name,
@@ -62,7 +73,15 @@ class LBWSGSubRisk(Risk, ABC):
         )
 
     def _get_population_view(self, builder: Builder) -> PopulationView:
-        return builder.population.get_view([self.propensity_column_name, 'tracked'])
+        return builder.population.get_view([self.propensity_column_name, 'tracked', self.exposure_column_name])
+
+    def _register_simulant_initializer(self, builder: Builder) -> None:
+        builder.population.initializes_simulants(
+            self.on_initialize_simulants,
+            creates_columns=[self.propensity_column_name, self.exposure_column_name],
+            requires_streams=[self._randomness_stream_name],
+            requires_values=[self.birth_exposure_pipeline_name]
+        )
 
     def _get_lbwsg_exposure_pipeline(self, builder: Builder) -> Pipeline:
         return builder.value.get_value(self.lbwsg_exposure_pipeline_name)
@@ -77,11 +96,24 @@ class LBWSGSubRisk(Risk, ABC):
     def _get_category_intervals(cls, builder: Builder) -> pd.Series:
         return cls.get_intervals_from_categories(builder.data.load(f'risk_factor.{data_keys.LBWSG.name}.categories'))
 
+    ########################
+    # Event-driven methods #
+    ########################
+
+    def on_initialize_simulants(self, pop_data: SimulantData) -> None:
+        super().on_initialize_simulants(pop_data)
+        birth_exposure = pd.Series(self.birth_exposure_pipeline(pop_data.index), name=self.exposure_column_name)
+        self.population_view.update(birth_exposure)
+
     ##################################
     # Pipeline sources and modifiers #
     ##################################
 
     def _get_current_exposure(self, index: pd.Index) -> pd.Series:
+        exposure = self.population_view.get(index)[[self.exposure_column_name]]
+        return exposure
+
+    def _get_birth_exposure(self, index: pd.Index) -> pd.Series:
         propensities = self.propensity(index)
         lbwsg_categories = self.lbwsg_exposure(index)
         risk_specific_shift = self.risk_specific_shift(index)
