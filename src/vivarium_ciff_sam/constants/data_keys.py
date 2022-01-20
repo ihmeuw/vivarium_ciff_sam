@@ -265,7 +265,7 @@ class __LowBirthWeightShortGestation(NamedTuple):
     PAF: TargetString = 'risk_factor.low_birth_weight_and_short_gestation.population_attributable_fraction'
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
-    BIRTH_WEIGHT_EXPOSURE = TargetString('risk_factor.low_birth_weight.exposure')
+    BIRTH_WEIGHT_EXPOSURE = TargetString('risk_factor.low_birth_weight.birth_exposure')
     TMREL_CATEGORIES = {'cat53', 'cat54', 'cat55', 'cat56'}
     TMREL_GESTATIONAL_AGE_INTERVAL = pd.Interval(38.0, 42.0)
     TMREL_BIRTH_WEIGHT_INTERVAL = pd.Interval(3500.0, 4500.0)

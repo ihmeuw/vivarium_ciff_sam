@@ -110,7 +110,7 @@ class LBWSGSubRisk(Risk, ABC):
     ##################################
 
     def _get_current_exposure(self, index: pd.Index) -> pd.Series:
-        exposure = self.population_view.get(index)[[self.exposure_column_name]]
+        exposure = self.population_view.get(index)[self.exposure_column_name]
         return exposure
 
     def _get_birth_exposure(self, index: pd.Index) -> pd.Series:
