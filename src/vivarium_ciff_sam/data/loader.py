@@ -679,7 +679,7 @@ def load_dichotomous_excess_shift(
         excess_shift
         .set_index(['affected_entity', 'affected_measure', 'parameter'], append=True)
         .sort_index()
-)
+    )
     return excess_shift
 
 
