@@ -24,11 +24,15 @@ class RiskWithTracked(Risk):
         return builder.population.get_view([self.propensity_column_name, 'tracked'])
 
 
-class MaternalSupplementation(RiskWithTracked):
+class MaternalSupplementation(Risk):
 
     def __init__(self):
         super().__init__('risk_factor.maternal_supplementation')
         self._sub_components = []
+
+        self.ifa_exposure_column_name = f'{data_keys.IFA_SUPPLEMENTATION.name}_exposure'
+        self.mmn_exposure_column_name = f'{data_keys.MMN_SUPPLEMENTATION.name}_exposure'
+        self.bep_exposure_column_name = f'{data_keys.BEP_SUPPLEMENTATION.name}_exposure'
 
     ##########################
     # Initialization methods #
@@ -41,8 +45,55 @@ class MaternalSupplementation(RiskWithTracked):
     # Setup methods #
     #################
 
+    # noinspection PyAttributeOutsideInit
+    def setup(self, builder: Builder) -> None:
+        super().setup(builder)
+
     def _get_exposure_pipeline(self, builder: Builder) -> Pipeline:
-        return None
+        return builder.value.register_value_producer(
+            self.exposure_pipeline_name,
+            source=self._get_current_exposure,
+            requires_columns=[
+                'tracked',
+                self.ifa_exposure_column_name,
+                self.mmn_exposure_column_name,
+                self.bep_exposure_column_name,
+            ],
+            preferred_post_processor=get_exposure_post_processor(builder, self.risk)
+        )
+
+    def _get_population_view(self, builder: Builder) -> PopulationView:
+        return builder.population.get_view(
+            [
+                self.propensity_column_name,
+                'tracked',
+                self.ifa_exposure_column_name,
+                self.mmn_exposure_column_name,
+                self.bep_exposure_column_name,
+            ]
+        )
+
+    ##################################
+    # Pipeline sources and modifiers #
+    ##################################
+
+    def _get_current_exposure(self, index: pd.Index) -> pd.Series:
+        required_columns = [
+            'tracked',
+            self.ifa_exposure_column_name,
+            self.mmn_exposure_column_name,
+            self.bep_exposure_column_name
+        ]
+        pop = self.population_view.get(index)[required_columns]
+        has_bep = pop[self.bep_exposure_column_name] == data_keys.BEP_SUPPLEMENTATION.CAT2
+        has_mmn = pop[self.mmn_exposure_column_name] == data_keys.MMN_SUPPLEMENTATION.CAT2
+        has_ifa = pop[self.ifa_exposure_column_name] == data_keys.IFA_SUPPLEMENTATION.CAT2
+
+        exposure = pd.Series('uncovered', index=index)
+        exposure[has_ifa] = 'ifa'
+        exposure[has_mmn] = 'mmn'
+        exposure[has_bep] = 'bep'
+        return exposure
 
 
 class MaternalSupplementationType(Risk):
