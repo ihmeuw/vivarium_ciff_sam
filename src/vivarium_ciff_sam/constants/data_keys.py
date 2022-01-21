@@ -1,7 +1,5 @@
 from typing import NamedTuple
 
-import pandas as pd
-
 from vivarium_public_health.utilities import TargetString
 
 
@@ -266,9 +264,6 @@ class __LowBirthWeightShortGestation(NamedTuple):
 
     # Useful keys not for the artifact - distinguished by not using the colon type declaration
     BIRTH_WEIGHT_EXPOSURE = TargetString('risk_factor.low_birth_weight.birth_exposure')
-    TMREL_CATEGORIES = {'cat53', 'cat54', 'cat55', 'cat56'}
-    TMREL_GESTATIONAL_AGE_INTERVAL = pd.Interval(38.0, 42.0)
-    TMREL_BIRTH_WEIGHT_INTERVAL = pd.Interval(3500.0, 4500.0)
 
     @property
     def name(self):

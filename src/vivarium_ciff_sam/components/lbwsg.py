@@ -13,7 +13,7 @@ from vivarium_public_health.risks import Risk, RiskEffect
 from vivarium_public_health.risks import data_transformations
 from vivarium_public_health.risks.distributions import SimulationDistribution
 
-from vivarium_ciff_sam.constants import data_keys, metadata
+from vivarium_ciff_sam.constants import data_keys, data_values, metadata
 
 
 class LBWSGSubRisk(Risk, ABC):
@@ -291,11 +291,16 @@ class LBWSGRiskEffect(RiskEffect):
     ########################
 
     def on_initialize_simulants(self, pop_data: SimulantData) -> None:
-        is_tmrel = (self.pipelines[self.lbwsg_exposure_pipeline_name](pop_data.index)
-                    .isin(data_keys.LBWSG.TMREL_CATEGORIES))
-        is_male = self.population_view.subview(['sex']).get(pop_data.index).squeeze() == 'Male'
         gestational_age = self.pipelines[self.short_gestation_pipeline_name](pop_data.index)
         birth_weight = self.pipelines[self.low_birth_weight_pipeline_name](pop_data.index)
+
+        is_male = (
+                self.population_view.subview(['sex']).get(pop_data.index).squeeze(axis=1) == 'Male'
+        )
+        is_tmrel = (
+            (data_values.LBWSG.TMREL_GESTATIONAL_AGE_INTERVAL.left <= gestational_age)
+            & (data_values.LBWSG.TMREL_BIRTH_WEIGHT_INTERVAL.left <= birth_weight)
+        )
 
         def get_relative_risk_for_age_group(column_name: str, age_group_id: int) -> pd.Series:
             log_relative_risk = pd.Series(0.0, index=pop_data.index, name=column_name)

@@ -101,7 +101,7 @@ class MaternalSupplementationType(Risk):
             self.population_view
             .subview([self.exposure_column_name])
             .get(index)
-            .squeeze()
+            .squeeze(axis=1)
         )
         return exposure
 
