@@ -31,7 +31,7 @@ DISEASE_TRANSITION_COUNT_COLUMN_TEMPLATE = '{DISEASE_TRANSITION}_event_count_in_
 WASTING_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{WASTING_STATE}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_sam_treatment_{SAM_TREATMENT_STATE}_mam_treatment_{MAM_TREATMENT_STATE}_sq_lns_{SQLNS_STATE}_x_factor_{X_FACTOR_STATE}'
 WASTING_TRANSITION_COUNT_COLUMN_TEMPLATE = '{WASTING_TRANSITION}_event_count_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_sam_treatment_{SAM_TREATMENT_STATE}_mam_treatment_{MAM_TREATMENT_STATE}_sq_lns_{SQLNS_STATE}_x_factor_{X_FACTOR_STATE}'
 STUNTING_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{STUNTING_STATE}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_sq_lns_{SQLNS_STATE}'
-BIRTHS_COLUMN_TEMPLATE = '{BIRTH_METRIC}_in_{YEAR}_among_{SEX}_maternal_malnutrition_{MATERNAL_MALNUTRITION_STATE}'
+BIRTHS_COLUMN_TEMPLATE = '{BIRTH_METRIC}_in_{YEAR}_among_{SEX}_maternal_malnutrition_{MATERNAL_MALNUTRITION_STATE}_maternal_supplementation_{MATERNAL_SUPPLEMENTATION_TYPES}'
 
 COLUMN_TEMPLATES = {
     'population': TOTAL_POPULATION_COLUMN_TEMPLATE,
@@ -56,6 +56,7 @@ AGE_GROUPS = ('early_neonatal', 'late_neonatal', '1-5_months', '6-11_months', '1
 STUNTING_STATES = ('cat4', 'cat3', 'cat2', 'cat1')
 TREATMENT_STATES = ('covered', 'uncovered')
 DICHOTOMOUS_RISK_STATES = ('cat2', 'cat1')
+MATERNAL_SUPPLEMENTATION_TYPES = ('bep', 'mmn', 'ifa', 'uncovered')
 BIRTH_METRICS = ('total_births', 'birth_weight_sum', 'low_weight_births')
 CAUSES_OF_DEATH = (
     'other_causes',
@@ -91,6 +92,7 @@ TEMPLATE_FIELD_MAP = {
     'X_FACTOR_STATE': DICHOTOMOUS_RISK_STATES,
     'BIRTH_METRIC': BIRTH_METRICS,
     'MATERNAL_MALNUTRITION_STATE': DICHOTOMOUS_RISK_STATES,
+    'MATERNAL_SUPPLEMENTATION_TYPES': MATERNAL_SUPPLEMENTATION_TYPES,
 }
 
 

@@ -37,6 +37,7 @@ class ResultsStratifier:
             by_x_factor: str = 'False',
             by_stunting: str = 'False',
             by_maternal_malnutrition: str = 'False',
+            by_maternal_supplementation: str = 'False',
     ):
         self.name = f'{observer_name}_results_stratifier'
         self.by_wasting = by_wasting != 'False'
@@ -45,6 +46,7 @@ class ResultsStratifier:
         self.by_x_factor = by_x_factor != 'False'
         self.by_stunting = by_stunting != 'False'
         self.by_maternal_malnutrition = by_maternal_malnutrition != 'False'
+        self.by_maternal_supplementation = by_maternal_supplementation != 'False'
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
@@ -101,6 +103,14 @@ class ResultsStratifier:
                 True,
                 'maternal_malnutrition',
                 results.DICHOTOMOUS_RISK_STATES
+            )
+
+        if self.by_maternal_supplementation:
+            setup_stratification(
+                source_name='maternal_supplementation.exposure',
+                is_pipeline=True,
+                stratification_name='maternal_supplementation',
+                categories=results.MATERNAL_SUPPLEMENTATION_TYPES
             )
 
         self.population_view = builder.population.get_view(columns_required)
@@ -431,7 +441,8 @@ class BirthObserver:
             stratify_by_wasting_treatment: str = 'False',
             stratify_by_x_factor: str = 'False',
             stratify_by_stunting: str = 'False',
-            stratify_by_maternal_malnutrition: str = 'True'
+            stratify_by_maternal_malnutrition: str = 'True',
+            stratify_by_maternal_supplementation: str = 'True'
     ):
         self.configuration_defaults = self._get_configuration_defaults()
         self.stratifier = ResultsStratifier(
@@ -441,7 +452,8 @@ class BirthObserver:
             stratify_by_wasting_treatment,
             stratify_by_x_factor,
             stratify_by_stunting,
-            stratify_by_maternal_malnutrition
+            stratify_by_maternal_malnutrition,
+            stratify_by_maternal_supplementation
         )
 
         self.tracked_column_name = 'tracked'
