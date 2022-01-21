@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Dict, NamedTuple, Tuple
 
+import pandas as pd
 from scipy import stats
 
 from vivarium_ciff_sam.utilities import (
@@ -75,6 +76,18 @@ class __Wasting(NamedTuple):
 
 
 WASTING = __Wasting()
+
+
+##########################
+# LBWSG Model Parameters #
+##########################
+class __LBWSG(NamedTuple):
+
+    TMREL_GESTATIONAL_AGE_INTERVAL: pd.Interval = pd.Interval(38.0, 42.0)
+    TMREL_BIRTH_WEIGHT_INTERVAL: pd.Interval = pd.Interval(3500.0, 4500.0)
+
+
+LBWSG = __LBWSG()
 
 
 ###########################
