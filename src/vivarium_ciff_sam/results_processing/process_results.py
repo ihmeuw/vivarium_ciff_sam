@@ -225,7 +225,7 @@ def get_transition_count_measure_data(
 ) -> pd.DataFrame:
     # Oops, edge case.
     data = data.drop(
-        columns=[c for c in data.columns if 'event_count' in c and results.YEARS[-1] + 1 in c]
+        columns=[c for c in data.columns if 'event_count' in c and str(results.YEARS[-1] + 1) in c]
     )
     data = get_measure_data(data, measure, **stratifications)
     return sort_data(data)
