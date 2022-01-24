@@ -668,6 +668,8 @@ def load_treatment_excess_shift(key: str, location: str) -> pd.DataFrame:
                 data_values.MATERNAL_SUPPLEMENTATION.MMN_BIRTH_WEIGHT_SHIFT,
             data_keys.BEP_SUPPLEMENTATION.EXCESS_SHIFT:
                 data_values.MATERNAL_SUPPLEMENTATION.BEP_BIRTH_WEIGHT_SHIFT,
+            data_keys.INSECTICIDE_TX_NETS.EXCESS_SHIFT:
+                data_values.INSECTICIDE_TX_NETS.BIRTH_WEIGHT_SHIFT,
         }[key]
     except KeyError:
         raise ValueError(f'Unrecognized key {key}')
@@ -707,6 +709,7 @@ def load_risk_specific_shift(key: str, location: str) -> pd.DataFrame:
             data_keys.IFA_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: data_keys.IFA_SUPPLEMENTATION,
             data_keys.MMN_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: data_keys.MMN_SUPPLEMENTATION,
             data_keys.BEP_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: data_keys.BEP_SUPPLEMENTATION,
+            data_keys.INSECTICIDE_TX_NETS.RISK_SPECIFIC_SHIFT: data_keys.INSECTICIDE_TX_NETS,
         }[key]
     except KeyError:
         raise ValueError(f'Unrecognized key {key}')

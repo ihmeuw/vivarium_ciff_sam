@@ -179,7 +179,7 @@ class __InsecticideTreatedNets(NamedTuple):
         )
     )
 
-    EXPOSED_BIRTH_WEIGHT_SHIFT: Tuple = (
+    BIRTH_WEIGHT_SHIFT: Tuple = (
         'insecticide_treated_nets_effect_on_birth_weight',
         get_norm_from_quantiles(mean=33, lower=5, upper=62, quantiles=(0.05, 0.95))
     )
