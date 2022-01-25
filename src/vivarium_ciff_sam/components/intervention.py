@@ -150,12 +150,6 @@ class BirthweightIntervention(LinearScaleUp):
     def __init__(self, supplementation: str):
         super().__init__(supplementation)
 
-        self.treatment_keys = {
-            data_keys.IFA_SUPPLEMENTATION.name: data_keys.IFA_SUPPLEMENTATION,
-            data_keys.MMN_SUPPLEMENTATION.name: data_keys.MMN_SUPPLEMENTATION,
-            data_keys.BEP_SUPPLEMENTATION.name: data_keys.BEP_SUPPLEMENTATION,
-        }[self.treatment.name]
-
     def _get_configuration_defaults(self) -> Dict[str, Dict]:
         return {
             f"{self.treatment.name}_scale_up": {
