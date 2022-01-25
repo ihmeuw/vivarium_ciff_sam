@@ -145,7 +145,7 @@ class WastingTreatmentIntervention(LinearScaleUp):
         return target
 
 
-class MaternalSupplementationIntervention(LinearScaleUp):
+class BirthweightIntervention(LinearScaleUp):
 
     def __init__(self, supplementation: str):
         super().__init__(supplementation)

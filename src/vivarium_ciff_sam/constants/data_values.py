@@ -185,6 +185,7 @@ class __InsecticideTreatedNets(NamedTuple):
     )
 
     PROP_MALARIOUS: float = 0.6
+    ALTERNATIVE_COVERAGE: float = 0.9 * PROP_MALARIOUS
 
 
 INSECTICIDE_TX_NETS = __InsecticideTreatedNets()

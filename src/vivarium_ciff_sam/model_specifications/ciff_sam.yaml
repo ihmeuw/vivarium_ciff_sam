@@ -47,11 +47,12 @@ components:
             - AdditiveRiskEffect('risk_factor.iron_folic_acid_supplementation', 'risk_factor.low_birth_weight.birth_exposure')
             - AdditiveRiskEffect('risk_factor.multiple_micronutrient_supplementation', 'risk_factor.low_birth_weight.birth_exposure')
             - AdditiveRiskEffect('risk_factor.balanced_energy_protein_supplementation', 'risk_factor.low_birth_weight.birth_exposure')
-            - MaternalSupplementationIntervention('risk_factor.iron_folic_acid_supplementation')
-            - MaternalSupplementationIntervention('risk_factor.multiple_micronutrient_supplementation')
+            - BirthweightIntervention('risk_factor.iron_folic_acid_supplementation')
+            - BirthweightIntervention('risk_factor.multiple_micronutrient_supplementation')
 
             - RiskWithTracked('risk_factor.insecticide_treated_nets')
             - AdditiveRiskEffect('risk_factor.insecticide_treated_nets', 'risk_factor.low_birth_weight.birth_exposure')
+            - BirthweightIntervention('risk_factor.insecticide_treated_nets')
 
             - XFactorExposure()
             - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
@@ -119,6 +120,12 @@ configuration:
         conditional_exposure: 0.78
         transition_rate:
             relative_risk: 3.16
+
+    insecticide_treated_nets_scale_up:
+        start:
+            value: 'data'
+        end:
+            value: 0.54     # 0.9 * 0.6
 
     metrics:
         disability:

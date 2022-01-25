@@ -1,5 +1,5 @@
 from vivarium_ciff_sam.components.intervention import (
-    MaternalSupplementationIntervention,
+    BirthweightIntervention,
     SQLNSIntervention,
     WastingTreatmentIntervention
 )
