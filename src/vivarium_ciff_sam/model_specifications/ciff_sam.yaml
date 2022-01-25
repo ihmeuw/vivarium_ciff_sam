@@ -22,6 +22,8 @@ components:
 
             - RiskEffect('risk_factor.moderate_acute_malnutrition_treatment', 'risk_factor.moderate_acute_malnutrition_to_mild_child_wasting.transition_rate')
 
+
+
     vivarium_ciff_sam:
         components:
             - Mortality()
@@ -47,6 +49,9 @@ components:
             - AdditiveRiskEffect('risk_factor.balanced_energy_protein_supplementation', 'risk_factor.low_birth_weight.birth_exposure')
             - MaternalSupplementationIntervention('risk_factor.iron_folic_acid_supplementation')
             - MaternalSupplementationIntervention('risk_factor.multiple_micronutrient_supplementation')
+
+            - RiskWithTracked('risk_factor.insecticide_treated_nets')
+            - AdditiveRiskEffect('risk_factor.insecticide_treated_nets', 'risk_factor.low_birth_weight.birth_exposure')
 
             - XFactorExposure()
             - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
