@@ -150,6 +150,13 @@ class BirthweightIntervention(LinearScaleUp):
     def __init__(self, supplementation: str):
         super().__init__(supplementation)
 
+        self.treatment_keys = {
+            data_keys.IFA_SUPPLEMENTATION.name: data_keys.IFA_SUPPLEMENTATION,
+            data_keys.MMN_SUPPLEMENTATION.name: data_keys.MMN_SUPPLEMENTATION,
+            data_keys.BEP_SUPPLEMENTATION.name: data_keys.BEP_SUPPLEMENTATION,
+            data_keys.INSECTICIDE_TX_NETS.name: data_keys.INSECTICIDE_TX_NETS,
+        }[self.treatment.name]
+
     def _get_configuration_defaults(self) -> Dict[str, Dict]:
         return {
             f"{self.treatment.name}_scale_up": {
@@ -182,6 +189,17 @@ class BirthweightIntervention(LinearScaleUp):
     ##################
     # Helper methods #
     ##################
+
+    def _get_endpoint_value_from_data(self, builder: Builder, endpoint_type: str) -> LookupTable:
+        if endpoint_type != 'start':
+            raise ValueError(f'Invalid endpoint type {endpoint_type}. "start" is the only allowed type.')
+
+        baseline_coverage = builder.data.load(self.treatment_keys.EXPOSURE)
+        baseline_coverage = (
+            baseline_coverage.query(f'parameter == "{self.treatment_keys.CAT2}"')
+            .drop(columns='parameter')
+        )
+        return builder.lookup.build_table(baseline_coverage, key_columns=['sex'], parameter_columns=['age', 'year'])
 
     def _apply_scale_up(self, idx: pd.Index, target: pd.DataFrame, scale_up_progress: float) -> pd.Series:
         # NOTE: this operation is NOT commutative. This pipeline must not be modified in any other component.
