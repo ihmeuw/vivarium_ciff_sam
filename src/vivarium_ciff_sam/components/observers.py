@@ -38,6 +38,7 @@ class ResultsStratifier:
             by_stunting: str = 'False',
             by_maternal_malnutrition: str = 'False',
             by_maternal_supplementation: str = 'False',
+            by_insecticide_treated_nets: str = 'False'
     ):
         self.name = f'{observer_name}_results_stratifier'
         self.by_wasting = by_wasting != 'False'
@@ -47,6 +48,7 @@ class ResultsStratifier:
         self.by_stunting = by_stunting != 'False'
         self.by_maternal_malnutrition = by_maternal_malnutrition != 'False'
         self.by_maternal_supplementation = by_maternal_supplementation != 'False'
+        self.by_insecticide_treated_nets = by_insecticide_treated_nets != 'False'
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
@@ -95,14 +97,19 @@ class ResultsStratifier:
                                  {'covered': True, 'uncovered': False})
 
         if self.by_x_factor:
-            setup_stratification('x_factor.exposure', True, 'x_factor', results.DICHOTOMOUS_RISK_STATES)
+            setup_stratification(
+                source_name='x_factor.exposure',
+                is_pipeline=True,
+                stratification_name='x_factor',
+                categories=results.DICHOTOMOUS_RISK_STATES
+            )
 
         if self.by_maternal_malnutrition:
             setup_stratification(
-                f'{data_keys.MATERNAL_MALNUTRITION.name}.exposure',
-                True,
-                'maternal_malnutrition',
-                results.DICHOTOMOUS_RISK_STATES
+                source_name=f'{data_keys.MATERNAL_MALNUTRITION.name}.exposure',
+                is_pipeline=True,
+                stratification_name='maternal_malnutrition',
+                categories=results.DICHOTOMOUS_RISK_STATES
             )
 
         if self.by_maternal_supplementation:
@@ -111,6 +118,17 @@ class ResultsStratifier:
                 is_pipeline=True,
                 stratification_name='maternal_supplementation',
                 categories=results.MATERNAL_SUPPLEMENTATION_TYPES
+            )
+
+        if self.by_maternal_malnutrition:
+            setup_stratification(
+                source_name=f'{data_keys.INSECTICIDE_TX_NETS.name}.exposure',
+                is_pipeline=True,
+                stratification_name='itn',
+                categories={
+                    'covered': data_keys.INSECTICIDE_TX_NETS.CAT2,
+                    'uncovered': data_keys.INSECTICIDE_TX_NETS.CAT1
+                }
             )
 
         self.population_view = builder.population.get_view(columns_required)
@@ -442,7 +460,8 @@ class BirthObserver:
             stratify_by_x_factor: str = 'False',
             stratify_by_stunting: str = 'False',
             stratify_by_maternal_malnutrition: str = 'True',
-            stratify_by_maternal_supplementation: str = 'True'
+            stratify_by_maternal_supplementation: str = 'True',
+            stratify_by_insecticide_treated_nets: str = 'True'
     ):
         self.configuration_defaults = self._get_configuration_defaults()
         self.stratifier = ResultsStratifier(
@@ -453,7 +472,8 @@ class BirthObserver:
             stratify_by_x_factor,
             stratify_by_stunting,
             stratify_by_maternal_malnutrition,
-            stratify_by_maternal_supplementation
+            stratify_by_maternal_supplementation,
+            stratify_by_insecticide_treated_nets
         )
 
         self.tracked_column_name = 'tracked'

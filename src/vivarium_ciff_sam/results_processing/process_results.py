@@ -64,7 +64,8 @@ def make_measure_data(data):
             has_wasting_stratification=False,
             has_age_stratification=False,
             has_maternal_malnutrition_stratification=True,
-            has_maternal_supplementation_stratification=True
+            has_maternal_supplementation_stratification=True,
+            has_itn_stratification=True
         )
     )
     return measure_data
@@ -164,7 +165,10 @@ def split_processing_column(
         has_age_stratification: bool = True,
         has_maternal_malnutrition_stratification: bool = False,
         has_maternal_supplementation_stratification: bool = False,
+        has_itn_stratification: bool = False,
 ) -> pd.DataFrame:
+    if has_itn_stratification:
+        data['process'], data['insecticide_treated_nets'] = data.process.str.split(f'_itn_').str
     if has_maternal_supplementation_stratification:
         data['process'], data['maternal_supplementation'] = (
             data.process.str.split(f'_maternal_supplementation_').str
