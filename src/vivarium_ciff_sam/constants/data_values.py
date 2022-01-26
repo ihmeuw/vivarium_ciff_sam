@@ -134,6 +134,7 @@ SQ_LNS = __SQLNS()
 
 class __MaternalSupplementation(NamedTuple):
 
+    DISTRIBUTION: str = 'dichotomous'
     CATEGORIES: Dict[str, str] = {
         'cat1': 'uncovered',
         'cat2': 'covered',
@@ -161,6 +162,32 @@ class __MaternalSupplementation(NamedTuple):
 
 MATERNAL_SUPPLEMENTATION = __MaternalSupplementation()
 
+
+class __InsecticideTreatedNets(NamedTuple):
+    DISTRIBUTION: str = 'dichotomous'
+    CATEGORIES: Dict[str, str] = {
+        'cat1': 'uncovered',
+        'cat2': 'covered',
+    }
+
+    EXPOSURE: Tuple = (
+        'insecticide_treated_nets_exposure',
+        get_truncnorm_from_quantiles(
+            mean=0.44,
+            lower=0.44 - (1.96 * 0.021),
+            upper=0.44 + (1.96 * 0.021)
+        )
+    )
+
+    BIRTH_WEIGHT_SHIFT: Tuple = (
+        'insecticide_treated_nets_effect_on_birth_weight',
+        get_norm_from_quantiles(mean=33, lower=5, upper=62, quantiles=(0.05, 0.95))
+    )
+
+    PROP_MALARIOUS: float = 0.6
+
+
+INSECTICIDE_TX_NETS = __InsecticideTreatedNets()
 
 ###################################
 # Scale-up Intervention Constants #

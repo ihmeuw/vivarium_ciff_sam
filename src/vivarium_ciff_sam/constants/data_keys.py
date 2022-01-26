@@ -342,6 +342,7 @@ MATERNAL_MALNUTRITION = _get_additive_risk_keys('maternal_malnutrition')
 IFA_SUPPLEMENTATION = _get_additive_risk_keys('iron_folic_acid_supplementation')
 MMN_SUPPLEMENTATION = _get_additive_risk_keys('multiple_micronutrient_supplementation')
 BEP_SUPPLEMENTATION = _get_additive_risk_keys('balanced_energy_protein_supplementation')
+INSECTICIDE_TX_NETS = _get_additive_risk_keys('insecticide_treated_nets')
 
 
 MAKE_ARTIFACT_KEY_GROUPS = [
@@ -361,4 +362,5 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     IFA_SUPPLEMENTATION,
     MMN_SUPPLEMENTATION,
     BEP_SUPPLEMENTATION,
+    INSECTICIDE_TX_NETS,
 ]
