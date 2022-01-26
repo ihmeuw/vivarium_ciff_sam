@@ -120,7 +120,7 @@ class ResultsStratifier:
                 categories=results.MATERNAL_SUPPLEMENTATION_TYPES
             )
 
-        if self.by_maternal_malnutrition:
+        if self.by_insecticide_treated_nets:
             setup_stratification(
                 source_name=f'{data_keys.INSECTICIDE_TX_NETS.name}.exposure',
                 is_pipeline=True,
