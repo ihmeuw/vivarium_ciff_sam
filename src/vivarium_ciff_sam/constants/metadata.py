@@ -1,5 +1,7 @@
 from typing import NamedTuple
 
+import pandas as pd
+
 ####################
 # Project metadata #
 ####################
@@ -22,8 +24,10 @@ ARTIFACT_INDEX_COLUMNS = [
     'age_start',
     'age_end',
     'year_start',
-    'year_end'
+    'year_end',
 ]
+
+ARTIFACT_COLUMNS = pd.Index([f'draw_{i}' for i in range(0, 1000)])
 
 GBD_2019_ROUND_ID = 6
 GBD_2020_ROUND_ID = 7

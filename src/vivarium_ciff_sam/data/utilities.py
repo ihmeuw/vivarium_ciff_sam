@@ -15,7 +15,9 @@ from vivarium_inputs.mapping_extension import alternative_risk_factors, Alternat
 from vivarium_inputs.validation.raw import check_metadata
 
 from vivarium_ciff_sam.constants import data_keys, data_values
-from vivarium_ciff_sam.constants.metadata import ARTIFACT_INDEX_COLUMNS, AGE_GROUP, GBD_2020_ROUND_ID
+from vivarium_ciff_sam.constants.metadata import (
+    ARTIFACT_COLUMNS, ARTIFACT_INDEX_COLUMNS, AGE_GROUP, GBD_2020_ROUND_ID
+)
 from vivarium_ciff_sam.utilities import get_random_variable_draws
 
 
@@ -343,12 +345,16 @@ def process_relative_risk(data: pd.DataFrame, key: str, entity: Union[RiskFactor
     return data
 
 
-def get_treatment_efficacy(demography: pd.DataFrame, treatment_type: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def get_treatment_efficacy(
+        demography: pd.DataFrame, treatment_type: str
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     baseline_efficacy = {
-        data_keys.WASTING.CAT1: get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]),
-                                                          *data_values.WASTING.BASELINE_SAM_TX_EFFICACY),
-        data_keys.WASTING.CAT2: get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]),
-                                                          *data_values.WASTING.BASELINE_MAM_TX_EFFICACY)
+        data_keys.WASTING.CAT1: get_random_variable_draws(
+            ARTIFACT_COLUMNS, *data_values.WASTING.BASELINE_SAM_TX_EFFICACY
+        ),
+        data_keys.WASTING.CAT2: get_random_variable_draws(
+            ARTIFACT_COLUMNS, *data_values.WASTING.BASELINE_MAM_TX_EFFICACY
+        )
     }
     alternative_efficacy = {
         data_keys.WASTING.CAT1: data_values.WASTING.SAM_TX_ALTERNATIVE_EFFICACY,
