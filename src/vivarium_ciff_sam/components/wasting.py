@@ -561,8 +561,11 @@ def load_daily_mortality_probabilities(builder: Builder) -> pd.DataFrame:
     diarrhea_duration = get_random_variable(
         builder.configuration.input_data.input_draw_number, *data_values.DIARRHEA_DURATION
     )
+    lri_duration = get_random_variable(
+        builder.configuration.input_data.input_draw_number, *data_values.LRI_DURATION
+    )
     duration_c = pd.Series(
-        [diarrhea_duration, data_values.MEASLES_DURATION, data_values.LRI_DURATION],
+        [diarrhea_duration, data_values.MEASLES_DURATION, lri_duration],
         index=pd.Index(
             [data_keys.DIARRHEA.name, data_keys.MEASLES.name, data_keys.LRI.name],
             name='affected_entity'
