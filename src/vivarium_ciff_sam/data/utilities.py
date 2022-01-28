@@ -224,7 +224,7 @@ def get_gbd_2020_demographic_dimensions() -> pd.DataFrame:
                          .rename(columns={0: 'sex', 1: 'age_start', 2: 'year_start'}))
 
     index_data = apply_artifact_index(unique_index_data)
-    return index_data
+    return index_data.sort_index()
 
 
 def apply_artifact_index(data: pd.DataFrame) -> pd.DataFrame:
