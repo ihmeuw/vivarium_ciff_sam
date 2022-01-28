@@ -21,7 +21,9 @@ YEAR_DURATION: float = 365.25
 ##########################
 
 # diarrhea duration in days
-DIARRHEA_DURATION: int = 10
+DIARRHEA_DURATION: Tuple = (
+    'diarrheal_diseases_duration', get_norm_from_quantiles(mean=4.3, lower=4.2, upper=4.4)
+)
 
 # measles duration in days
 MEASLES_DURATION: int = 10

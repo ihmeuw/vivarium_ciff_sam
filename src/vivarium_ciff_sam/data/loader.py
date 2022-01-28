@@ -58,7 +58,7 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
 
         data_keys.DIARRHEA.PREVALENCE: load_standard_gbd_2019_data_as_gbd_2020_data,
         data_keys.DIARRHEA.INCIDENCE_RATE: load_standard_gbd_2019_data_as_gbd_2020_data,
-        data_keys.DIARRHEA.REMISSION_RATE: load_standard_gbd_2019_data_as_gbd_2020_data,
+        data_keys.DIARRHEA.REMISSION_RATE: load_remission_rate_from_duration,
         data_keys.DIARRHEA.DISABILITY_WEIGHT: load_standard_gbd_2019_data_as_gbd_2020_data,
         data_keys.DIARRHEA.EMR: load_standard_gbd_2019_data_as_gbd_2020_data,
         data_keys.DIARRHEA.CSMR: load_standard_gbd_2019_data_as_gbd_2020_data,
@@ -221,6 +221,22 @@ def load_standard_gbd_2019_data_as_gbd_2020_data(key: str, location: str) -> pd.
     return utilities.reshape_gbd_2019_data_as_gbd_2020_data(gbd_2019_data)
 
 
+def load_remission_rate_from_duration(key: str, location: str) -> pd.DataFrame:
+    try:
+        distribution = {
+            data_keys.DIARRHEA.REMISSION_RATE: data_values.DIARRHEA_DURATION
+        }[key]
+    except KeyError:
+        raise ValueError(f'Unrecognized key {key}')
+    index = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
+    duration = (
+        get_random_variable_draws(metadata.ARTIFACT_COLUMNS, *distribution)
+        / data_values.YEAR_DURATION
+    )
+    remission_rate = pd.DataFrame([1 / duration], index=index)
+    return remission_rate
+
+
 def load_lri_prevalence(key: str, location: str) -> pd.DataFrame:
     if key == data_keys.LRI.PREVALENCE:
         incidence_rate = get_data(data_keys.LRI.INCIDENCE_RATE, location)
@@ -362,8 +378,9 @@ def load_wasting_treatment_exposure(key: str, location: str) -> pd.DataFrame:
     else:
         raise ValueError(f'Unrecognized key {key}')
 
-    treatment_coverage = get_random_variable_draws(pd.Index([f'draw_{i}' for i in range(0, 1000)]),
-                                                   *coverage_distribution)
+    treatment_coverage = get_random_variable_draws(
+        metadata.ARTIFACT_COLUMNS, *coverage_distribution
+    )
 
     idx = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
     cat3 = pd.DataFrame({f'draw_{i}': 0.0 for i in range(0, 1000)}, index=idx)
@@ -632,11 +649,10 @@ def load_dichotomous_exposure(
         location: str, distribution_data: Union[float, Tuple], is_risk: bool, coverage: float = 1.0,
 ) -> pd.DataFrame:
     index = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
-    column_index = pd.Index([f'draw_{i}' for i in range(0, 1000)])
     if type(distribution_data) == float:
-        base_exposure = pd.Series(distribution_data, index=column_index)
+        base_exposure = pd.Series(distribution_data, index=metadata.ARTIFACT_COLUMNS)
     else:
-        base_exposure = get_random_variable_draws(column_index, *distribution_data)
+        base_exposure = get_random_variable_draws(metadata.ARTIFACT_COLUMNS, *distribution_data)
 
     exposed = pd.DataFrame([base_exposure * coverage], index=index)
     unexposed = 1 - exposed
@@ -681,13 +697,11 @@ def load_dichotomous_excess_shift(
 ) -> pd.DataFrame:
 
     index = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
-    column_index = pd.Index([f'draw_{i}' for i in range(0, 1000)])
-
-    shift = get_random_variable_draws(column_index, *distribution_data)
+    shift = get_random_variable_draws(metadata.ARTIFACT_COLUMNS, *distribution_data)
 
     exposed = pd.DataFrame([shift], index=index)
     exposed['parameter'] = 'cat1' if is_risk else 'cat2'
-    unexposed = pd.DataFrame([pd.Series(0.0, index=column_index)], index=index)
+    unexposed = pd.DataFrame([pd.Series(0.0, index=metadata.ARTIFACT_COLUMNS)], index=index)
     unexposed['parameter'] = 'cat2' if is_risk else 'cat1'
 
     excess_shift = pd.concat([exposed, unexposed])
