@@ -289,8 +289,15 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
     key = EntityKey(key)
     entity = utilities.get_gbd_2020_entity(key)
 
-    data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.RR, 'rei_id', metadata.AGE_GROUP.GBD_2020,
-                              metadata.GBD_2020_ROUND_ID)
+    data = utilities.get_data(
+        key,
+        entity,
+        location,
+        gbd_constants.SOURCES.RR,
+        'rei_id',
+        metadata.AGE_GROUP.GBD_2020,
+        metadata.GBD_2020_ROUND_ID
+    )
     data = utilities.process_relative_risk(data, key, entity, location, metadata.GBD_2020_ROUND_ID,
                                            metadata.AGE_GROUP.GBD_2020)
 
@@ -301,6 +308,14 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
     elif key == data_keys.WASTING.RELATIVE_RISK:
         # Remove relative risks for simulants under 6 months
         data.loc[data.index.get_level_values('age_end') <= data_values.WASTING.START_AGE] = 1.0
+
+        # Set risk to affect diarrheal emr
+        diarrhea_rr = data.query(f"affected_entity == '{data_keys.DIARRHEA.name}'")
+        data = pd.concat([
+            diarrhea_rr.rename(
+                index={'incidence_rate': 'excess_mortality_rate'}, level='affected_measure'
+            ), data.drop(diarrhea_rr.index)
+        ]).sort_index()
 
     return data
 
