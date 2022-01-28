@@ -29,7 +29,9 @@ DIARRHEA_DURATION: Tuple = (
 MEASLES_DURATION: int = 10
 
 # LRI duration in days
-LRI_DURATION: int = 10
+LRI_DURATION: Tuple = (
+    'lri_duration', get_norm_from_quantiles(mean=7.79, lower=6.2, upper=9.64)
+)
 
 # duration > bin_duration, so there is effectively no remission,
 # and duration within the bin is bin_duration / 2

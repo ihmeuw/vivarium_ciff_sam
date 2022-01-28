@@ -73,7 +73,7 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
 
         data_keys.LRI.PREVALENCE: load_lri_prevalence,
         data_keys.LRI.INCIDENCE_RATE: load_standard_gbd_2019_data_as_gbd_2020_data,
-        data_keys.LRI.REMISSION_RATE: load_standard_gbd_2019_data_as_gbd_2020_data,
+        data_keys.LRI.REMISSION_RATE: load_remission_rate_from_duration,
         data_keys.LRI.DISABILITY_WEIGHT: load_standard_gbd_2019_data_as_gbd_2020_data,
         data_keys.LRI.EMR: load_lri_excess_mortality_rate,
         data_keys.LRI.CSMR: load_standard_gbd_2019_data_as_gbd_2020_data,
@@ -224,7 +224,8 @@ def load_standard_gbd_2019_data_as_gbd_2020_data(key: str, location: str) -> pd.
 def load_remission_rate_from_duration(key: str, location: str) -> pd.DataFrame:
     try:
         distribution = {
-            data_keys.DIARRHEA.REMISSION_RATE: data_values.DIARRHEA_DURATION
+            data_keys.DIARRHEA.REMISSION_RATE: data_values.DIARRHEA_DURATION,
+            data_keys.LRI.REMISSION_RATE: data_values.LRI_DURATION,
         }[key]
     except KeyError:
         raise ValueError(f'Unrecognized key {key}')
@@ -240,11 +241,16 @@ def load_remission_rate_from_duration(key: str, location: str) -> pd.DataFrame:
 def load_lri_prevalence(key: str, location: str) -> pd.DataFrame:
     if key == data_keys.LRI.PREVALENCE:
         incidence_rate = get_data(data_keys.LRI.INCIDENCE_RATE, location)
-        early_neonatal_prevalence = (incidence_rate[incidence_rate.index.get_level_values('age_start') == 0.0]
-                                     * data_values.EARLY_NEONATAL_CAUSE_DURATION / 365)
-        all_other_prevalence = (incidence_rate[incidence_rate.index.get_level_values('age_start') != 0.0]
-                                * data_values.LRI_DURATION / 365)
-        prevalence = pd.concat([early_neonatal_prevalence, all_other_prevalence])
+        duration = get_random_variable_draws(metadata.ARTIFACT_COLUMNS, *data_values.LRI_DURATION)
+        early_neonatal_prevalence = (
+            incidence_rate.query(f'age_start == 0.0')
+            * data_values.EARLY_NEONATAL_CAUSE_DURATION / data_values.YEAR_DURATION
+        )
+        all_other_prevalence = (
+                incidence_rate.query(f'age_start > 0.0')
+                * duration / data_values.YEAR_DURATION
+        )
+        prevalence = pd.concat([early_neonatal_prevalence, all_other_prevalence]).sort_index()
         return prevalence
     else:
         raise ValueError(f'Unrecognized key {key}')
