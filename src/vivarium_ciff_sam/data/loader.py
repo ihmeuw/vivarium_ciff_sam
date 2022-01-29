@@ -327,7 +327,6 @@ def load_paf(key: str, location: str) -> pd.DataFrame:
             data_keys.STUNTING.PAF: data_keys.STUNTING,
             data_keys.SAM_TREATMENT.PAF: data_keys.SAM_TREATMENT,
             data_keys.MAM_TREATMENT.PAF: data_keys.MAM_TREATMENT,
-            data_keys.MATERNAL_MALNUTRITION.PAF: data_keys.MATERNAL_MALNUTRITION,
         }[key]
     except KeyError:
         raise ValueError(f'Unrecognized key {key}')
