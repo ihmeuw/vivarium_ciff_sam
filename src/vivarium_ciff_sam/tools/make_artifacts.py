@@ -46,7 +46,7 @@ def check_for_existing(output_dir: Path, location: str, append: bool, replace_ke
             for loc in existing:
                 path = output_dir / f'{loc}.hdf'
                 logger.info(f'Deleting artifact at {str(path)}.')
-                path.unlink()
+                path.unlink(missing_ok=True)
         elif replace_keys:
             click.confirm(f'Existing artifacts found for {existing}. If the listed keys {replace_keys} exist, they will'
                           f' be deleted and regenerated. Do you want to delete and regenerate them?', abort=True)
