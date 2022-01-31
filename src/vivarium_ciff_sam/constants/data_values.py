@@ -194,6 +194,14 @@ class __InsecticideTreatedNets(NamedTuple):
 
 INSECTICIDE_TX_NETS = __InsecticideTreatedNets()
 
+
+#######################################
+# Breastfeeding Risk Factor Constants #
+#######################################
+
+DISCONTINUED_BREASTFEEDING_START_AGE = 0.5
+
+
 ###################################
 # Scale-up Intervention Constants #
 ###################################

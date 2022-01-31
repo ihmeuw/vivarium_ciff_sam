@@ -118,6 +118,20 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR: load_lbwsg_interpolated_rr,
         data_keys.LBWSG.PAF: load_lbwsg_paf,
 
+        data_keys.NON_EXCLUSIVE_BREASTFEEDING.DISTRIBUTION: load_metadata,
+        data_keys.NON_EXCLUSIVE_BREASTFEEDING.ALT_DISTRIBUTION: load_metadata,
+        data_keys.NON_EXCLUSIVE_BREASTFEEDING.CATEGORIES: load_metadata,
+        data_keys.NON_EXCLUSIVE_BREASTFEEDING.EXPOSURE: load_gbd_2020_exposure,
+        data_keys.NON_EXCLUSIVE_BREASTFEEDING.RELATIVE_RISK: load_gbd_2020_rr,
+        data_keys.NON_EXCLUSIVE_BREASTFEEDING.PAF: load_paf,
+
+        data_keys.DISCONTINUED_BREASTFEEDING.DISTRIBUTION: load_metadata, #TODO: NOT POLYTOMOUS. SHOULD THIS BE DIFFERENT?
+        data_keys.DISCONTINUED_BREASTFEEDING.ALT_DISTRIBUTION: load_metadata,
+        data_keys.DISCONTINUED_BREASTFEEDING.CATEGORIES: load_metadata,
+        data_keys.DISCONTINUED_BREASTFEEDING.EXPOSURE: load_gbd_2020_exposure,
+        data_keys.DISCONTINUED_BREASTFEEDING.RELATIVE_RISK: load_gbd_2020_rr, #TODO: not necessarily using this
+        data_keys.DISCONTINUED_BREASTFEEDING.PAF: load_paf,
+
         data_keys.AFFECTED_UNMODELED_CAUSES.URI_CSMR: load_standard_data,
         data_keys.AFFECTED_UNMODELED_CAUSES.OTITIS_MEDIA_CSMR: load_standard_data,
         data_keys.AFFECTED_UNMODELED_CAUSES.MENINGITIS_CSMR: load_standard_data,
@@ -282,6 +296,22 @@ def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
         data.loc[data.index.get_level_values('age_end').isin(neonatal_age_ends)] = 0.0
         data.loc[data.index.get_level_values('age_end').isin(neonatal_age_ends)
                  & (data.index.get_level_values('parameter') == data_keys.STUNTING.CAT4)] = 1.0
+    elif key == data_keys.DISCONTINUED_BREASTFEEDING:
+        # Remove month [1,6) exposure
+        post_neonatal_cat2_index = data.query(
+            f'age_end == {data_values.DISCONTINUED_BREASTFEEDING_START_AGE} & \
+            parameter == {data_keys.DISCONTINUED_BREASTFEEDING.CAT2}'
+        ).index
+        post_neonatal_cat1_index = data.query(
+            f'age_end == {data_values.DISCONTINUED_BREASTFEEDING_START_AGE} & \
+            parameter == {data_keys.DISCONTINUED_BREASTFEEDING.CAT1}'
+        ).index
+        post_neonatal_exposure = pd.concat([
+            pd.DataFrame(pd.Series(1.0, index=metadata.ARTIFACT_COLUMNS), index=post_neonatal_cat2_index),
+            pd.DataFrame(pd.Series(0.0, index=metadata.ARTIFACT_COLUMNS), index=post_neonatal_cat1_index)
+        ])
+        data.update(post_neonatal_exposure)
+
     return data
 
 
@@ -316,7 +346,11 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
                 index={'incidence_rate': 'excess_mortality_rate'}, level='affected_measure'
             ), data.drop(diarrhea_rr.index)
         ]).sort_index()
-
+    elif key == data_keys.DISCONTINUED_BREASTFEEDING:
+        # Remove month [1-6) relative risks
+        post_neonatal_index = data.query(f'age_end == {data_values.DISCONTINUED_BREASTFEEDING_START_AGE}').index
+        post_neonatal_rr = pd.DataFrame(pd.Series(1.0, index=metadata.ARTIFACT_COLUMNS), index=post_neonatal_index)
+        data.update(post_neonatal_rr)
     return data
 
 
