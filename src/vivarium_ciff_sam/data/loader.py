@@ -119,14 +119,13 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.LBWSG.PAF: load_lbwsg_paf,
 
         data_keys.NON_EXCLUSIVE_BREASTFEEDING.DISTRIBUTION: load_metadata,
-        # data_keys.NON_EXCLUSIVE_BREASTFEEDING.ALT_DISTRIBUTION: load_metadata,
         data_keys.NON_EXCLUSIVE_BREASTFEEDING.CATEGORIES: load_metadata,
         data_keys.NON_EXCLUSIVE_BREASTFEEDING.EXPOSURE: load_gbd_2020_exposure,
         data_keys.NON_EXCLUSIVE_BREASTFEEDING.RELATIVE_RISK: load_gbd_2020_rr,
         data_keys.NON_EXCLUSIVE_BREASTFEEDING.PAF: load_paf,
 
         data_keys.DISCONTINUED_BREASTFEEDING.DISTRIBUTION: load_metadata,
-        data_keys.DISCONTINUED_BREASTFEEDING.ALT_DISTRIBUTION: load_metadata,
+        # data_keys.DISCONTINUED_BREASTFEEDING.ALT_DISTRIBUTION: load_metadata,
         data_keys.DISCONTINUED_BREASTFEEDING.CATEGORIES: load_metadata,
         data_keys.DISCONTINUED_BREASTFEEDING.EXPOSURE: load_gbd_2020_exposure,
         data_keys.DISCONTINUED_BREASTFEEDING.RELATIVE_RISK: load_gbd_2020_rr,
@@ -361,6 +360,8 @@ def load_paf(key: str, location: str) -> pd.DataFrame:
             data_keys.STUNTING.PAF: data_keys.STUNTING,
             data_keys.SAM_TREATMENT.PAF: data_keys.SAM_TREATMENT,
             data_keys.MAM_TREATMENT.PAF: data_keys.MAM_TREATMENT,
+            data_keys.DISCONTINUED_BREASTFEEDING.PAF: data_keys.DISCONTINUED_BREASTFEEDING,
+            data_keys.NON_EXCLUSIVE_BREASTFEEDING.PAF: data_keys.NON_EXCLUSIVE_BREASTFEEDING,
         }[key]
     except KeyError:
         raise ValueError(f'Unrecognized key {key}')
