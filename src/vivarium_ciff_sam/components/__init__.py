@@ -1,7 +1,7 @@
 from vivarium_ciff_sam.components.intervention import (
-    BirthweightIntervention,
-    SQLNSIntervention,
-    WastingTreatmentIntervention
+    BirthweightInterventionScaleUp,
+    SQLNSInterventionScaleUp,
+    WastingTreatmentScaleUp
 )
 from vivarium_ciff_sam.components.mortality import Mortality
 from vivarium_ciff_sam.components.observers import (
@@ -21,6 +21,7 @@ from vivarium_ciff_sam.components.risk import (
     AdditiveRiskEffect,
     BEPSupplementation,
     MaternalSupplementation,
+    BirthWeightIntervention,
     MaternalSupplementationType,
     RiskWithTracked
 )

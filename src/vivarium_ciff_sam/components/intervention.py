@@ -11,7 +11,7 @@ from vivarium_public_health.treatment import LinearScaleUp
 from vivarium_ciff_sam.constants import data_keys, data_values, scenarios
 
 
-class SQLNSIntervention(LinearScaleUp):
+class SQLNSInterventionScaleUp(LinearScaleUp):
 
     def __init__(self):
         super().__init__('treatment.sqlns')
@@ -78,7 +78,7 @@ class SQLNSIntervention(LinearScaleUp):
         return target | effect
 
 
-class WastingTreatmentIntervention(LinearScaleUp):
+class WastingTreatmentScaleUp(LinearScaleUp):
 
     def __init__(self, treatment: str):
         super().__init__(treatment)
@@ -145,7 +145,7 @@ class WastingTreatmentIntervention(LinearScaleUp):
         return target
 
 
-class BirthweightIntervention(LinearScaleUp):
+class BirthweightInterventionScaleUp(LinearScaleUp):
 
     def __init__(self, supplementation: str):
         super().__init__(supplementation)

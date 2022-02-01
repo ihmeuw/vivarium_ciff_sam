@@ -96,25 +96,21 @@ class MaternalSupplementation(Risk):
         return exposure
 
 
-class MaternalSupplementationType(Risk):
+class BirthWeightIntervention(Risk):
 
     def __init__(self, risk: str):
         super().__init__(risk)
-        self.propensity_column_name = 'maternal_supplementation_propensity'
         self.exposure_column_name = f'{self.risk.name}_exposure'
 
     #################
     # Setup methods #
     #################
 
-    def _get_randomness_stream(self, builder) -> RandomnessStream:
-        return None
-
     def _get_exposure_pipeline(self, builder: Builder) -> Pipeline:
         return builder.value.register_value_producer(
             self.exposure_pipeline_name,
             source=self._get_current_exposure,
-            requires_columns=['age', 'sex', self.exposure_column_name],
+            requires_columns=[self.exposure_column_name],
             preferred_post_processor=get_exposure_post_processor(builder, self.risk)
         )
 
@@ -122,6 +118,55 @@ class MaternalSupplementationType(Risk):
         return builder.population.get_view(
             [self.propensity_column_name, 'tracked', self.exposure_column_name]
         )
+
+    def _register_simulant_initializer(self, builder: Builder) -> None:
+        builder.population.initializes_simulants(
+            self.on_initialize_simulants,
+            creates_columns=[self.exposure_column_name, self.propensity_column_name],
+        )
+
+    ########################
+    # Event-driven methods #
+    ########################
+
+    def on_initialize_simulants(self, pop_data: SimulantData) -> None:
+        propensity = pd.Series(
+            self.randomness.get_draw(pop_data.index), name=self.propensity_column_name
+        )
+
+        exposure = pd.Series(
+            self.exposure_distribution.ppf(propensity),
+            index=pop_data.index,
+            name=self.exposure_column_name
+        )
+        self.population_view.update(pd.concate[propensity, exposure], axis=1)
+
+    ##################################
+    # Pipeline sources and modifiers #
+    ##################################
+
+    def _get_current_exposure(self, index: pd.Index) -> pd.Series:
+        exposure = (
+            self.population_view
+            .subview([self.exposure_column_name])
+            .get(index)
+            .squeeze(axis=1)
+        )
+        return exposure
+
+
+class MaternalSupplementationType(BirthWeightIntervention):
+
+    def __init__(self, risk: str):
+        super().__init__(risk)
+        self.propensity_column_name = 'maternal_supplementation_propensity'
+
+    #################
+    # Setup methods #
+    #################
+
+    def _get_randomness_stream(self, builder) -> RandomnessStream:
+        return None
 
     def _register_simulant_initializer(self, builder: Builder) -> None:
         builder.population.initializes_simulants(
@@ -143,21 +188,8 @@ class MaternalSupplementationType(Risk):
         )
         self.population_view.update(exposure)
 
-    ##################################
-    # Pipeline sources and modifiers #
-    ##################################
 
-    def _get_current_exposure(self, index: pd.Index) -> pd.Series:
-        exposure = (
-            self.population_view
-            .subview([self.exposure_column_name])
-            .get(index)
-            .squeeze(axis=1)
-        )
-        return exposure
-
-
-class BEPSupplementation(MaternalSupplementationType):
+class BEPSupplementation(BirthWeightIntervention):
 
     def __init__(self):
         super().__init__(f'risk_factor.{data_keys.BEP_SUPPLEMENTATION.name}')
