@@ -125,7 +125,7 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.NON_EXCLUSIVE_BREASTFEEDING.PAF: load_paf,
 
         data_keys.DISCONTINUED_BREASTFEEDING.DISTRIBUTION: load_metadata,
-        data_keys.DISCONTINUED_BREASTFEEDING.ALT_DISTRIBUTION: load_metadata,
+        # data_keys.DISCONTINUED_BREASTFEEDING.ALT_DISTRIBUTION: load_metadata,
         data_keys.DISCONTINUED_BREASTFEEDING.CATEGORIES: load_metadata,
         data_keys.DISCONTINUED_BREASTFEEDING.EXPOSURE: load_gbd_2020_exposure,
         data_keys.DISCONTINUED_BREASTFEEDING.RELATIVE_RISK: load_gbd_2020_rr,

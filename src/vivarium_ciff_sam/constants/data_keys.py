@@ -305,7 +305,7 @@ NON_EXCLUSIVE_BREASTFEEDING = NonExclusiveBreastfeeding()
 class DiscontinuedBreastfeeding(NamedTuple):
     # Keys that will be loaded into the artifact. must have a colon type declaration
     DISTRIBUTION: TargetString = 'risk_factor.discontinued_breastfeeding.distribution'
-    ALT_DISTRIBUTION: TargetString = 'alternative_risk_factor.discontinued_breastfeeding.distribution'
+    # ALT_DISTRIBUTION: TargetString = 'alternative_risk_factor.discontinued_breastfeeding.distribution'
     CATEGORIES: TargetString = 'risk_factor.discontinued_breastfeeding.categories'
     EXPOSURE: TargetString = 'risk_factor.discontinued_breastfeeding.exposure'
     RELATIVE_RISK: TargetString = 'risk_factor.discontinued_breastfeeding.relative_risk'
