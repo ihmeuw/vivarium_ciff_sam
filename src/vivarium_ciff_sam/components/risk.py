@@ -139,7 +139,7 @@ class BirthWeightIntervention(Risk):
             index=pop_data.index,
             name=self.exposure_column_name
         )
-        self.population_view.update(pd.concate[propensity, exposure], axis=1)
+        self.population_view.update(pd.concat[propensity, exposure], axis=1)
 
     ##################################
     # Pipeline sources and modifiers #
