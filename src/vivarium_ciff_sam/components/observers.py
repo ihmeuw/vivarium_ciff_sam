@@ -122,8 +122,8 @@ class ResultsStratifier:
 
         if self.by_insecticide_treated_nets:
             setup_stratification(
-                source_name=f'{data_keys.INSECTICIDE_TX_NETS.name}.exposure',
-                is_pipeline=True,
+                source_name=f'{data_keys.INSECTICIDE_TX_NETS.name}_exposure',
+                is_pipeline=False,
                 stratification_name='itn',
                 categories={
                     'covered': data_keys.INSECTICIDE_TX_NETS.CAT2,
