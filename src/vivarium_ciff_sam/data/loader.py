@@ -298,11 +298,11 @@ def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
         # Remove month [1,6) exposure
         post_neonatal_cat2_index = data.query(
             f'age_end == {data_values.DISCONTINUED_BREASTFEEDING_START_AGE}'
-            f' & parameter == {data_keys.DISCONTINUED_BREASTFEEDING.CAT2}'
+            f' and parameter == {data_keys.DISCONTINUED_BREASTFEEDING.CAT2}'
         ).index
         post_neonatal_cat1_index = data.query(
             f'age_end == {data_values.DISCONTINUED_BREASTFEEDING_START_AGE}'
-            f' & parameter == {data_keys.DISCONTINUED_BREASTFEEDING.CAT1}'
+            f' and parameter == {data_keys.DISCONTINUED_BREASTFEEDING.CAT1}'
         ).index
         post_neonatal_exposure = pd.concat([
             pd.DataFrame(pd.Series(1.0, index=metadata.ARTIFACT_COLUMNS), index=post_neonatal_cat2_index),
@@ -348,7 +348,7 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
         # Remove RR outside of [6 months, 2 years)
         discontinued_tmrel_index = data.query(
             f'age_start < {data_values.DISCONTINUED_BREASTFEEDING_START_AGE}'
-            f' | age_end > {data_values.DISCONTINUED_BREASTFEEDING_END_AGE}'
+            f' or age_end > {data_values.DISCONTINUED_BREASTFEEDING_END_AGE}'
         ).index
         discontinued_tmrel_rr = pd.DataFrame(pd.Series(1.0, index=metadata.ARTIFACT_COLUMNS), index=discontinued_tmrel_index)
         data.update(discontinued_tmrel_rr)
