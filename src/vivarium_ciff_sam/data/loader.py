@@ -345,10 +345,22 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
             ), data.drop(diarrhea_rr.index)
         ]).sort_index()
     elif key == data_keys.DISCONTINUED_BREASTFEEDING:
-        # Remove month [1-6) relative risks
-        post_neonatal_index = data.query(f'age_end == {data_values.DISCONTINUED_BREASTFEEDING_START_AGE}').index
-        post_neonatal_rr = pd.DataFrame(pd.Series(1.0, index=metadata.ARTIFACT_COLUMNS), index=post_neonatal_index)
-        data.update(post_neonatal_rr)
+        # Remove RR outside of [6 months, 2 years)
+        discontinued_tmrel_index = data.query(
+            f'age_start < {data_values.DISCONTINUED_BREASTFEEDING_START_AGE}'
+            f' | age_end > {data_values.DISCONTINUED_BREASTFEEDING_END_AGE}'
+        ).index
+        discontinued_tmrel_rr = pd.DataFrame(pd.Series(1.0, index=metadata.ARTIFACT_COLUMNS), index=discontinued_tmrel_index)
+        data.update(discontinued_tmrel_rr)
+    elif key == data_keys.NON_EXCLUSIVE_BREASTFEEDING:
+        # Remove month [6, months, 1 year) exposure
+        non_exclusive_tmrel_index = data.query(
+            f'age_start >= {data_values.NON_EXCLUSIVE_BREASTFEEDING_END_AGE}'
+        ).index
+        non_exclusive_tmrel_rr = pd.DataFrame(
+            pd.Series(1.0, index=metadata.ARTIFACT_COLUMNS), index=non_exclusive_tmrel_index
+        )
+        data.update(non_exclusive_tmrel_rr)
     return data
 
 

@@ -200,6 +200,8 @@ INSECTICIDE_TX_NETS = __InsecticideTreatedNets()
 #######################################
 
 DISCONTINUED_BREASTFEEDING_START_AGE = 0.5
+DISCONTINUED_BREASTFEEDING_END_AGE = 2.0
+NON_EXCLUSIVE_BREASTFEEDING_END_AGE = 0.5
 
 
 ###################################
