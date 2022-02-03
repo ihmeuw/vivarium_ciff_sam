@@ -294,22 +294,6 @@ def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
         data.loc[data.index.get_level_values('age_end').isin(neonatal_age_ends)] = 0.0
         data.loc[data.index.get_level_values('age_end').isin(neonatal_age_ends)
                  & (data.index.get_level_values('parameter') == data_keys.STUNTING.CAT4)] = 1.0
-    # elif key == data_keys.DISCONTINUED_BREASTFEEDING:
-    #     # Remove month [1,6) exposure
-    #     post_neonatal_cat2_index = data.query(
-    #         f'age_end == {data_values.DISCONTINUED_BREASTFEEDING_START_AGE}'
-    #         f' and parameter == "{data_keys.DISCONTINUED_BREASTFEEDING.CAT2}"'
-    #     ).index
-    #     post_neonatal_cat1_index = data.query(
-    #         f'age_end == {data_values.DISCONTINUED_BREASTFEEDING_START_AGE}'
-    #         f' and parameter == "{data_keys.DISCONTINUED_BREASTFEEDING.CAT1}"'
-    #     ).index
-    #     post_neonatal_exposure = pd.concat([
-    #         pd.DataFrame(1.0, columns=metadata.ARTIFACT_COLUMNS, index=post_neonatal_cat2_index),
-    #         pd.DataFrame(0.0, columns=metadata.ARTIFACT_COLUMNS, index=post_neonatal_cat1_index)
-    #     ])
-    #     data.update(post_neonatal_exposure)
-
     return data
 
 
@@ -344,7 +328,7 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
                 index={'incidence_rate': 'excess_mortality_rate'}, level='affected_measure'
             ), data.drop(diarrhea_rr.index)
         ]).sort_index()
-    elif key == data_keys.DISCONTINUED_BREASTFEEDING:
+    elif key.name == data_keys.DISCONTINUED_BREASTFEEDING.name:
         # Remove RR outside of [6 months, 2 years)
         discontinued_tmrel_index = data.query(
             f'age_start < {data_values.DISCONTINUED_BREASTFEEDING_START_AGE}'
@@ -354,7 +338,7 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
             1.0, columns=metadata.ARTIFACT_COLUMNS, index=discontinued_tmrel_index
         )
         data.update(discontinued_tmrel_rr)
-    elif key == data_keys.NON_EXCLUSIVE_BREASTFEEDING:
+    elif key.name == data_keys.NON_EXCLUSIVE_BREASTFEEDING.name:
         # Remove month [6, months, 1 year) exposure
         non_exclusive_tmrel_index = data.query(
             f'age_start == {data_values.NON_EXCLUSIVE_BREASTFEEDING_END_AGE}'
