@@ -45,12 +45,12 @@ components:
             - AdditiveRiskEffect('risk_factor.iron_folic_acid_supplementation', 'risk_factor.low_birth_weight.birth_exposure')
             - AdditiveRiskEffect('risk_factor.multiple_micronutrient_supplementation', 'risk_factor.low_birth_weight.birth_exposure')
             - AdditiveRiskEffect('risk_factor.balanced_energy_protein_supplementation', 'risk_factor.low_birth_weight.birth_exposure')
-            - BirthweightIntervention('risk_factor.iron_folic_acid_supplementation')
-            - BirthweightIntervention('risk_factor.multiple_micronutrient_supplementation')
+            - BirthweightInterventionScaleUp('risk_factor.iron_folic_acid_supplementation')
+            - BirthweightInterventionScaleUp('risk_factor.multiple_micronutrient_supplementation')
 
-            - RiskWithTracked('risk_factor.insecticide_treated_nets')
+            - BirthWeightIntervention('risk_factor.insecticide_treated_nets')
             - AdditiveRiskEffect('risk_factor.insecticide_treated_nets', 'risk_factor.low_birth_weight.birth_exposure')
-            - BirthweightIntervention('risk_factor.insecticide_treated_nets')
+            - BirthweightInterventionScaleUp('risk_factor.insecticide_treated_nets')
 
             - XFactorExposure()
             - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
@@ -58,11 +58,11 @@ components:
 
             - WastingTreatment('risk_factor.severe_acute_malnutrition_treatment')
             - WastingTreatment('risk_factor.moderate_acute_malnutrition_treatment')
-            - WastingTreatmentIntervention('risk_factor.severe_acute_malnutrition_treatment')
-            - WastingTreatmentIntervention('risk_factor.moderate_acute_malnutrition_treatment')
+            - WastingTreatmentScaleUp('risk_factor.severe_acute_malnutrition_treatment')
+            - WastingTreatmentScaleUp('risk_factor.moderate_acute_malnutrition_treatment')
 
             - SQLNSTreatment()
-            - SQLNSIntervention()
+            - SQLNSInterventionScaleUp()
 
             - DisabilityObserver('wasting')
             - MortalityObserver('wasting')
