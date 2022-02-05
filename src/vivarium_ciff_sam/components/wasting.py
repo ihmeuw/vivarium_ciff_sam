@@ -334,10 +334,12 @@ def get_daily_mam_remission_probability(index: pd.Index, mam_tx_coverage: float,
     mam_tx_recovery_time[0.5 <= index.get_level_values('age_start')] = data_values.WASTING.MAM_TX_RECOVERY_TIME_OVER_6MO
     mam_tx_eff_coverage = mam_tx_coverage * mam_tx_efficacy
 
-    # r3: mam_tx_eff_coverage * 1/mam_tx_recovery_time + (1-mam_tx_eff_coverage)*(1/mam_ux_recovery_time)
+    # r3: mam_tx_eff_coverage * 1/mam_tx_recovery_time
+    #     + (1-mam_tx_eff_coverage)*(1/mam_ux_recovery_time)
     annual_remission_rate = (
-            mam_tx_eff_coverage * data_values.YEAR_DURATION / mam_tx_recovery_time
-            + (1 - mam_tx_eff_coverage) * data_values.YEAR_DURATION / data_values.WASTING.MAM_UX_RECOVERY_TIME
+            mam_tx_eff_coverage * metadata.YEAR_DURATION / mam_tx_recovery_time
+            + ((1 - mam_tx_eff_coverage) * metadata.YEAR_DURATION
+               / data_values.WASTING.MAM_UX_RECOVERY_TIME)
     )
     r3 = _convert_annual_rate_to_daily_probability(annual_remission_rate)
     _reset_underage_transitions(r3)
@@ -441,7 +443,9 @@ def get_daily_sam_treated_remission_probability(index: pd.Index, sam_tx_coverage
     sam_tx_recovery_time[0.5 <= index.get_level_values('age_start')] = data_values.WASTING.SAM_TX_RECOVERY_TIME_OVER_6MO
 
     # t1: tx_coverage * sam_tx_efficacy * (1/sam_tx_recovery_time)
-    annual_remission_rate = sam_tx_coverage * sam_tx_efficacy * data_values.YEAR_DURATION / sam_tx_recovery_time
+    annual_remission_rate = (
+            sam_tx_coverage * sam_tx_efficacy * metadata.YEAR_DURATION / sam_tx_recovery_time
+    )
     t1 = _convert_annual_rate_to_daily_probability(annual_remission_rate)
     _reset_underage_transitions(t1)
     return t1
@@ -572,7 +576,7 @@ def load_daily_mortality_probabilities(builder: Builder) -> pd.DataFrame:
         )
     ).reindex(index=rr_ci.index, level='affected_entity')
     duration_c.loc[duration_c.index.get_level_values('age_start') == 0.0] = data_values.EARLY_NEONATAL_CAUSE_DURATION
-    duration_c = duration_c / data_values.YEAR_DURATION   # convert to duration in years
+    duration_c = duration_c / metadata.YEAR_DURATION  # convert to duration in years
 
     # prevalence_pem_i
     # index = [ 'sex', 'age_start', 'age_end', 'year_start', 'year_end', 'affected_entity', 'parameter ]
@@ -612,11 +616,11 @@ def adjust_exposure(exposures: pd.DataFrame, adjustment: pd.Series) -> pd.DataFr
 
 
 def _convert_annual_rate_to_daily_probability(rate: Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]:
-    return 1 - np.exp(-rate / data_values.YEAR_DURATION)
+    return 1 - np.exp(-rate / metadata.YEAR_DURATION)
 
 
 def _convert_daily_probability_to_annual_rate(probability: Union[pd.Series, float]) -> Union[pd.Series, float]:
-    return -np.log(1 - probability) * data_values.YEAR_DURATION
+    return -np.log(1 - probability) * metadata.YEAR_DURATION
 
 
 def _reset_underage_transitions(transition_rates: pd.Series) -> None:
