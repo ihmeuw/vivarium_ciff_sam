@@ -87,8 +87,8 @@ configuration:
         random_seed: 0
     time:
         start:
-            year: 2022
-            month: 1
+            year: 2021
+            month: 7
             day: 1
         end:
             year: 2026
