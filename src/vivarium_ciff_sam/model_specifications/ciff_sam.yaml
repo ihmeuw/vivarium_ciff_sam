@@ -110,6 +110,8 @@ configuration:
     x_factor:
         exposure: 0.5
 
+    sam_k: 'baseline'
+
     effect_of_x_factor_on_mild_child_wasting_to_moderate_acute_malnutrition:
         conditional_exposure: 0.54
         transition_rate:

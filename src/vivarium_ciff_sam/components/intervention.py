@@ -45,7 +45,9 @@ class SQLNSInterventionScaleUp(LinearScaleUp):
     #################
 
     def _get_is_intervention_scenario(self, builder: Builder) -> bool:
-        return scenarios.SCENARIOS[builder.configuration.intervention.scenario].has_sqlns
+        return (
+            scenarios.INTERVENTION_SCENARIOS[builder.configuration.intervention.scenario].has_sqlns
+        )
 
     def _get_required_columns(self) -> List[str]:
         return ["age"]
@@ -115,7 +117,10 @@ class WastingTreatmentScaleUp(LinearScaleUp):
     #################
 
     def _get_is_intervention_scenario(self, builder: Builder) -> bool:
-        return scenarios.SCENARIOS[builder.configuration.intervention.scenario].has_alternative_wasting_treatment
+        return (
+            scenarios.INTERVENTION_SCENARIOS[builder.configuration.intervention.scenario]
+            .has_alternative_wasting_treatment
+        )
 
     ##################
     # Helper methods #
@@ -184,7 +189,9 @@ class BirthweightInterventionScaleUp(LinearScaleUp):
     #################
 
     def _get_is_intervention_scenario(self, builder: Builder) -> bool:
-        return scenarios.SCENARIOS[builder.configuration.intervention.scenario].has_lbwsg
+        return (
+            scenarios.INTERVENTION_SCENARIOS[builder.configuration.intervention.scenario].has_lbwsg
+        )
 
     ##################
     # Helper methods #
