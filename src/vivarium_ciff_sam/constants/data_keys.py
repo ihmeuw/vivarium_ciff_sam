@@ -277,6 +277,55 @@ class __LowBirthWeightShortGestation(NamedTuple):
 LBWSG = __LowBirthWeightShortGestation()
 
 
+class NonExclusiveBreastfeeding(NamedTuple):
+    # Keys that will be loaded into the artifact. must have a colon type declaration
+    DISTRIBUTION: TargetString = 'risk_factor.non_exclusive_breastfeeding.distribution'
+    CATEGORIES: TargetString = 'risk_factor.non_exclusive_breastfeeding.categories'
+    EXPOSURE: TargetString = 'risk_factor.non_exclusive_breastfeeding.exposure'
+    RELATIVE_RISK: TargetString = 'risk_factor.non_exclusive_breastfeeding.relative_risk'
+    PAF: TargetString = 'risk_factor.non_exclusive_breastfeeding.population_attributable_fraction'
+
+    # Useful keys not for the artifact - distinguished by not using the colon type declaration
+    CAT4 = 'cat4'
+    CAT3 = 'cat3'
+    CAT2 = 'cat2'
+    CAT1 = 'cat1'
+
+    @property
+    def name(self):
+        return 'non_exclusive_breastfeeding'
+
+    @property
+    def log_name(self):
+        return 'child non_exclusive_breastfeeding'
+
+
+NON_EXCLUSIVE_BREASTFEEDING = NonExclusiveBreastfeeding()
+
+class DiscontinuedBreastfeeding(NamedTuple):
+    # Keys that will be loaded into the artifact. must have a colon type declaration
+    DISTRIBUTION: TargetString = 'risk_factor.discontinued_breastfeeding.distribution'
+    CATEGORIES: TargetString = 'risk_factor.discontinued_breastfeeding.categories'
+    EXPOSURE: TargetString = 'risk_factor.discontinued_breastfeeding.exposure'
+    RELATIVE_RISK: TargetString = 'risk_factor.discontinued_breastfeeding.relative_risk'
+    PAF: TargetString = 'risk_factor.discontinued_breastfeeding.population_attributable_fraction'
+
+    # Useful keys not for the artifact - distinguished by not using the colon type declaration
+    CAT2 = 'cat2'
+    CAT1 = 'cat1'
+
+    @property
+    def name(self):
+        return 'discontinued_breastfeeding'
+
+    @property
+    def log_name(self):
+        return 'child discontinued_breastfeeding'
+
+
+DISCONTINUED_BREASTFEEDING = DiscontinuedBreastfeeding()
+
+
 class __AffectedUnmodeledCauses(NamedTuple):
     # Keys that will be loaded into the artifact. must have a colon type declaration
     URI_CSMR: TargetString = TargetString('cause.upper_respiratory_infections.cause_specific_mortality_rate')
@@ -363,4 +412,6 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     MMN_SUPPLEMENTATION,
     BEP_SUPPLEMENTATION,
     INSECTICIDE_TX_NETS,
+    # NON_EXCLUSIVE_BREASTFEEDING,
+    # DISCONTINUED_BREASTFEEDING,
 ]

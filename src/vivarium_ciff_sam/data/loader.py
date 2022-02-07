@@ -118,6 +118,18 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.LBWSG.RELATIVE_RISK_INTERPOLATOR: load_lbwsg_interpolated_rr,
         data_keys.LBWSG.PAF: load_lbwsg_paf,
 
+        data_keys.NON_EXCLUSIVE_BREASTFEEDING.DISTRIBUTION: load_metadata,
+        data_keys.NON_EXCLUSIVE_BREASTFEEDING.CATEGORIES: load_metadata,
+        data_keys.NON_EXCLUSIVE_BREASTFEEDING.EXPOSURE: load_gbd_2020_exposure,
+        data_keys.NON_EXCLUSIVE_BREASTFEEDING.RELATIVE_RISK: load_gbd_2020_rr,
+        data_keys.NON_EXCLUSIVE_BREASTFEEDING.PAF: load_paf,
+
+        data_keys.DISCONTINUED_BREASTFEEDING.DISTRIBUTION: load_metadata,
+        data_keys.DISCONTINUED_BREASTFEEDING.CATEGORIES: load_metadata,
+        data_keys.DISCONTINUED_BREASTFEEDING.EXPOSURE: load_gbd_2020_exposure,
+        data_keys.DISCONTINUED_BREASTFEEDING.RELATIVE_RISK: load_gbd_2020_rr,
+        data_keys.DISCONTINUED_BREASTFEEDING.PAF: load_paf,
+
         data_keys.AFFECTED_UNMODELED_CAUSES.URI_CSMR: load_standard_data,
         data_keys.AFFECTED_UNMODELED_CAUSES.OTITIS_MEDIA_CSMR: load_standard_data,
         data_keys.AFFECTED_UNMODELED_CAUSES.MENINGITIS_CSMR: load_standard_data,
@@ -268,15 +280,15 @@ def load_lri_excess_mortality_rate(key: str, location: str) -> pd.DataFrame:
 
 
 def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
-    key = EntityKey(key)
-    entity = utilities.get_gbd_2020_entity(key)
+    entity_key = EntityKey(key)
+    entity = utilities.get_gbd_2020_entity(entity_key)
 
-    data = utilities.get_data(key, entity, location, gbd_constants.SOURCES.EXPOSURE, 'rei_id',
+    data = utilities.get_data(entity_key, entity, location, gbd_constants.SOURCES.EXPOSURE, 'rei_id',
                               metadata.AGE_GROUP.GBD_2020, metadata.GBD_2020_ROUND_ID)
-    data = utilities.process_exposure(data, key, entity, location, metadata.GBD_2020_ROUND_ID,
+    data = utilities.process_exposure(data, entity_key, entity, location, metadata.GBD_2020_ROUND_ID,
                                       metadata.AGE_GROUP.GBD_2020)
 
-    if key == data_keys.STUNTING.EXPOSURE:
+    if entity_key == data_keys.STUNTING.EXPOSURE:
         # Remove neonatal exposure
         neonatal_age_ends = data.index.get_level_values('age_end').unique()[:2]
         data.loc[data.index.get_level_values('age_end').isin(neonatal_age_ends)] = 0.0
@@ -286,11 +298,11 @@ def load_gbd_2020_exposure(key: str, location: str) -> pd.DataFrame:
 
 
 def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
-    key = EntityKey(key)
-    entity = utilities.get_gbd_2020_entity(key)
+    entity_key = EntityKey(key)
+    entity = utilities.get_gbd_2020_entity(entity_key)
 
     data = utilities.get_data(
-        key,
+        entity_key,
         entity,
         location,
         gbd_constants.SOURCES.RR,
@@ -298,7 +310,7 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
         metadata.AGE_GROUP.GBD_2020,
         metadata.GBD_2020_ROUND_ID
     )
-    data = utilities.process_relative_risk(data, key, entity, location, metadata.GBD_2020_ROUND_ID,
+    data = utilities.process_relative_risk(data, entity_key, entity, location, metadata.GBD_2020_ROUND_ID,
                                            metadata.AGE_GROUP.GBD_2020)
 
     if key == data_keys.STUNTING.RELATIVE_RISK:
@@ -316,7 +328,25 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
                 index={'incidence_rate': 'excess_mortality_rate'}, level='affected_measure'
             ), data.drop(diarrhea_rr.index)
         ]).sort_index()
-
+    elif key == data_keys.DISCONTINUED_BREASTFEEDING.RELATIVE_RISK:
+        # Remove RR outside of [6 months, 2 years)
+        discontinued_tmrel_index = data.query(
+            f'age_start < {data_values.DISCONTINUED_BREASTFEEDING_START_AGE}'
+            f' or age_end > {data_values.DISCONTINUED_BREASTFEEDING_END_AGE}'
+        ).index
+        discontinued_tmrel_rr = pd.DataFrame(
+            1.0, columns=metadata.ARTIFACT_COLUMNS, index=discontinued_tmrel_index
+        )
+        data.update(discontinued_tmrel_rr)
+    elif key == data_keys.NON_EXCLUSIVE_BREASTFEEDING.RELATIVE_RISK:
+        # Remove month [6, months, 1 year) exposure
+        non_exclusive_tmrel_index = data.query(
+            f'age_start == {data_values.NON_EXCLUSIVE_BREASTFEEDING_END_AGE}'
+        ).index
+        non_exclusive_tmrel_rr = pd.DataFrame(
+            1.0, columns=metadata.ARTIFACT_COLUMNS, index=non_exclusive_tmrel_index
+        )
+        data.update(non_exclusive_tmrel_rr)
     return data
 
 
@@ -327,6 +357,8 @@ def load_paf(key: str, location: str) -> pd.DataFrame:
             data_keys.STUNTING.PAF: data_keys.STUNTING,
             data_keys.SAM_TREATMENT.PAF: data_keys.SAM_TREATMENT,
             data_keys.MAM_TREATMENT.PAF: data_keys.MAM_TREATMENT,
+            data_keys.DISCONTINUED_BREASTFEEDING.PAF: data_keys.DISCONTINUED_BREASTFEEDING,
+            data_keys.NON_EXCLUSIVE_BREASTFEEDING.PAF: data_keys.NON_EXCLUSIVE_BREASTFEEDING,
         }[key]
     except KeyError:
         raise ValueError(f'Unrecognized key {key}')
