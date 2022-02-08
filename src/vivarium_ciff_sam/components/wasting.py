@@ -8,7 +8,7 @@ from vivarium_public_health.risks.data_transformations import get_exposure_post_
 from vivarium_public_health.disease import DiseaseModel, DiseaseState, SusceptibleState
 from vivarium_public_health.utilities import EntityString
 
-from vivarium_ciff_sam.constants import data_keys, data_values, metadata, models
+from vivarium_ciff_sam.constants import data_keys, data_values, metadata, models, scenarios
 from vivarium_ciff_sam.constants.data_keys import WASTING
 from vivarium_ciff_sam.utilities import get_random_variable
 
@@ -359,9 +359,11 @@ def load_sam_exposure(cause: str, builder: Builder) -> pd.DataFrame:
 # noinspection PyUnusedLocal, DuplicatedCode
 def load_sam_incidence_rate(builder: Builder, *args) -> pd.DataFrame:
     draw = builder.configuration.input_data.input_draw_number
+    sam_k_distribution = scenarios.SAM_K_SCENARIOS[builder.configuration.sam_k].distribution
+
     sam_tx_coverage = load_wasting_treatment_coverage(builder, data_keys.WASTING.CAT1)
     sam_tx_efficacy = get_random_variable(draw, *data_values.WASTING.BASELINE_SAM_TX_EFFICACY)
-    sam_k = get_random_variable(draw, *data_values.WASTING.SAM_K)
+    sam_k = get_random_variable(draw, *sam_k_distribution)
 
     exposures = load_child_wasting_exposures(builder)
     adjustment = load_acmr_adjustment(builder)
@@ -399,9 +401,11 @@ def get_daily_sam_incidence_probability(exposures: pd.DataFrame, adjustment: pd.
 # noinspection PyUnusedLocal
 def load_sam_untreated_remission_rate(builder: Builder, *args) -> pd.Series:
     draw = builder.configuration.input_data.input_draw_number
+    sam_k_distribution = scenarios.SAM_K_SCENARIOS[builder.configuration.sam_k].distribution
+
     sam_tx_coverage = load_wasting_treatment_coverage(builder, data_keys.WASTING.CAT1)
     sam_tx_efficacy = get_random_variable(draw, *data_values.WASTING.BASELINE_SAM_TX_EFFICACY)
-    sam_k = get_random_variable(draw, *data_values.WASTING.SAM_K)
+    sam_k = get_random_variable(draw, *sam_k_distribution)
     mortality_probs = load_daily_mortality_probabilities(builder)
 
     daily_probability = get_daily_sam_untreated_remission_probability(mortality_probs, sam_tx_coverage, sam_tx_efficacy,

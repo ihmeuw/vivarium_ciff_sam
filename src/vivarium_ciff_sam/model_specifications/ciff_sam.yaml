@@ -87,8 +87,8 @@ configuration:
         random_seed: 0
     time:
         start:
-            year: 2022
-            month: 1
+            year: 2021
+            month: 7
             day: 1
         end:
             year: 2026
@@ -109,6 +109,8 @@ configuration:
 
     x_factor:
         exposure: 0.5
+
+    sam_k: 'baseline'
 
     effect_of_x_factor_on_mild_child_wasting_to_moderate_acute_malnutrition:
         conditional_exposure: 0.54

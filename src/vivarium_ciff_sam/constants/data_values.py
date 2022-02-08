@@ -61,7 +61,12 @@ class __Wasting(NamedTuple):
     MAM_TX_ALTERNATIVE_EFFICACY: float = 0.75
 
     # Incidence correction factor (total exit rate)
-    SAM_K: float = ('sam_incidence_correction', get_lognorm_from_quantiles(median=6.7, lower=5.3, upper=8.4))
+    SAM_K: Tuple = (
+        'sam_incidence_correction', get_lognorm_from_quantiles(median=6.7, lower=5.3, upper=8.4)
+    )
+    ALTERNATIVE_SAM_K: Tuple = (
+        'alt_sam_incidence_correction', get_lognorm_from_quantiles(median=3.5, lower=3.1, upper=3.9)
+    )
 
     # Untreated time to recovery in days
     MAM_UX_RECOVERY_TIME: float = 63.0

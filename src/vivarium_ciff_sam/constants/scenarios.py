@@ -1,11 +1,13 @@
 from typing import NamedTuple
 
+from vivarium_ciff_sam.constants.data_values import WASTING
+
 #############
 # Scenarios #
 #############
 
 
-class Scenario:
+class InterventionScenario:
 
     def __init__(
             self,
@@ -20,19 +22,40 @@ class Scenario:
         self.has_lbwsg = has_lbwsg
 
 
-class __Scenarios(NamedTuple):
-    BASELINE: Scenario = Scenario('baseline')
-    WASTING_TREATMENT: Scenario = Scenario('wasting_treatment', has_alternative_treatment=True)
-    SQLNS: Scenario = Scenario('sqlns', has_alternative_treatment=True, has_sqlns=True)
-    LBWSG_INTERVENTIONS: Scenario = Scenario(
+class __InterventionScenarios(NamedTuple):
+    BASELINE: InterventionScenario = InterventionScenario('baseline')
+    WASTING_TREATMENT: InterventionScenario = InterventionScenario('wasting_treatment', has_alternative_treatment=True)
+    SQLNS: InterventionScenario = InterventionScenario('sqlns', has_alternative_treatment=True, has_sqlns=True)
+    LBWSG_INTERVENTIONS: InterventionScenario = InterventionScenario(
         'lbwsg_interventions', has_alternative_treatment=True, has_sqlns=True, has_lbwsg=True
     )
 
-    def __getitem__(self, item) -> Scenario:
+    def __getitem__(self, item) -> InterventionScenario:
         for scenario in self:
             if scenario.name == item:
                 return scenario
         raise KeyError(item)
 
 
-SCENARIOS = __Scenarios()
+INTERVENTION_SCENARIOS = __InterventionScenarios()
+
+
+class SamKScenario:
+
+    def __init__(self, name: str, has_alternative_sam_k: bool = False):
+        self.name = name
+        self.distribution = WASTING.ALTERNATIVE_SAM_K if has_alternative_sam_k else WASTING.SAM_K
+
+
+class __SamKScenarios(NamedTuple):
+    BASELINE: SamKScenario = SamKScenario('baseline')
+    ALTERNATIVE: SamKScenario = SamKScenario('alternative', has_alternative_sam_k=True)
+
+    def __getitem__(self, item) -> InterventionScenario:
+        for scenario in self:
+            if scenario.name == item:
+                return scenario
+        raise KeyError(item)
+
+
+SAM_K_SCENARIOS = __SamKScenarios()
