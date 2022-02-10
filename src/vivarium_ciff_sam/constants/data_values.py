@@ -196,6 +196,7 @@ class __InsecticideTreatedNets(NamedTuple):
 
 INSECTICIDE_TX_NETS = __InsecticideTreatedNets()
 
+
 class __ZincSupplementation(NamedTuple):
     DISTRIBUTION: str = 'dichotomous'
     CATEGORIES: Dict[str, str] = {
@@ -209,15 +210,14 @@ class __ZincSupplementation(NamedTuple):
     )
 
     PREVENTATIVE_TX_EFFICACY: Tuple[str, stats.truncnorm] = (
-        'prevantative_zinc_treatment_efficacy',
+        'preventative_zinc_treatment_efficacy',
         get_lognorm_from_quantiles(median=0.89, lower=0.82, upper=0.97, quantiles=(0.05, 0.95))
     )
 
-    DIARRHEA_DURATION_SHIFT_HOURS = Tuple[str, stats.norm] = (
+    DIARRHEA_DURATION_SHIFT_HOURS: Tuple[str, stats.norm] = (
         'diarrhea_duration_shift',
         get_norm_from_quantiles(mean=-11.46, lower=-19.72, upper=-3.19, quantiles=(0.05, 0.95))
     )
-
 
 
 PREVENTATIVE_ZINC = __ZincSupplementation()
