@@ -18,7 +18,6 @@ from typing import Dict, Tuple, Type, Union
 import numpy as np
 import pandas as pd
 from scipy.interpolate import griddata, RectBivariateSpline
-from scipy import stats
 
 from gbd_mapping import sequelae, Cause
 from vivarium.framework.artifact import EntityKey
@@ -27,7 +26,6 @@ from vivarium_inputs import interface
 
 from vivarium_ciff_sam.components import LBWSGSubRisk, LowBirthWeight, ShortGestation
 from vivarium_ciff_sam.constants import data_keys, data_values, metadata, paths
-from vivarium_ciff_sam.constants.metadata import ARTIFACT_COLUMNS
 from vivarium_ciff_sam.data import utilities
 
 from vivarium_ciff_sam.utilities import get_random_variable_draws
@@ -258,7 +256,7 @@ def load_remission_rate_from_duration(key: str, location: str) -> pd.DataFrame:
     index = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
     duration = (
             get_random_variable_draws(metadata.ARTIFACT_COLUMNS, *distribution)
-            / data_values.YEAR_DURATION
+            / metadata.YEAR_DURATION
     )
     remission_rate = pd.DataFrame([1 / duration], index=index)
     return remission_rate
@@ -270,11 +268,11 @@ def load_lri_prevalence(key: str, location: str) -> pd.DataFrame:
         duration = get_random_variable_draws(metadata.ARTIFACT_COLUMNS, *data_values.LRI_DURATION)
         early_neonatal_prevalence = (
                 incidence_rate.query(f'age_start == 0.0')
-                * data_values.EARLY_NEONATAL_CAUSE_DURATION / data_values.YEAR_DURATION
+                * data_values.EARLY_NEONATAL_CAUSE_DURATION / metadata.YEAR_DURATION
         )
         all_other_prevalence = (
                 incidence_rate.query(f'age_start > 0.0')
-                * duration / data_values.YEAR_DURATION
+                * duration / metadata.YEAR_DURATION
         )
         prevalence = pd.concat([early_neonatal_prevalence, all_other_prevalence]).sort_index()
         return prevalence
@@ -410,10 +408,10 @@ def calculate_therapeutic_zinc_distribution(key: str) -> pd.Series:
 
     diarrhea_duration_shift_years = get_random_variable_draws(
         metadata.ARTIFACT_COLUMNS, *data_values.THERAPEUTIC_ZINC.DIARRHEA_DURATION_SHIFT_HOURS
-    ) / (data_values.DAY_DURATION * data_values.YEAR_DURATION)
+    ) / (metadata.DAY_DURATION * metadata.YEAR_DURATION)
 
     diarrhea_duration_years = get_random_variable_draws(metadata.ARTIFACT_COLUMNS, *data_values.DIARRHEA_DURATION) / (
-            data_values.YEAR_DURATION
+            metadata.YEAR_DURATION
     )
 
     baseline_coverage = get_random_variable_draws(

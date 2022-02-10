@@ -4,6 +4,7 @@ from typing import Dict, NamedTuple, Tuple
 import pandas as pd
 from scipy import stats
 
+from vivarium_ciff_sam.constants.metadata import YEAR_DURATION
 from vivarium_ciff_sam.utilities import (
     get_norm_from_quantiles,
     get_lognorm_from_quantiles,
@@ -11,12 +12,6 @@ from vivarium_ciff_sam.utilities import (
     get_truncnorm_from_sd
 )
 
-#######################
-# Universal Constants #
-#######################
-
-DAY_DURATION: float = 24
-YEAR_DURATION: float = 365.25
 
 ##########################
 # Cause Model Parameters #
