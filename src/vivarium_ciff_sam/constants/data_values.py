@@ -7,13 +7,15 @@ from scipy import stats
 from vivarium_ciff_sam.utilities import (
     get_norm_from_quantiles,
     get_lognorm_from_quantiles,
-    get_truncnorm_from_quantiles
+    get_truncnorm_from_quantiles,
+    get_truncnorm_from_sd
 )
 
 #######################
 # Universal Constants #
 #######################
 
+DAY_DURATION: float = 24
 YEAR_DURATION: float = 365.25
 
 ##########################
@@ -194,6 +196,32 @@ class __InsecticideTreatedNets(NamedTuple):
 
 INSECTICIDE_TX_NETS = __InsecticideTreatedNets()
 
+class __ZincSupplementation(NamedTuple):
+    DISTRIBUTION: str = 'dichotomous'
+    CATEGORIES: Dict[str, str] = {
+        'cat1': 'uncovered',
+        'cat2': 'covered',
+    }
+
+    BASELINE_PREVENTATIVE_COVERAGE: float = 0.0
+    BASELINE_THERAPEUTIC_COVERAGE: Tuple[str, stats.truncnorm] = (
+        'baseline_therapeutic_zinc_coverage', get_truncnorm_from_sd(mean=0.499, sd=0.143)
+    )
+
+    PREVENTATIVE_TX_EFFICACY: Tuple[str, stats.truncnorm] = (
+        'prevantative_zinc_treatment_efficacy',
+        get_lognorm_from_quantiles(median=0.89, lower=0.82, upper=0.97, quantiles=(0.05, 0.95))
+    )
+
+    DIARRHEA_DURATION_SHIFT_HOURS = Tuple[str, stats.norm] = (
+        'diarrhea_duration_shift',
+        get_norm_from_quantiles(mean=-11.46, lower=-19.72, upper=-3.19, quantiles=(0.05, 0.95))
+    )
+
+
+
+PREVENTATIVE_ZINC = __ZincSupplementation()
+THERAPEUTIC_ZINC = __ZincSupplementation()
 
 #######################################
 # Breastfeeding Risk Factor Constants #
