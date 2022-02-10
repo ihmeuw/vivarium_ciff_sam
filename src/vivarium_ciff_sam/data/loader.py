@@ -413,7 +413,7 @@ def calculate_therapeutic_zinc_distribution(key: str) -> pd.Series:
     ) / (data_values.DAY_DURATION * data_values.YEAR_DURATION)
 
     diarrhea_duration_years = get_random_variable_draws(metadata.ARTIFACT_COLUMNS, *data_values.DIARRHEA_DURATION) / (
-            data_values.DAY_DURATION * data_values.YEAR_DURATION
+            data_values.YEAR_DURATION
     )
 
     baseline_coverage = get_random_variable_draws(
