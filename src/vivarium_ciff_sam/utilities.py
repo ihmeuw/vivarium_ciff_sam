@@ -99,6 +99,12 @@ def get_truncnorm_from_quantiles(mean: float, lower: float, upper: float,
     return stats.truncnorm(loc=mean, scale=sd, a=a, b=b)
 
 
+def get_truncnorm_from_sd(mean, sd, lower_clip: float = 0.0, upper_clip: float = 1.0):
+    a = (lower_clip - mean) / sd
+    b = (upper_clip - mean) / sd
+    return stats.truncnorm(loc=mean, scale=sd, a=a, b=b)
+
+
 def get_lognorm_from_quantiles(median: float, lower: float, upper: float,
                                quantiles: Tuple[float, float] = (0.025, 0.975)) -> stats.lognorm:
     """Returns a frozen lognormal distribution with the specified median, such that

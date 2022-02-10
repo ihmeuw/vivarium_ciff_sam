@@ -7,7 +7,8 @@ from scipy import stats
 from vivarium_ciff_sam.utilities import (
     get_norm_from_quantiles,
     get_lognorm_from_quantiles,
-    get_truncnorm_from_quantiles
+    get_truncnorm_from_quantiles,
+    get_truncnorm_from_sd
 )
 
 #######################
