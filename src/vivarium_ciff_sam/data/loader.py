@@ -368,6 +368,7 @@ def load_treatment_rr(key: str, location: str) -> pd.DataFrame:
     try:
         distribution = {
             data_keys.PREVENTATIVE_ZINC.RELATIVE_RISK: data_values.PREVENTATIVE_ZINC.PREVENTATIVE_TX_EFFICACY,
+            data_keys.THERAPEUTIC_ZINC.RELATIVE_RISK: None,
         }[key]
         affected_entity = {
             data_keys.PREVENTATIVE_ZINC.RELATIVE_RISK: data_keys.PREVENTATIVE_ZINC.AFFECTED_ENTITY,
