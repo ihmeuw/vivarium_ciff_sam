@@ -299,10 +299,11 @@ class NonExclusiveBreastfeeding(NamedTuple):
 
     @property
     def log_name(self):
-        return 'child non_exclusive_breastfeeding'
+        return 'non-exclusive breastfeeding'
 
 
 NON_EXCLUSIVE_BREASTFEEDING = NonExclusiveBreastfeeding()
+
 
 class DiscontinuedBreastfeeding(NamedTuple):
     # Keys that will be loaded into the artifact. must have a colon type declaration
@@ -322,10 +323,64 @@ class DiscontinuedBreastfeeding(NamedTuple):
 
     @property
     def log_name(self):
-        return 'child discontinued_breastfeeding'
+        return 'discontinued breastfeeding'
 
 
 DISCONTINUED_BREASTFEEDING = DiscontinuedBreastfeeding()
+
+
+class PreventativeZinc(NamedTuple):
+    # Keys that will be loaded into the artifact. must have a colon type declaration
+    DISTRIBUTION: TargetString = 'risk_factor.preventative_zinc.distribution'
+    CATEGORIES: TargetString = 'risk_factor.preventative_zinc.categories'
+    EXPOSURE: TargetString = 'risk_factor.preventative_zinc.exposure'
+    RELATIVE_RISK: TargetString = 'risk_factor.preventative_zinc.relative_risk'
+    PAF: TargetString = 'risk_factor.preventative_zinc.population_attributable_fraction'
+
+    # Useful keys not for the artifact - distinguished by not using the colon type declaration
+    CAT2 = 'cat2'
+    CAT1 = 'cat1'
+
+    AFFECTED_ENTITY = 'diarrheal_diseases'
+    AFFECTED_MEASURE = 'incidence_rate'
+
+    @property
+    def name(self):
+        return 'preventative_zinc'
+
+    @property
+    def log_name(self):
+        return 'preventative zinc'
+
+
+PREVENTATIVE_ZINC = PreventativeZinc()
+
+
+class TherapeuticZinc(NamedTuple):
+    # Keys that will be loaded into the artifact. must have a colon type declaration
+    DISTRIBUTION: TargetString = 'risk_factor.therapeutic_zinc.distribution'
+    CATEGORIES: TargetString = 'risk_factor.therapeutic_zinc.categories'
+    EXPOSURE: TargetString = 'risk_factor.therapeutic_zinc.exposure'
+    RELATIVE_RISK: TargetString = 'risk_factor.therapeutic_zinc.relative_risk'
+    PAF: TargetString = 'risk_factor.therapeutic_zinc.population_attributable_fraction'
+
+    # Useful keys not for the artifact - distinguished by not using the colon type declaration
+    CAT2 = 'cat2'
+    CAT1 = 'cat1'
+
+    AFFECTED_ENTITY = 'diarrheal_diseases'
+    AFFECTED_MEASURE = 'remission_rate'
+
+    @property
+    def name(self):
+        return 'therapeutic_zinc'
+
+    @property
+    def log_name(self):
+        return 'therapeutic zinc'
+
+
+THERAPEUTIC_ZINC = TherapeuticZinc()
 
 
 class __AffectedUnmodeledCauses(NamedTuple):
@@ -413,6 +468,8 @@ MAKE_ARTIFACT_KEY_GROUPS = [
     IFA_SUPPLEMENTATION,
     MMN_SUPPLEMENTATION,
     BEP_SUPPLEMENTATION,
+    PREVENTATIVE_ZINC,
+    THERAPEUTIC_ZINC,
     INSECTICIDE_TX_NETS,
     # NON_EXCLUSIVE_BREASTFEEDING,
     # DISCONTINUED_BREASTFEEDING,

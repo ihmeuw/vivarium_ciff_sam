@@ -150,29 +150,41 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
         data_keys.MATERNAL_MALNUTRITION.EXCESS_SHIFT: load_risk_excess_shift,
         data_keys.MATERNAL_MALNUTRITION.RISK_SPECIFIC_SHIFT: load_risk_specific_shift,
 
-        data_keys.IFA_SUPPLEMENTATION.DISTRIBUTION: load_birthweight_intervention_distribution,
-        data_keys.IFA_SUPPLEMENTATION.CATEGORIES: load_birthweight_intervention_categories,
+        data_keys.IFA_SUPPLEMENTATION.DISTRIBUTION: load_intervention_distribution,
+        data_keys.IFA_SUPPLEMENTATION.CATEGORIES: load_intervention_categories,
         data_keys.IFA_SUPPLEMENTATION.EXPOSURE: load_dichotomous_treatment_exposure,
         data_keys.IFA_SUPPLEMENTATION.EXCESS_SHIFT: load_treatment_excess_shift,
         data_keys.IFA_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: load_risk_specific_shift,
 
-        data_keys.MMN_SUPPLEMENTATION.DISTRIBUTION: load_birthweight_intervention_distribution,
-        data_keys.MMN_SUPPLEMENTATION.CATEGORIES: load_birthweight_intervention_categories,
+        data_keys.MMN_SUPPLEMENTATION.DISTRIBUTION: load_intervention_distribution,
+        data_keys.MMN_SUPPLEMENTATION.CATEGORIES: load_intervention_categories,
         data_keys.MMN_SUPPLEMENTATION.EXPOSURE: load_dichotomous_treatment_exposure,
         data_keys.MMN_SUPPLEMENTATION.EXCESS_SHIFT: load_treatment_excess_shift,
         data_keys.MMN_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: load_risk_specific_shift,
 
-        data_keys.BEP_SUPPLEMENTATION.DISTRIBUTION: load_birthweight_intervention_distribution,
-        data_keys.BEP_SUPPLEMENTATION.CATEGORIES: load_birthweight_intervention_categories,
+        data_keys.BEP_SUPPLEMENTATION.DISTRIBUTION: load_intervention_distribution,
+        data_keys.BEP_SUPPLEMENTATION.CATEGORIES: load_intervention_categories,
         data_keys.BEP_SUPPLEMENTATION.EXPOSURE: load_dichotomous_treatment_exposure,
         data_keys.BEP_SUPPLEMENTATION.EXCESS_SHIFT: load_treatment_excess_shift,
         data_keys.BEP_SUPPLEMENTATION.RISK_SPECIFIC_SHIFT: load_risk_specific_shift,
 
-        data_keys.INSECTICIDE_TX_NETS.DISTRIBUTION: load_birthweight_intervention_distribution,
-        data_keys.INSECTICIDE_TX_NETS.CATEGORIES: load_birthweight_intervention_categories,
+        data_keys.INSECTICIDE_TX_NETS.DISTRIBUTION: load_intervention_distribution,
+        data_keys.INSECTICIDE_TX_NETS.CATEGORIES: load_intervention_categories,
         data_keys.INSECTICIDE_TX_NETS.EXPOSURE: load_insecticide_treated_nets_exposure,
         data_keys.INSECTICIDE_TX_NETS.EXCESS_SHIFT: load_treatment_excess_shift,
         data_keys.INSECTICIDE_TX_NETS.RISK_SPECIFIC_SHIFT: load_risk_specific_shift,
+
+        data_keys.PREVENTATIVE_ZINC.DISTRIBUTION: load_intervention_distribution,
+        data_keys.PREVENTATIVE_ZINC.CATEGORIES: load_intervention_categories,
+        data_keys.PREVENTATIVE_ZINC.EXPOSURE: load_dichotomous_treatment_exposure,
+        data_keys.PREVENTATIVE_ZINC.RELATIVE_RISK: load_treatment_rr,
+        data_keys.PREVENTATIVE_ZINC.PAF: load_paf,
+
+        data_keys.THERAPEUTIC_ZINC.DISTRIBUTION: load_intervention_distribution,
+        data_keys.THERAPEUTIC_ZINC.CATEGORIES: load_intervention_categories,
+        data_keys.THERAPEUTIC_ZINC.EXPOSURE: load_dichotomous_treatment_exposure,
+        data_keys.THERAPEUTIC_ZINC.RELATIVE_RISK: load_treatment_rr,
+        data_keys.THERAPEUTIC_ZINC.PAF: load_paf,
     }
     return mapping[lookup_key](lookup_key, location)
 
@@ -380,6 +392,73 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
     return data
 
 
+def load_treatment_rr(key: str, location: str) -> pd.DataFrame:
+    try:
+        distribution = {
+            data_keys.PREVENTATIVE_ZINC.RELATIVE_RISK: data_values.PREVENTATIVE_ZINC.PREVENTATIVE_TX_EFFICACY,
+            data_keys.THERAPEUTIC_ZINC.RELATIVE_RISK: None,
+        }[key]
+        affected_entity = {
+            data_keys.PREVENTATIVE_ZINC.RELATIVE_RISK: data_keys.PREVENTATIVE_ZINC.AFFECTED_ENTITY,
+            data_keys.THERAPEUTIC_ZINC.RELATIVE_RISK: data_keys.THERAPEUTIC_ZINC.AFFECTED_ENTITY,
+        }[key]
+        affected_measure = {
+            data_keys.PREVENTATIVE_ZINC.RELATIVE_RISK: data_keys.PREVENTATIVE_ZINC.AFFECTED_MEASURE,
+            data_keys.THERAPEUTIC_ZINC.RELATIVE_RISK: data_keys.THERAPEUTIC_ZINC.AFFECTED_MEASURE,
+        }[key]
+    except KeyError:
+        raise ValueError(f'Unrecognized key {key}')
+    index = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
+    if key == data_keys.THERAPEUTIC_ZINC.RELATIVE_RISK:
+        cat2_rr = calculate_therapeutic_zinc_distribution(key)
+    else:
+        cat2_rr = get_random_variable_draws(
+            metadata.ARTIFACT_COLUMNS, *distribution
+        )
+
+    exposed = pd.DataFrame([cat2_rr], index=index)
+    exposed['parameter'] = 'cat2'
+    unexposed = pd.DataFrame([pd.Series(1.0, index=metadata.ARTIFACT_COLUMNS)], index=index)
+    unexposed['parameter'] = 'cat1'
+
+    rr = pd.concat([exposed, unexposed])
+    rr['affected_entity'] = affected_entity
+    rr['affected_measure'] = affected_measure
+
+    rr = (
+        rr.set_index(['affected_entity', 'affected_measure', 'parameter'], append=True).sort_index()
+    )
+
+    return rr
+
+
+def calculate_therapeutic_zinc_distribution(key: str) -> pd.Series:
+    if key != data_keys.THERAPEUTIC_ZINC.RELATIVE_RISK:
+        raise ValueError(f'Unrecognized key {key}')
+
+    diarrhea_duration_shift_years = get_random_variable_draws(
+        metadata.ARTIFACT_COLUMNS, *data_values.THERAPEUTIC_ZINC.DIARRHEA_DURATION_SHIFT_HOURS
+    ) / (metadata.DAY_DURATION * metadata.YEAR_DURATION)
+
+    diarrhea_duration_years = get_random_variable_draws(metadata.ARTIFACT_COLUMNS, *data_values.DIARRHEA_DURATION) / (
+            metadata.YEAR_DURATION
+    )
+
+    baseline_coverage = get_random_variable_draws(
+        metadata.ARTIFACT_COLUMNS, *data_values.THERAPEUTIC_ZINC.BASELINE_THERAPEUTIC_COVERAGE
+    )
+    duration_uncovered = diarrhea_duration_years - (
+            diarrhea_duration_shift_years * baseline_coverage
+    )
+    duration_covered = duration_uncovered + diarrhea_duration_shift_years
+
+    remission_rate_uncovered = 1 / duration_uncovered
+    remission_rate_covered = 1 / duration_covered
+
+    rr = remission_rate_covered / remission_rate_uncovered
+    return rr
+
+
 def load_paf(key: str, location: str) -> pd.DataFrame:
     try:
         risk = {
@@ -389,6 +468,8 @@ def load_paf(key: str, location: str) -> pd.DataFrame:
             data_keys.MAM_TREATMENT.PAF: data_keys.MAM_TREATMENT,
             data_keys.DISCONTINUED_BREASTFEEDING.PAF: data_keys.DISCONTINUED_BREASTFEEDING,
             data_keys.NON_EXCLUSIVE_BREASTFEEDING.PAF: data_keys.NON_EXCLUSIVE_BREASTFEEDING,
+            data_keys.PREVENTATIVE_ZINC.PAF: data_keys.PREVENTATIVE_ZINC,
+            data_keys.THERAPEUTIC_ZINC.PAF: data_keys.THERAPEUTIC_ZINC,
         }[key]
     except KeyError:
         raise ValueError(f'Unrecognized key {key}')
@@ -711,6 +792,8 @@ def load_dichotomous_treatment_exposure(key: str, location: str, **kwargs) -> pd
             data_keys.IFA_SUPPLEMENTATION.EXPOSURE: data_values.MATERNAL_SUPPLEMENTATION.BASELINE_IFA_COVERAGE,
             data_keys.MMN_SUPPLEMENTATION.EXPOSURE: data_values.MATERNAL_SUPPLEMENTATION.BASELINE_MMN_COVERAGE,
             data_keys.BEP_SUPPLEMENTATION.EXPOSURE: data_values.MATERNAL_SUPPLEMENTATION.BASELINE_BEP_COVERAGE,
+            data_keys.PREVENTATIVE_ZINC.EXPOSURE: data_values.PREVENTATIVE_ZINC.BASELINE_PREVENTATIVE_COVERAGE,
+            data_keys.THERAPEUTIC_ZINC.EXPOSURE: data_values.THERAPEUTIC_ZINC.BASELINE_THERAPEUTIC_COVERAGE,
         }[key]
     except KeyError:
         raise ValueError(f'Unrecognized key {key}')
@@ -777,7 +860,6 @@ def load_treatment_excess_shift(key: str, location: str) -> pd.DataFrame:
 def load_dichotomous_excess_shift(
         location: str, distribution_data: Tuple, is_risk: bool
 ) -> pd.DataFrame:
-
     index = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
     shift = get_random_variable_draws(metadata.ARTIFACT_COLUMNS, *distribution_data)
 
@@ -827,27 +909,30 @@ def load_risk_specific_shift(key: str, location: str) -> pd.DataFrame:
 
 
 # noinspection PyUnusedLocal
-def load_birthweight_intervention_distribution(key: str, location: str) -> str:
+def load_intervention_distribution(key: str, location: str) -> str:
     try:
         return {
             data_keys.INSECTICIDE_TX_NETS.DISTRIBUTION: data_values.INSECTICIDE_TX_NETS.DISTRIBUTION,
             data_keys.IFA_SUPPLEMENTATION.DISTRIBUTION: data_values.MATERNAL_SUPPLEMENTATION.DISTRIBUTION,
             data_keys.MMN_SUPPLEMENTATION.DISTRIBUTION: data_values.MATERNAL_SUPPLEMENTATION.DISTRIBUTION,
             data_keys.BEP_SUPPLEMENTATION.DISTRIBUTION: data_values.MATERNAL_SUPPLEMENTATION.DISTRIBUTION,
+            data_keys.PREVENTATIVE_ZINC.DISTRIBUTION: data_values.PREVENTATIVE_ZINC.DISTRIBUTION,
+            data_keys.THERAPEUTIC_ZINC.DISTRIBUTION: data_values.THERAPEUTIC_ZINC.DISTRIBUTION,
         }[key]
     except KeyError:
         raise ValueError(f'Unrecognized key {key}')
 
 
 # noinspection PyUnusedLocal
-def load_birthweight_intervention_categories(key: str, location: str) -> str:
+def load_intervention_categories(key: str, location: str) -> str:
     try:
         return {
             data_keys.INSECTICIDE_TX_NETS.CATEGORIES: data_values.INSECTICIDE_TX_NETS.CATEGORIES,
             data_keys.IFA_SUPPLEMENTATION.CATEGORIES: data_values.MATERNAL_SUPPLEMENTATION.CATEGORIES,
             data_keys.MMN_SUPPLEMENTATION.CATEGORIES: data_values.MATERNAL_SUPPLEMENTATION.CATEGORIES,
             data_keys.BEP_SUPPLEMENTATION.CATEGORIES: data_values.MATERNAL_SUPPLEMENTATION.CATEGORIES,
+            data_keys.PREVENTATIVE_ZINC.CATEGORIES: data_values.PREVENTATIVE_ZINC.CATEGORIES,
+            data_keys.THERAPEUTIC_ZINC.CATEGORIES: data_values.THERAPEUTIC_ZINC.CATEGORIES,
         }[key]
     except KeyError:
         raise ValueError(f'Unrecognized key {key}')
-    
