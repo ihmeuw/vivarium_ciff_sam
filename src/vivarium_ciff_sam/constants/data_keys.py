@@ -39,6 +39,7 @@ POPULATION = __Population()
 class __DiarrhealDiseases(NamedTuple):
 
     # Keys that will be loaded into the artifact. must have a colon type declaration
+    DURATION: TargetString = TargetString('cause.diarrheal_diseases.duration')
     PREVALENCE: TargetString = TargetString('cause.diarrheal_diseases.prevalence')
     INCIDENCE_RATE: TargetString = TargetString('cause.diarrheal_diseases.incidence_rate')
     REMISSION_RATE: TargetString = TargetString('cause.diarrheal_diseases.remission_rate')
@@ -88,6 +89,7 @@ MEASLES = __Measles()
 class __LowerRespiratoryInfections(NamedTuple):
 
     # Keys that will be loaded into the artifact. must have a colon type declaration
+    DURATION: TargetString = TargetString('cause.lower_respiratory_infections.duration')
     PREVALENCE: TargetString = TargetString('cause.lower_respiratory_infections.prevalence')
     INCIDENCE_RATE: TargetString = TargetString('cause.lower_respiratory_infections.incidence_rate')
     REMISSION_RATE: TargetString = TargetString('cause.lower_respiratory_infections.remission_rate')

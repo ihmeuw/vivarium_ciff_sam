@@ -12,7 +12,6 @@ from vivarium_ciff_sam.utilities import (
     get_truncnorm_from_sd
 )
 
-
 ##########################
 # Cause Model Parameters #
 ##########################
@@ -52,18 +51,31 @@ class __Wasting(NamedTuple):
 
     # Wasting treatment coverage
     COVERAGE_START_AGE: float = 28 / YEAR_DURATION  # ~0.0767
-    BASELINE_SAM_TX_COVERAGE: Tuple = ('sam_tx_coverage', get_norm_from_quantiles(mean=0.488, lower=0.374, upper=0.604))
-    BASELINE_MAM_TX_COVERAGE: Tuple = ('sam_tx_coverage', get_norm_from_quantiles(mean=0.15, lower=0.1, upper=0.2))
+    BASELINE_SAM_TX_COVERAGE: Tuple = (
+        'sam_tx_coverage', get_norm_from_quantiles(mean=0.488, lower=0.374, upper=0.604)
+    )
+    BASELINE_MAM_TX_COVERAGE: Tuple = (
+        'sam_tx_coverage', get_norm_from_quantiles(mean=0.15, lower=0.1, upper=0.2)
+    )
     ALTERNATIVE_TX_COVERAGE: float = 0.7
 
     # Wasting treatment efficacy
-    BASELINE_SAM_TX_EFFICACY: Tuple = ('sam_tx_efficacy', get_norm_from_quantiles(mean=0.700, lower=0.64, upper=0.76))
-    BASELINE_MAM_TX_EFFICACY: Tuple = ('mam_tx_efficacy', get_norm_from_quantiles(mean=0.731, lower=0.585, upper=0.877))
+    BASELINE_SAM_TX_EFFICACY: Tuple = (
+        'sam_tx_efficacy', get_norm_from_quantiles(mean=0.700, lower=0.64, upper=0.76)
+    )
+    BASELINE_MAM_TX_EFFICACY: Tuple = (
+        'mam_tx_efficacy', get_norm_from_quantiles(mean=0.731, lower=0.585, upper=0.877)
+    )
     SAM_TX_ALTERNATIVE_EFFICACY: float = 0.75
     MAM_TX_ALTERNATIVE_EFFICACY: float = 0.75
 
     # Incidence correction factor (total exit rate)
-    SAM_K: float = ('sam_incidence_correction', get_lognorm_from_quantiles(median=6.7, lower=5.3, upper=8.4))
+    SAM_K: Tuple = (
+        'sam_incidence_correction', get_lognorm_from_quantiles(median=6.7, lower=5.3, upper=8.4)
+    )
+    ALTERNATIVE_SAM_K: Tuple = (
+        'alt_sam_incidence_correction', get_lognorm_from_quantiles(median=3.5, lower=3.1, upper=3.9)
+    )
 
     # Untreated time to recovery in days
     MAM_UX_RECOVERY_TIME: float = 63.0
@@ -122,12 +134,17 @@ class __SQLNS(NamedTuple):
     COVERAGE_START_AGE: float = 0.5
     COVERAGE_BASELINE: float = 0.0
     COVERAGE_RAMP_UP: float = 0.9
-    RISK_RATIO_WASTING: Tuple = ('sq_lns_wasting_effect',
-                                 get_lognorm_from_quantiles(median=0.82, lower=0.74, upper=0.91))
-    RISK_RATIO_STUNTING_SEVERE: Tuple = ('sq_lns_severe_stunting_effect',
-                                         get_lognorm_from_quantiles(median=0.85, lower=0.74, upper=0.98))
-    RISK_RATIO_STUNTING_MODERATE: Tuple = ('sq_lns_moderate_stunting_effect',
-                                           get_lognorm_from_quantiles(median=0.93, lower=0.88, upper=0.98))
+    RISK_RATIO_WASTING: Tuple = (
+        'sq_lns_wasting_effect', get_lognorm_from_quantiles(median=0.82, lower=0.74, upper=0.91)
+    )
+    RISK_RATIO_STUNTING_SEVERE: Tuple = (
+        'sq_lns_severe_stunting_effect',
+        get_lognorm_from_quantiles(median=0.85, lower=0.74, upper=0.98)
+    )
+    RISK_RATIO_STUNTING_MODERATE: Tuple = (
+        'sq_lns_moderate_stunting_effect',
+        get_lognorm_from_quantiles(median=0.93, lower=0.88, upper=0.98)
+    )
 
 
 SQ_LNS = __SQLNS()
