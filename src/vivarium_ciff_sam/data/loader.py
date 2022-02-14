@@ -205,8 +205,8 @@ def load_population_structure(key: str, location: str) -> pd.DataFrame:
 def load_age_bins(key: str, location: str) -> pd.DataFrame:
     all_age_bins = (
         utilities.get_gbd_age_bins(metadata.AGE_GROUP.GBD_2020)
-            .set_index(['age_start', 'age_end', 'age_group_name'])
-            .sort_index()
+        .set_index(['age_start', 'age_end', 'age_group_name'])
+        .sort_index()
     )
     return all_age_bins
 
@@ -480,9 +480,9 @@ def load_paf(key: str, location: str) -> pd.DataFrame:
     # paf = (sum_categories(exp * rr) - 1) / sum_categories(exp * rr)
     sum_exp_x_rr = (
         (exp * rr)
-            .groupby(list(set(rr.index.names) - {'parameter'})).sum()
-            .reset_index()
-            .set_index(rr.index.names[:-1])
+        .groupby(list(set(rr.index.names) - {'parameter'})).sum()
+        .reset_index()
+        .set_index(rr.index.names[:-1])
     )
     paf = (sum_exp_x_rr - 1) / sum_exp_x_rr
     return paf
@@ -510,8 +510,8 @@ def load_pem_disability_weight(key: str, location: str) -> pd.DataFrame:
 
     gbd_2019_disability_weight = (
         (sum(prevalence_disability_weight) / sum(state_prevalence))
-            .fillna(0)
-            .droplevel('location')
+        .fillna(0)
+        .droplevel('location')
     )
     disability_weight = utilities.reshape_gbd_2019_data_as_gbd_2020_data(gbd_2019_disability_weight)
     return disability_weight
@@ -603,7 +603,7 @@ def load_mam_treatment_rr(key: str, location: str) -> pd.DataFrame:
     mam_tx_duration[0.5 <= index.get_level_values('age_start')] = data_values.WASTING.MAM_TX_RECOVERY_TIME_OVER_6MO
     mam_tx_duration = (
         pd.DataFrame({f'draw_{i}': 1 for i in range(0, 1000)}, index=index)
-            .multiply(mam_tx_duration, axis='index')
+        .multiply(mam_tx_duration, axis='index')
     )
 
     # rr_r3 = r3 / r3_tmrel
@@ -650,7 +650,7 @@ def load_lbwsg_rr(key: str, location: str) -> pd.DataFrame:
                                            metadata.AGE_GROUP.GBD_2020, whitelist_sids=True)
     data = (
         data.query('year_start == 2019')
-            .droplevel(['affected_entity', 'affected_measure'])
+        .droplevel(['affected_entity', 'affected_measure'])
     )
     data = data[~data.index.duplicated()]
     return data
@@ -664,10 +664,10 @@ def load_lbwsg_interpolated_rr(key: str, location: str) -> pd.DataFrame:
     rr['parameter'] = pd.Categorical(rr['parameter'], [f'cat{i}' for i in range(1000)])
     rr = (
         rr.sort_values('parameter')
-            .set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['parameter'])
-            .stack()
-            .unstack('parameter')
-            .apply(np.log)
+        .set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['parameter'])
+        .stack()
+        .unstack('parameter')
+        .apply(np.log)
     )
 
     # get category midpoints
@@ -701,8 +701,8 @@ def load_lbwsg_interpolated_rr(key: str, location: str) -> pd.DataFrame:
 
     log_rr_interpolator = (
         rr.apply(make_interpolator, axis='columns')
-            .apply(lambda x: pickle.dumps(x).hex())
-            .unstack()
+        .apply(lambda x: pickle.dumps(x).hex())
+        .unstack()
     )
     return log_rr_interpolator
 
@@ -714,14 +714,14 @@ def load_lbwsg_paf(key: str, location: str) -> pd.DataFrame:
     paf_files = paths.TEMPORARY_PAF_DIR.glob('*.hdf')
     paf_data = (
         pd.concat([pd.read_hdf(paf_file) for paf_file in paf_files])
-            .sort_values(metadata.ARTIFACT_INDEX_COLUMNS + ['draw'])
+        .sort_values(metadata.ARTIFACT_INDEX_COLUMNS + ['draw'])
     )
 
     paf_data['draw'] = paf_data['draw'].apply(lambda draw: f'draw_{draw}')
 
     paf_data = (
         paf_data.set_index(metadata.ARTIFACT_INDEX_COLUMNS + ['draw'])
-            .unstack()
+        .unstack()
     )
 
     paf_data.columns = paf_data.columns.droplevel(0)
@@ -729,13 +729,13 @@ def load_lbwsg_paf(key: str, location: str) -> pd.DataFrame:
 
     full_index = (
         get_data(data_keys.LBWSG.RELATIVE_RISK, location).index
-            .droplevel('parameter')
-            .drop_duplicates()
+        .droplevel('parameter')
+        .drop_duplicates()
     )
 
     paf_data = (
         paf_data.reindex(full_index)
-            .fillna(0.0)
+        .fillna(0.0)
     )
     return paf_data
 
@@ -874,8 +874,8 @@ def load_dichotomous_excess_shift(
 
     excess_shift = (
         excess_shift
-            .set_index(['affected_entity', 'affected_measure', 'parameter'], append=True)
-            .sort_index()
+        .set_index(['affected_entity', 'affected_measure', 'parameter'], append=True)
+        .sort_index()
     )
     return excess_shift
 
@@ -902,8 +902,8 @@ def load_risk_specific_shift(key: str, location: str) -> pd.DataFrame:
 
     risk_specific_shift = (
         (exposure * excess_shift)
-            .groupby(metadata.ARTIFACT_INDEX_COLUMNS + ['affected_entity', 'affected_measure'])
-            .sum()
+        .groupby(metadata.ARTIFACT_INDEX_COLUMNS + ['affected_entity', 'affected_measure'])
+        .sum()
     )
     return risk_specific_shift
 
