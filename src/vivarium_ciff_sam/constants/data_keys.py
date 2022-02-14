@@ -304,6 +304,7 @@ class NonExclusiveBreastfeeding(NamedTuple):
 
 NON_EXCLUSIVE_BREASTFEEDING = NonExclusiveBreastfeeding()
 
+
 class DiscontinuedBreastfeeding(NamedTuple):
     # Keys that will be loaded into the artifact. must have a colon type declaration
     DISTRIBUTION: TargetString = 'risk_factor.discontinued_breastfeeding.distribution'
@@ -326,6 +327,7 @@ class DiscontinuedBreastfeeding(NamedTuple):
 
 
 DISCONTINUED_BREASTFEEDING = DiscontinuedBreastfeeding()
+
 
 class PreventativeZinc(NamedTuple):
     # Keys that will be loaded into the artifact. must have a colon type declaration
@@ -352,6 +354,7 @@ class PreventativeZinc(NamedTuple):
 
 
 PREVENTATIVE_ZINC = PreventativeZinc()
+
 
 class TherapeuticZinc(NamedTuple):
     # Keys that will be loaded into the artifact. must have a colon type declaration
