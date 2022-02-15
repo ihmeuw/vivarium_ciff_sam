@@ -217,3 +217,71 @@ class BirthweightInterventionScaleUp(LinearScaleUp):
 
         target = np.minimum(1 - cat2_scale_up, target)
         return target
+
+
+class TreatmentScaleUp(LinearScaleUp):
+
+    def __init__(self, treatment: str):
+        super().__init__(treatment)
+
+        self.treatment_keys = {
+            data_keys.THERAPEUTIC_ZINC.name: data_keys.THERAPEUTIC_ZINC,
+            data_keys.PREVENTATIVE_ZINC.name: data_keys.PREVENTATIVE_ZINC
+        }[self.treatment.name]
+
+    def _get_configuration_defaults(self) -> Dict[str, Dict]:
+        return {
+            f"{self.treatment.name}_scale_up": {
+                "start": {
+                    "date": {
+                        "year": data_values.SCALE_UP_START_DT.year,
+                        "month": data_values.SCALE_UP_START_DT.month,
+                        "day": data_values.SCALE_UP_START_DT.day,
+                    },
+                    "value": 'data',
+                },
+                "end": {
+                    "date": {
+                        "year": data_values.SCALE_UP_END_DT.year,
+                        "month": data_values.SCALE_UP_END_DT.month,
+                        "day": data_values.SCALE_UP_END_DT.day,
+                    },
+                    "value": 'data',
+                }
+            }
+        }
+
+    #################
+    # Setup methods #
+    #################
+
+    def _get_is_intervention_scenario(self, builder: Builder) -> bool:
+        return (
+            scenarios.INTERVENTION_SCENARIOS[builder.configuration.intervention.scenario].has_zinc
+        )
+
+    ##################
+    # Helper methods #
+    ##################
+
+    def _get_endpoint_value_from_data(self, builder: Builder, endpoint_type: str) -> LookupTable:
+        if endpoint_type != 'start':
+            raise ValueError(f'Invalid endpoint type {endpoint_type}. "start" is the only allowed type.')
+
+        baseline_coverage = builder.data.load(self.treatment_keys.EXPOSURE)
+        baseline_coverage = (
+            baseline_coverage[baseline_coverage['parameter'] == self.treatment_keys.CAT2]
+            .drop(columns='parameter')
+        )
+        return builder.lookup.build_table(baseline_coverage, key_columns=['sex'], parameter_columns=['age', 'year'])
+
+    def _apply_scale_up(self, idx: pd.Index, target: pd.Series, scale_up_progress: float) -> pd.Series:
+        # NOTE: this operation is NOT commutative. This pipeline must not be modified in any other component.
+        start_value = self.scale_up_start_value(idx)
+        end_value = self.scale_up_end_value(idx)
+
+        coverage_value = scale_up_progress * (end_value - start_value) + start_value
+
+        target.loc[idx] = coverage_value
+        return target
+
