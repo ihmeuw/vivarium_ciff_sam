@@ -1,7 +1,8 @@
 from vivarium_ciff_sam.components.intervention import (
     BirthweightInterventionScaleUp,
     SQLNSInterventionScaleUp,
-    WastingTreatmentScaleUp
+    WastingTreatmentScaleUp,
+    TreatmentScaleUp
 )
 from vivarium_ciff_sam.components.mortality import Mortality
 from vivarium_ciff_sam.components.observers import (
@@ -23,6 +24,7 @@ from vivarium_ciff_sam.components.risk import (
     MaternalSupplementation,
     BirthWeightIntervention,
     MaternalSupplementationType,
+    PreventativeZincSupplementation,
     RiskWithTracked
 )
 from vivarium_ciff_sam.components.treatment import SQLNSTreatment, WastingTreatment

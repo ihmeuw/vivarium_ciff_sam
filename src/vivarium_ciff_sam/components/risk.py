@@ -269,6 +269,22 @@ class BEPSupplementation(BirthWeightIntervention):
         self.population_view.update(exposure)
 
 
+class PreventativeZincSupplementation(Risk):
+
+    def __init__(self, risk: str):
+        super().__init__(risk)
+        self.propensity_column_name = f'therapeutic_zinc_propensity'
+
+    #################
+    # Setup methods #
+    #################
+
+    def _register_simulant_initializer(self, builder: Builder) -> None:
+        builder.population.initializes_simulants(
+            self.on_initialize_simulants
+        )
+
+
 class AdditiveRiskEffect(RiskEffect):
 
     def __init__(self, risk: str, target: str):

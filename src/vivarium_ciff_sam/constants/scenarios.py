@@ -14,12 +14,14 @@ class InterventionScenario:
             name: str,
             has_alternative_treatment: bool = False,
             has_sqlns: bool = False,
-            has_lbwsg: bool = False
+            has_lbwsg: bool = False,
+            has_zinc: bool = False
     ):
         self.name = name
         self.has_alternative_wasting_treatment = has_alternative_treatment
         self.has_sqlns = has_sqlns
         self.has_lbwsg = has_lbwsg
+        self.has_zinc = has_zinc
 
 
 class __InterventionScenarios(NamedTuple):
@@ -28,6 +30,9 @@ class __InterventionScenarios(NamedTuple):
     SQLNS: InterventionScenario = InterventionScenario('sqlns', has_alternative_treatment=True, has_sqlns=True)
     LBWSG_INTERVENTIONS: InterventionScenario = InterventionScenario(
         'lbwsg_interventions', has_alternative_treatment=True, has_sqlns=True, has_lbwsg=True
+    )
+    ZINC_SUPPLEMENTATION: InterventionScenario = InterventionScenario(
+        'zinc_supplementation', has_alternative_treatment=True, has_sqlns=True, has_lbwsg=True, has_zinc=True
     )
 
     def __getitem__(self, item) -> InterventionScenario:
