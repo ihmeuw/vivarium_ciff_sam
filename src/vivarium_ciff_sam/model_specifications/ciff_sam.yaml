@@ -26,12 +26,18 @@ components:
             - RiskEffect('risk_factor.therapeutic_zinc', 'cause.diarrheal_diseases.remission_rate')
             - RiskEffect('risk_factor.preventative_zinc', 'cause.diarrheal_diseases.incidence_rate')
 
+            - Risk('risk_factor.therapeutic_zinc')
+            - RiskEffect('risk_factor.therapeutic_zinc', 'cause.diarrheal_diseases.remission_rate')
+            - PreventativeZincSupplementation('risk_factor.preventative_zinc')
+            - RiskEffect('risk_factor.preventative_zinc', 'cause.diarrheal_diseases.incidence_rate')
+
     vivarium_ciff_sam:
         components:
             - Mortality()
 
             - ChildWasting()
 
+<<<<<<< HEAD
 #            - RiskWithTracked('risk_factor.low_birth_weight_and_short_gestation')
 #            - LowBirthWeight()
 #            - ShortGestation()
@@ -80,6 +86,55 @@ components:
 #            - DiseaseObserver('child_wasting', 'False', 'sq_lns', 'wasting_treatment', 'x_factor')
 #            - CategoricalRiskObserver('child_stunting', 'False', 'sq_lns')
 #            - BirthObserver()
+=======
+            - RiskWithTracked('risk_factor.low_birth_weight_and_short_gestation')
+            - LowBirthWeight()
+            - ShortGestation()
+            - LBWSGRiskEffect('cause.diarrheal_diseases.excess_mortality_rate')
+            - LBWSGRiskEffect('cause.lower_respiratory_infections.excess_mortality_rate')
+            - LBWSGRiskEffect('cause.affected_unmodeled.cause_specific_mortality_rate')
+
+            - RiskWithTracked('risk_factor.maternal_malnutrition')
+            - AdditiveRiskEffect('risk_factor.maternal_malnutrition', 'risk_factor.low_birth_weight.birth_exposure')
+
+            - MaternalSupplementation()
+            - MaternalSupplementationType('risk_factor.iron_folic_acid_supplementation')
+            - MaternalSupplementationType('risk_factor.multiple_micronutrient_supplementation')
+            - BEPSupplementation()
+            - AdditiveRiskEffect('risk_factor.iron_folic_acid_supplementation', 'risk_factor.low_birth_weight.birth_exposure')
+            - AdditiveRiskEffect('risk_factor.multiple_micronutrient_supplementation', 'risk_factor.low_birth_weight.birth_exposure')
+            - AdditiveRiskEffect('risk_factor.balanced_energy_protein_supplementation', 'risk_factor.low_birth_weight.birth_exposure')
+            - BirthweightInterventionScaleUp('risk_factor.iron_folic_acid_supplementation')
+            - BirthweightInterventionScaleUp('risk_factor.multiple_micronutrient_supplementation')
+
+            - BirthWeightIntervention('risk_factor.insecticide_treated_nets')
+            - AdditiveRiskEffect('risk_factor.insecticide_treated_nets', 'risk_factor.low_birth_weight.birth_exposure')
+            - BirthweightInterventionScaleUp('risk_factor.insecticide_treated_nets')
+
+            - XFactorExposure()
+            - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
+            - XFactorEffect('risk_factor.moderate_acute_malnutrition_to_severe_acute_malnutrition.transition_rate')
+
+            - WastingTreatment('risk_factor.severe_acute_malnutrition_treatment')
+            - WastingTreatment('risk_factor.moderate_acute_malnutrition_treatment')
+            - WastingTreatmentScaleUp('risk_factor.severe_acute_malnutrition_treatment')
+            - WastingTreatmentScaleUp('risk_factor.moderate_acute_malnutrition_treatment')
+
+            - SQLNSTreatment()
+            - SQLNSInterventionScaleUp()
+
+            - TreatmentScaleUp('risk_factor.therapeutic_zinc')
+            - TreatmentScaleUp('risk_factor.preventative_zinc')
+
+            - DisabilityObserver('wasting')
+            - MortalityObserver('wasting')
+            - DiseaseObserver('diarrheal_diseases', 'wasting')
+            - DiseaseObserver('measles', 'wasting')
+            - DiseaseObserver('lower_respiratory_infections', 'wasting')
+            - DiseaseObserver('child_wasting', 'False', 'sq_lns', 'wasting_treatment', 'x_factor')
+            - CategoricalRiskObserver('child_stunting', 'False', 'sq_lns')
+            - BirthObserver()
+
 
 configuration:
     input_data:
