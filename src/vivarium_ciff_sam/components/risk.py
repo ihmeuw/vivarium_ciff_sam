@@ -101,6 +101,7 @@ class BirthWeightIntervention(Risk):
     def __init__(self, risk: str):
         super().__init__(risk)
         self.exposure_column_name = f'{self.risk.name}_exposure'
+        self.exposure_parameters_pipeline_name = f'{self.risk}.exposure_parameters'
 
     #################
     # Setup methods #
@@ -123,6 +124,8 @@ class BirthWeightIntervention(Risk):
         builder.population.initializes_simulants(
             self.on_initialize_simulants,
             creates_columns=[self.exposure_column_name, self.propensity_column_name],
+            requires_streams=[self._randomness_stream_name],
+            requires_values=[self.exposure_parameters_pipeline_name]
         )
 
     ########################
