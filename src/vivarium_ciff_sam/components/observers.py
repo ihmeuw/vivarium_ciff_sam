@@ -77,6 +77,8 @@ class ResultsStratifier:
                 self.pipelines[source_name] = builder.value.get_value(source_name)
             else:
                 columns_required.append(data_keys.WASTING.name)
+                # if source_name == f'{data_keys.INSECTICIDE_TX_NETS.name}_exposure':
+                #     columns_required.append(data_keys.INSECTICIDE_TX_NETS.name)
 
         if self.by_wasting:
             setup_stratification(data_keys.WASTING.name, False, 'wasting_state', models.WASTING.STATES)
@@ -124,7 +126,7 @@ class ResultsStratifier:
             setup_stratification(
                 source_name=f'{data_keys.INSECTICIDE_TX_NETS.name}_exposure',
                 is_pipeline=False,
-                stratification_name='itn',
+                stratification_name='insecticide_treated_nets',
                 categories={
                     'covered': data_keys.INSECTICIDE_TX_NETS.CAT2,
                     'uncovered': data_keys.INSECTICIDE_TX_NETS.CAT1

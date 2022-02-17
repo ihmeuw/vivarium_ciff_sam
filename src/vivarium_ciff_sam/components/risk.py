@@ -280,8 +280,10 @@ class PreventativeZincSupplementation(Risk):
     #################
 
     def _register_simulant_initializer(self, builder: Builder) -> None:
+        # builder.population.initializes_simulants(
+        #     self.on_initialize_simulants
+        # )
         pass
-
 
 class AdditiveRiskEffect(RiskEffect):
 
