@@ -282,6 +282,6 @@ class TreatmentScaleUp(LinearScaleUp):
 
         coverage_value = scale_up_progress * (end_value - start_value) + start_value
 
-        target.loc[idx] = coverage_value
+        target.loc[idx] = 1 - coverage_value
         return target
 
