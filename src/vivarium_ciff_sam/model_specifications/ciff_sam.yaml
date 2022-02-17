@@ -85,8 +85,7 @@ configuration:
     input_data:
         input_draw_number: 0
         location: 'Ethiopia'
-#        artifact_path: '/ihme/costeffectiveness/artifacts/vivarium_ciff_sam/ethiopia.hdf'
-        artifact_path: '/home/beatrixh/scratch/sam/ethiopia.hdf'
+        artifact_path: '/ihme/costeffectiveness/artifacts/vivarium_ciff_sam/ethiopia.hdf'
     interpolation:
         order: 0
         extrapolate: True
@@ -96,16 +95,16 @@ configuration:
         random_seed: 0
     time:
         start:
-            year: 2023
+            year: 2021
             month: 7
             day: 1
         end:
             year: 2026
             month: 12
             day: 31
-        step_size: 100 # Days
+        step_size: 0.5 # Days
     population:
-        population_size: 10_000
+        population_size: 1_000
         age_start: 0
         age_end: 5
         exit_age: 5
