@@ -80,9 +80,9 @@ components:
             - DiseaseObserver('diarrheal_diseases', 'wasting')
             - DiseaseObserver('measles', 'wasting')
             - DiseaseObserver('lower_respiratory_infections', 'wasting')
-            - DiseaseObserver('child_wasting', 'False', 'sq_lns', 'wasting_treatment', 'x_factor')
-            - CategoricalRiskObserver('child_stunting', 'False', 'sq_lns')
-            - BirthObserver()
+            - DiseaseObserver('child_wasting', 'False', 'sq_lns', 'wasting_treatment', 'x_factor', 'diarrhea')
+            - CategoricalRiskObserver('child_stunting', 'sq_lns')
+            - BirthObserver('maternal_malnutrition', 'maternal_supplementation', 'insecticide_treated_nets')
 
 configuration:
     input_data:
