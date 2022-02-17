@@ -28,5 +28,5 @@ from vivarium_ciff_sam.components.risk import (
     RiskWithTracked
 )
 from vivarium_ciff_sam.components.treatment import SQLNSTreatment, WastingTreatment
-from vivarium_ciff_sam.components.wasting import ChildWasting
+from vivarium_ciff_sam.components.wasting import ChildWasting, DiarrheaRiskEffect
 from vivarium_ciff_sam.components.x_factor import XFactorExposure, XFactorEffect

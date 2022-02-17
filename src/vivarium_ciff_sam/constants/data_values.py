@@ -87,6 +87,12 @@ class __Wasting(NamedTuple):
     MAM_TX_RECOVERY_TIME_OVER_6MO: float = 41.3
     MAM_TX_RECOVERY_TIME_UNDER_6MO: float = 13.3
 
+    DIARRHEA_PREVALENCE_RATIO: pd.Series = pd.Series(
+        [1.095396, 1.085606, 1.051678],
+        index=pd.Index(['cat1', 'cat2', 'cat3'], name='wasting'),
+        name='value'
+    )
+
 
 WASTING = __Wasting()
 

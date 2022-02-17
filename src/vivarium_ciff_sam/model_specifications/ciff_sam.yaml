@@ -31,6 +31,9 @@ components:
             - Mortality()
 
             - ChildWasting()
+            - DiarrheaRiskEffect('risk_factor.moderate_acute_malnutrition_to_severe_acute_malnutrition.transition_rate')
+            - DiarrheaRiskEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
+            - DiarrheaRiskEffect('risk_factor.mild_child_wasting.incidence_rate')
 
             - RiskWithTracked('risk_factor.low_birth_weight_and_short_gestation')
             - LowBirthWeight()
