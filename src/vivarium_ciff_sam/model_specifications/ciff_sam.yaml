@@ -107,7 +107,7 @@ configuration:
             day: 31
         step_size: 0.5 # Days
     population:
-        population_size: 1_000
+        population_size: 5_000
         age_start: 0
         age_end: 5
         exit_age: 5
