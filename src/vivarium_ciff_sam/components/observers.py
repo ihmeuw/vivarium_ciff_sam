@@ -76,7 +76,7 @@ class ResultsStratifier:
             if is_pipeline:
                 self.pipelines[source_name] = builder.value.get_value(source_name)
             else:
-                columns_required.append(data_keys.WASTING.name)
+                columns_required.append(source_name)
 
         if self.by_wasting:
             setup_stratification(data_keys.WASTING.name, False, 'wasting_state', models.WASTING.STATES)
