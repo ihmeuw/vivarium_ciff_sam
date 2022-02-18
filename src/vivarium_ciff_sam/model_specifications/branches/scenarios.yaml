@@ -4,4 +4,4 @@ random_seed_count: 100
 branches:
   - intervention:
       scenario: ['baseline', 'wasting_treatment', 'sqlns', 'lbwsg_interventions','zinc_supplementation']
-    sam_k: ['baseline', 'alternative']
+    sam_k: ['alternative']
