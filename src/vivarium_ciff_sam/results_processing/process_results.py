@@ -42,7 +42,8 @@ def make_measure_data(data):
             has_wasting_stratification=False,
             has_wasting_treatment_stratification=True,
             has_sqlns_stratification=True,
-            has_x_factor_stratification=True
+            has_x_factor_stratification=True,
+            has_diarrhea_stratification=True,
         ),
         wasting_transition_count=get_transition_count_measure_data(
             data,
@@ -50,7 +51,8 @@ def make_measure_data(data):
             has_wasting_stratification=False,
             has_wasting_treatment_stratification=True,
             has_sqlns_stratification=True,
-            has_x_factor_stratification=True
+            has_x_factor_stratification=True,
+            has_diarrhea_stratification=True,
         ),
         stunting_state_person_time=get_state_person_time_measure_data(
             data,
@@ -100,9 +102,11 @@ def read_data(path: Path, single_run: bool) -> (pd.DataFrame, Dict[str, Union[st
         data[results.INPUT_DRAW_COLUMN] = 0
         data[results.RANDOM_SEED_COLUMN] = 0
         data[SCENARIO_COLUMN] = scenarios.INTERVENTION_SCENARIOS.BASELINE.name
-        keyspace = {results.INPUT_DRAW_COLUMN: [0],
-                    results.RANDOM_SEED_COLUMN: [0],
-                    results.OUTPUT_SCENARIO_COLUMN: [scenarios.INTERVENTION_SCENARIOS.BASELINE.name]}
+        keyspace = {
+            results.INPUT_DRAW_COLUMN: [0],
+            results.RANDOM_SEED_COLUMN: [0],
+            results.OUTPUT_SCENARIO_COLUMN: [scenarios.INTERVENTION_SCENARIOS.BASELINE.name]
+        }
     else:
         data[results.INPUT_DRAW_COLUMN] = data[results.INPUT_DRAW_COLUMN].astype(int)
         data[results.RANDOM_SEED_COLUMN] = data[results.RANDOM_SEED_COLUMN].astype(int)
@@ -166,7 +170,10 @@ def split_processing_column(
         has_maternal_malnutrition_stratification: bool = False,
         has_maternal_supplementation_stratification: bool = False,
         has_itn_stratification: bool = False,
+        has_diarrhea_stratification: bool = False,
 ) -> pd.DataFrame:
+    if has_diarrhea_stratification:
+        data['process'], data['diarrhea'] = data.process.str.split(f'_diarrhea_').str
     if has_itn_stratification:
         data['process'], data['insecticide_treated_nets'] = data.process.str.split(f'_itn_').str
     if has_maternal_supplementation_stratification:
@@ -220,7 +227,8 @@ def get_state_person_time_measure_data(
         data: pd.DataFrame, measure: str, **stratifications
 ) -> pd.DataFrame:
     data = get_measure_data(data, measure, **stratifications)
-    data['measure'], data['cause'] = 'state_person_time', data.measure.str.split('_person_time').str[0]
+    data['measure'] = 'state_person_time'
+    data['cause'] = data.measure.str.split('_person_time').str[0]
     return sort_data(data)
 
 
