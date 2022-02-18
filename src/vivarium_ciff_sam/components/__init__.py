@@ -2,7 +2,7 @@ from vivarium_ciff_sam.components.intervention import (
     BirthweightInterventionScaleUp,
     SQLNSInterventionScaleUp,
     WastingTreatmentScaleUp,
-    TreatmentScaleUp
+    ZincTreatmentScaleUp
 )
 from vivarium_ciff_sam.components.mortality import Mortality
 from vivarium_ciff_sam.components.observers import (

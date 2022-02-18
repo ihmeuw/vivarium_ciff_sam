@@ -219,7 +219,7 @@ class BirthweightInterventionScaleUp(LinearScaleUp):
         return target
 
 
-class TreatmentScaleUp(LinearScaleUp):
+class ZincTreatmentScaleUp(LinearScaleUp):
 
     def __init__(self, treatment: str):
         super().__init__(treatment)
