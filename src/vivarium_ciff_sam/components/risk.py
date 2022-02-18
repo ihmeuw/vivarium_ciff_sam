@@ -274,11 +274,13 @@ class PreventativeZincSupplementation(Risk):
     def __init__(self, risk: str):
         super().__init__(risk)
         self.propensity_column_name = f'therapeutic_zinc_propensity'
-        self._randomness_stream_name = None
 
     #################
     # Setup methods #
     #################
+
+    def _get_randomness_stream(self, builder) -> RandomnessStream:
+        return None
 
     def _register_simulant_initializer(self, builder: Builder) -> None:
         pass
