@@ -227,8 +227,8 @@ def get_state_person_time_measure_data(
         data: pd.DataFrame, measure: str, **stratifications
 ) -> pd.DataFrame:
     data = get_measure_data(data, measure, **stratifications)
-    data['measure'] = 'state_person_time'
     data['cause'] = data.measure.str.split('_person_time').str[0]
+    data['measure'] = 'state_person_time'
     return sort_data(data)
 
 
