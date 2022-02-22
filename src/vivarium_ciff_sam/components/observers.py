@@ -38,7 +38,9 @@ class ResultsStratifier:
             by_stunting: str = 'False',
             by_maternal_malnutrition: str = 'False',
             by_maternal_supplementation: str = 'False',
-            by_insecticide_treated_nets: str = 'False'
+            by_insecticide_treated_nets: str = 'False',
+            by_therapeutic_zinc_supplementation: str = 'False',
+            by_preventative_zinc_supplementation: str = 'False'
     ):
         self.name = f'{observer_name}_results_stratifier'
         self.by_wasting = by_wasting != 'False'
@@ -49,6 +51,8 @@ class ResultsStratifier:
         self.by_maternal_malnutrition = by_maternal_malnutrition != 'False'
         self.by_maternal_supplementation = by_maternal_supplementation != 'False'
         self.by_insecticide_treated_nets = by_insecticide_treated_nets != 'False'
+        self.by_therapeutic_zinc_supplementation = by_therapeutic_zinc_supplementation != 'False'
+        self.by_preventative_zinc_supplementation = by_preventative_zinc_supplementation != 'False'
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
@@ -128,6 +132,28 @@ class ResultsStratifier:
                 categories={
                     'covered': data_keys.INSECTICIDE_TX_NETS.CAT2,
                     'uncovered': data_keys.INSECTICIDE_TX_NETS.CAT1
+                }
+            )
+
+        if self.by_therapeutic_zinc_supplementation:
+            setup_stratification(
+                source_name='data_keys.therapeutic_zinc.exposure',
+                is_pipeline=True,
+                stratification_name='therapeutic_zinc',
+                categories={
+                    'covered': data_keys.THERAPEUTIC_ZINC.CAT2,
+                    'uncovered': data_keys.THERAPEUTIC_ZINC.CAT1
+                }
+            )
+
+        if self.by_preventative_zinc_supplementation:
+            setup_stratification(
+                source_name='risk_factor.preventative_zinc.exposure',
+                is_pipeline=True,
+                stratification_name='preventative_zinc',
+                categories={
+                    'covered': data_keys.PREVENTATIVE_ZINC.CAT2,
+                    'uncovered': data_keys.PREVENTATIVE_ZINC.CAT1
                 }
             )
 
@@ -333,6 +359,8 @@ class DiseaseObserver(DiseaseObserver_):
             self,
             disease: str,
             stratify_by_wasting: str = 'wasting',
+            stratify_by_therapeutic_zinc_supplementation: str = 'False',
+            stratify_by_preventative_zinc_supplementation: str = 'False',
             stratify_by_sq_lns: str = 'False',
             stratify_by_wasting_treatment: str = 'False',
             stratify_by_x_factor: str = 'False',
@@ -347,7 +375,9 @@ class DiseaseObserver(DiseaseObserver_):
             stratify_by_wasting_treatment,
             stratify_by_x_factor,
             stratify_by_stunting,
-            stratify_by_maternal_malnutrition
+            stratify_by_maternal_malnutrition,
+            stratify_by_therapeutic_zinc_supplementation,
+            stratify_by_preventative_zinc_supplementation
         )
 
     @property
