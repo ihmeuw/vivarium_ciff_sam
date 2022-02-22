@@ -69,8 +69,8 @@ components:
             - SQLNSInterventionScaleUp()
 
             - PreventativeZincSupplementation('risk_factor.preventative_zinc')
-            - TreatmentScaleUp('risk_factor.therapeutic_zinc')
-            - TreatmentScaleUp('risk_factor.preventative_zinc')
+            - ZincTreatmentScaleUp('risk_factor.therapeutic_zinc')
+            - ZincTreatmentScaleUp('risk_factor.preventative_zinc')
 
             - DisabilityObserver('wasting')
             - MortalityObserver('wasting')
