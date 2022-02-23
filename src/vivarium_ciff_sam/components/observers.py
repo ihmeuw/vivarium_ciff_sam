@@ -139,7 +139,7 @@ class ResultsStratifier:
 
         if self.by_therapeutic_zinc:
             setup_stratification(
-                source_name='data_keys.therapeutic_zinc.exposure',
+                source_name='therapeutic_zinc.exposure',
                 is_pipeline=True,
                 stratification_name='therapeutic_zinc',
                 categories={
@@ -150,13 +150,13 @@ class ResultsStratifier:
 
         if self.by_preventative_zinc:
             setup_stratification(
-                source_name='risk_factor.preventative_zinc.exposure',
+                source_name='preventative_zinc.exposure',
                 is_pipeline=True,
                 stratification_name='preventative_zinc',
                 categories={
                     'covered': data_keys.PREVENTATIVE_ZINC.CAT2,
                     'uncovered': data_keys.PREVENTATIVE_ZINC.CAT1
-                           }
+                }
             )
 
         if self.by_diarrhea:
