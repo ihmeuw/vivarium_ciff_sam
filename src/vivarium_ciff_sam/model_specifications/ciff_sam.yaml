@@ -31,6 +31,9 @@ components:
             - Mortality()
 
             - ChildWasting()
+            - DiarrheaRiskEffect('risk_factor.moderate_acute_malnutrition_to_severe_acute_malnutrition.transition_rate')
+            - DiarrheaRiskEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
+            - DiarrheaRiskEffect('risk_factor.mild_child_wasting.incidence_rate')
 
             - RiskWithTracked('risk_factor.low_birth_weight_and_short_gestation')
             - LowBirthWeight()
@@ -77,9 +80,9 @@ components:
             - DiseaseObserver('diarrheal_diseases', 'wasting', 'therapeutic_zinc', 'preventative_zinc')
             - DiseaseObserver('measles', 'wasting')
             - DiseaseObserver('lower_respiratory_infections', 'wasting')
-            - DiseaseObserver('child_wasting', 'False', 'False', 'False', 'sq_lns', 'wasting_treatment', 'x_factor')
-            - CategoricalRiskObserver('child_stunting', 'False', 'sq_lns')
-            - BirthObserver()
+            - DiseaseObserver('child_wasting', 'False', 'False', 'False', 'sq_lns', 'wasting_treatment', 'x_factor','diarrhea')
+            - CategoricalRiskObserver('child_stunting', 'sq_lns')
+            - BirthObserver('maternal_malnutrition', 'maternal_supplementation', 'insecticide_treated_nets')
 
 configuration:
     input_data:
@@ -104,7 +107,7 @@ configuration:
             day: 31
         step_size: 0.5 # Days
     population:
-        population_size: 1_000
+        population_size: 5_000
         age_start: 0
         age_end: 5
         exit_age: 5
@@ -118,7 +121,7 @@ configuration:
     x_factor:
         exposure: 0.5
 
-    sam_k: 'baseline'
+    sam_k: 'alternative'
 
     effect_of_x_factor_on_mild_child_wasting_to_moderate_acute_malnutrition:
         conditional_exposure: 0.54

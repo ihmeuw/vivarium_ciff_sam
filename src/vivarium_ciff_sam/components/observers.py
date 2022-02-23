@@ -39,8 +39,9 @@ class ResultsStratifier:
             by_maternal_malnutrition: str = 'False',
             by_maternal_supplementation: str = 'False',
             by_insecticide_treated_nets: str = 'False',
-            by_therapeutic_zinc_supplementation: str = 'False',
-            by_preventative_zinc_supplementation: str = 'False'
+            by_therapeutic_zinc: str = 'False',
+            by_preventative_zinc: str = 'False',
+            by_diarrhea: str = 'False'
     ):
         self.name = f'{observer_name}_results_stratifier'
         self.by_wasting = by_wasting != 'False'
@@ -51,8 +52,9 @@ class ResultsStratifier:
         self.by_maternal_malnutrition = by_maternal_malnutrition != 'False'
         self.by_maternal_supplementation = by_maternal_supplementation != 'False'
         self.by_insecticide_treated_nets = by_insecticide_treated_nets != 'False'
-        self.by_therapeutic_zinc_supplementation = by_therapeutic_zinc_supplementation != 'False'
-        self.by_preventative_zinc_supplementation = by_preventative_zinc_supplementation != 'False'
+        self.by_therapeutic_zinc = by_therapeutic_zinc != 'False'
+        self.by_preventative_zinc = by_preventative_zinc != 'False'
+        self.by_diarrhea = by_diarrhea != 'False'
 
     # noinspection PyAttributeOutsideInit
     def setup(self, builder: Builder):
@@ -80,7 +82,7 @@ class ResultsStratifier:
             if is_pipeline:
                 self.pipelines[source_name] = builder.value.get_value(source_name)
             else:
-                columns_required.append(data_keys.WASTING.name)
+                columns_required.append(source_name)
 
         if self.by_wasting:
             setup_stratification(data_keys.WASTING.name, False, 'wasting_state', models.WASTING.STATES)
@@ -135,7 +137,7 @@ class ResultsStratifier:
                 }
             )
 
-        if self.by_therapeutic_zinc_supplementation:
+        if self.by_therapeutic_zinc:
             setup_stratification(
                 source_name='data_keys.therapeutic_zinc.exposure',
                 is_pipeline=True,
@@ -146,7 +148,7 @@ class ResultsStratifier:
                 }
             )
 
-        if self.by_preventative_zinc_supplementation:
+        if self.by_preventative_zinc:
             setup_stratification(
                 source_name='risk_factor.preventative_zinc.exposure',
                 is_pipeline=True,
@@ -154,6 +156,17 @@ class ResultsStratifier:
                 categories={
                     'covered': data_keys.PREVENTATIVE_ZINC.CAT2,
                     'uncovered': data_keys.PREVENTATIVE_ZINC.CAT1
+                           }
+            )
+
+        if self.by_diarrhea:
+            setup_stratification(
+                source_name=data_keys.DIARRHEA.name,
+                is_pipeline=False,
+                stratification_name='diarrhea',
+                categories={
+                    'cat1': models.DIARRHEA.STATE_NAME,
+                    'cat2': models.DIARRHEA.SUSCEPTIBLE_STATE_NAME
                 }
             )
 
@@ -258,25 +271,9 @@ class ResultsStratifier:
 
 class MortalityObserver(MortalityObserver_):
 
-    def __init__(
-            self,
-            stratify_by_wasting: str = 'wasting',
-            stratify_by_sq_lns: str = 'False',
-            stratify_by_wasting_treatment: str = 'False',
-            stratify_by_x_factor: str = 'False',
-            stratify_by_stunting: str = 'False',
-            stratify_by_maternal_malnutrition: str = 'False'
-    ):
+    def __init__(self, stratify_by_wasting: str = 'wasting'):
         super().__init__()
-        self.stratifier = ResultsStratifier(
-            self.name,
-            stratify_by_wasting,
-            stratify_by_sq_lns,
-            stratify_by_wasting_treatment,
-            stratify_by_x_factor,
-            stratify_by_stunting,
-            stratify_by_maternal_malnutrition
-        )
+        self.stratifier = ResultsStratifier(self.name, by_wasting=stratify_by_wasting)
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:
@@ -312,25 +309,9 @@ class MortalityObserver(MortalityObserver_):
 
 class DisabilityObserver(DisabilityObserver_):
 
-    def __init__(
-            self,
-            stratify_by_wasting: str = 'wasting',
-            stratify_by_sq_lns: str = 'False',
-            stratify_by_wasting_treatment: str = 'False',
-            stratify_by_x_factor: str = 'False',
-            stratify_by_stunting: str = 'False',
-            stratify_by_maternal_malnutrition: str = 'False'
-    ):
+    def __init__(self, stratify_by_wasting: str = 'wasting'):
         super().__init__()
-        self.stratifier = ResultsStratifier(
-            self.name,
-            stratify_by_wasting,
-            stratify_by_sq_lns,
-            stratify_by_wasting_treatment,
-            stratify_by_x_factor,
-            stratify_by_stunting,
-            stratify_by_maternal_malnutrition
-        )
+        self.stratifier = ResultsStratifier(self.name, by_wasting=stratify_by_wasting)
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:
@@ -359,25 +340,23 @@ class DiseaseObserver(DiseaseObserver_):
             self,
             disease: str,
             stratify_by_wasting: str = 'wasting',
-            stratify_by_therapeutic_zinc_supplementation: str = 'False',
-            stratify_by_preventative_zinc_supplementation: str = 'False',
+            stratify_by_therapeutic_zinc: str = 'False',
+            stratify_by_preventative_zinc: str = 'False',
             stratify_by_sq_lns: str = 'False',
             stratify_by_wasting_treatment: str = 'False',
             stratify_by_x_factor: str = 'False',
-            stratify_by_stunting: str = 'False',
-            stratify_by_maternal_malnutrition: str = 'False'
+            stratify_by_diarrhea: str = 'False',
     ):
         super().__init__(disease)
         self.stratifier = ResultsStratifier(
             self.name,
-            stratify_by_wasting,
-            stratify_by_sq_lns,
-            stratify_by_wasting_treatment,
-            stratify_by_x_factor,
-            stratify_by_stunting,
-            stratify_by_maternal_malnutrition,
-            stratify_by_therapeutic_zinc_supplementation,
-            stratify_by_preventative_zinc_supplementation
+            by_wasting=stratify_by_wasting,
+            by_sqlns=stratify_by_sq_lns,
+            by_wasting_treatment=stratify_by_wasting_treatment,
+            by_x_factor=stratify_by_x_factor,
+            by_diarrhea=stratify_by_diarrhea,
+            by_therapeutic_zinc=stratify_by_therapeutic_zinc,
+            by_preventative_zinc=stratify_by_preventative_zinc
         )
 
     @property
@@ -431,26 +410,9 @@ class DiseaseObserver(DiseaseObserver_):
 
 class CategoricalRiskObserver(CategoricalRiskObserver_):
 
-    def __init__(
-            self,
-            risk: str,
-            stratify_by_wasting: str = 'False',
-            stratify_by_sq_lns: str = 'False',
-            stratify_by_wasting_treatment: str = 'False',
-            stratify_by_x_factor: str = 'False',
-            stratify_by_stunting: str = 'False',
-            stratify_by_maternal_malnutrition: str = 'False'
-    ):
+    def __init__(self, risk: str, stratify_by_sq_lns: str = 'False',):
         super().__init__(risk)
-        self.stratifier = ResultsStratifier(
-            self.name,
-            stratify_by_wasting,
-            stratify_by_sq_lns,
-            stratify_by_wasting_treatment,
-            stratify_by_x_factor,
-            stratify_by_stunting,
-            stratify_by_maternal_malnutrition
-        )
+        self.stratifier = ResultsStratifier(self.name, by_sqlns=stratify_by_sq_lns)
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:
@@ -484,26 +446,16 @@ class BirthObserver:
 
     def __init__(
             self,
-            stratify_by_wasting: str = 'False',
-            stratify_by_sq_lns: str = 'False',
-            stratify_by_wasting_treatment: str = 'False',
-            stratify_by_x_factor: str = 'False',
-            stratify_by_stunting: str = 'False',
-            stratify_by_maternal_malnutrition: str = 'True',
-            stratify_by_maternal_supplementation: str = 'True',
-            stratify_by_insecticide_treated_nets: str = 'True'
+            stratify_by_maternal_malnutrition: str = 'maternal_malnutrition',
+            stratify_by_maternal_supplementation: str = 'maternal_supplementation',
+            stratify_by_insecticide_treated_nets: str = 'insecticide_treated_nets'
     ):
         self.configuration_defaults = self._get_configuration_defaults()
         self.stratifier = ResultsStratifier(
             self.name,
-            stratify_by_wasting,
-            stratify_by_sq_lns,
-            stratify_by_wasting_treatment,
-            stratify_by_x_factor,
-            stratify_by_stunting,
-            stratify_by_maternal_malnutrition,
-            stratify_by_maternal_supplementation,
-            stratify_by_insecticide_treated_nets
+            by_maternal_malnutrition=stratify_by_maternal_malnutrition,
+            by_maternal_supplementation=stratify_by_maternal_supplementation,
+            by_insecticide_treated_nets=stratify_by_insecticide_treated_nets
         )
 
         self.tracked_column_name = 'tracked'
