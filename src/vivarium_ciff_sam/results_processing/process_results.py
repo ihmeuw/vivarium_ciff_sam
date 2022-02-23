@@ -68,6 +68,20 @@ def make_measure_data(data):
             has_maternal_malnutrition_stratification=True,
             has_maternal_supplementation_stratification=True,
             has_itn_stratification=True
+        ),
+        diarrhea_state_person_time=get_state_person_time_measure_data(
+            data,
+            'diarrhea_state_person_time',
+            has_wasting_stratification=False,
+            has_therapeutic_zinc_stratification=True,
+            has_preventative_zinc_stratification=True
+        ),
+        diarrhea_transition_count=get_transition_count_measure_data(
+            data,
+            'diarrhea_transition_count',
+            has_wasting_stratification=False,
+            has_therapeutic_zinc_stratification=True,
+            has_preventative_zinc_stratification=True
         )
     )
     return measure_data
@@ -84,6 +98,8 @@ class MeasureData(NamedTuple):
     wasting_transition_count: pd.DataFrame
     stunting_state_person_time: pd.DataFrame
     births: pd.DataFrame
+    diarrhea_state_person_time: pd.DataFrame
+    diarrhea_transition_count: pd.DataFrame
 
     def dump(self, output_dir: Path):
         for key, df in self._asdict().items():
@@ -171,7 +187,13 @@ def split_processing_column(
         has_maternal_supplementation_stratification: bool = False,
         has_itn_stratification: bool = False,
         has_diarrhea_stratification: bool = False,
+        has_therapeutic_zinc_stratification: bool = False,
+        has_preventative_zinc_stratification: bool = False,
 ) -> pd.DataFrame:
+    if has_preventative_zinc_stratification:
+        data['process'], data['preventative_zinc'] = data.process.str.split(f'_preventative_zinc_').str
+    if has_therapeutic_zinc_stratification:
+        data['process'], data['therapeutic_zinc'] = data.process.str.split(f'_therapeutic_zinc_').str
     if has_diarrhea_stratification:
         data['process'], data['diarrhea'] = data.process.str.split(f'_diarrhea_').str
     if has_itn_stratification:
