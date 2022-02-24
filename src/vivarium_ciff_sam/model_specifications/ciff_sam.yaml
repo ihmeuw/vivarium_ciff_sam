@@ -71,16 +71,16 @@ components:
             - SQLNSTreatment()
             - SQLNSInterventionScaleUp()
 
-#            - PreventativeZincSupplementation('risk_factor.preventative_zinc')
-#            - TreatmentScaleUp('risk_factor.therapeutic_zinc')
-#            - TreatmentScaleUp('risk_factor.preventative_zinc')
+            - PreventativeZincSupplementation('risk_factor.preventative_zinc')
+            - ZincTreatmentScaleUp('risk_factor.therapeutic_zinc')
+            - ZincTreatmentScaleUp('risk_factor.preventative_zinc')
 
             - DisabilityObserver('wasting')
             - MortalityObserver('wasting')
-            - DiseaseObserver('diarrheal_diseases', 'wasting')
+            - DiseaseObserver('diarrheal_diseases', 'wasting', 'therapeutic_zinc', 'preventative_zinc')
             - DiseaseObserver('measles', 'wasting')
             - DiseaseObserver('lower_respiratory_infections', 'wasting')
-            - DiseaseObserver('child_wasting', 'False', 'sq_lns', 'wasting_treatment', 'x_factor', 'diarrhea')
+            - DiseaseObserver('child_wasting', 'False', 'False', 'False', 'sq_lns', 'wasting_treatment', 'x_factor','diarrhea')
             - CategoricalRiskObserver('child_stunting', 'sq_lns')
             - BirthObserver('maternal_malnutrition', 'maternal_supplementation', 'insecticide_treated_nets')
 
