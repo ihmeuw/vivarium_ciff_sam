@@ -22,9 +22,9 @@ components:
 
             - RiskEffect('risk_factor.moderate_acute_malnutrition_treatment', 'risk_factor.moderate_acute_malnutrition_to_mild_child_wasting.transition_rate')
 
-            - Risk('risk_factor.therapeutic_zinc')
-            - RiskEffect('risk_factor.therapeutic_zinc', 'cause.diarrheal_diseases.remission_rate')
-            - RiskEffect('risk_factor.preventative_zinc', 'cause.diarrheal_diseases.incidence_rate')
+#            - Risk('risk_factor.therapeutic_zinc')
+#            - RiskEffect('risk_factor.therapeutic_zinc', 'cause.diarrheal_diseases.remission_rate')
+#            - RiskEffect('risk_factor.preventative_zinc', 'cause.diarrheal_diseases.incidence_rate')
 
     vivarium_ciff_sam:
         components:

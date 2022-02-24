@@ -329,7 +329,9 @@ class DiarrheaRiskEffect(RiskEffect):
         relative_risk = (
             (incidence_diarrhea * susceptible_exposure.xs(self.source_state, level='wasting'))
             / (incidence_susceptible * diarrhea_exposure.xs(self.source_state, level='wasting'))
-        ).rename(models.DIARRHEA.STATE_NAME).to_frame()
+        ).rename(models.DIARRHEA.STATE_NAME)
+        relative_risk[relative_risk < 0.0] = 0.0
+        relative_risk = relative_risk.to_frame()
         relative_risk[models.DIARRHEA.SUSCEPTIBLE_STATE_NAME] = 1.0
 
         return builder.lookup.build_table(
