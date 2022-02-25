@@ -94,10 +94,17 @@ class MeasureData(NamedTuple):
 def read_data(path: Path, single_run: bool) -> (pd.DataFrame, Dict[str, Union[str, int]]):
     data = pd.read_hdf(path)
     # noinspection PyUnresolvedReferences
-    data = (data
-            .reset_index(drop=True)
-            .rename(columns={results.OUTPUT_SCENARIO_COLUMN: SCENARIO_COLUMN})
-            )
+    data = (
+        data
+        .reset_index()
+        .rename(
+            columns={
+                results.OUTPUT_SCENARIO_COLUMN: SCENARIO_COLUMN,
+                results.OUTPUT_INPUT_DRAW_COLUMN: results.INPUT_DRAW_COLUMN,
+                results.OUTPUT_RANDOM_SEED_COLUMN: results.RANDOM_SEED_COLUMN,
+            }
+        )
+    )
     if single_run:
         data[results.INPUT_DRAW_COLUMN] = 0
         data[results.RANDOM_SEED_COLUMN] = 0
