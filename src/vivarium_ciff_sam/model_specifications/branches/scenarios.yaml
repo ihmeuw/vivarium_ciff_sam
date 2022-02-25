@@ -8,7 +8,7 @@ branches:
         'wasting_treatment',
         'sqlns',
         'lbwsg_interventions',
-#        'zinc_supplementation',
+        'zinc_supplementation',
       ]
     sam_k: [
       'alternative',
