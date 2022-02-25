@@ -13,6 +13,9 @@ TOTAL_YLLS_COLUMN = 'years_of_life_lost'
 # Columns from parallel runs
 INPUT_DRAW_COLUMN = 'input_draw'
 RANDOM_SEED_COLUMN = 'random_seed'
+
+OUTPUT_INPUT_DRAW_COLUMN = 'input_data.input_draw_number'
+OUTPUT_RANDOM_SEED_COLUMN = 'randomness.random_seed'
 OUTPUT_SCENARIO_COLUMN = 'intervention.scenario'
 X_FACTOR_EFFECT_COLUMN = 'effect_of_x_factor_on_mild_child_wasting.incidence_rate.relative_risk'
 
