@@ -72,14 +72,12 @@ def make_measure_data(data):
         diarrhea_state_person_time=get_state_person_time_measure_data(
             data,
             'diarrheal_diseases_state_person_time',
-            has_wasting_stratification=False,
             has_therapeutic_zinc_stratification=True,
             has_preventative_zinc_stratification=True
         ),
         diarrhea_transition_count=get_transition_count_measure_data(
             data,
             'diarrheal_diseases_transition_count',
-            has_wasting_stratification=False,
             has_therapeutic_zinc_stratification=True,
             has_preventative_zinc_stratification=True
         )
