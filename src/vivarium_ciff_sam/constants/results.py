@@ -29,8 +29,8 @@ TOTAL_POPULATION_COLUMN_TEMPLATE = 'total_population_{POP_STATE}'
 DEATH_COLUMN_TEMPLATE = 'death_due_to_{CAUSE_OF_DEATH}_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
 YLLS_COLUMN_TEMPLATE = 'ylls_due_to_{CAUSE_OF_DEATH}_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
 YLDS_COLUMN_TEMPLATE = 'ylds_due_to_{CAUSE_OF_DISABILITY}_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
-DISEASE_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{NON_DIARRHEAL_DISEASE_STATE}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
-DISEASE_TRANSITION_COUNT_COLUMN_TEMPLATE = '{NON_DIARRHEAL_DISEASE_TRANSITION}_event_count_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
+DISEASE_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{DISEASE_STATE_EXCL_DIARRHEA}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
+DISEASE_TRANSITION_COUNT_COLUMN_TEMPLATE = '{DISEASE_TRANSITION_EXCL_DIARRHEA}_event_count_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_wasting_state_{WASTING_STATE}'
 WASTING_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{WASTING_STATE}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_sam_treatment_{SAM_TREATMENT_STATE}_mam_treatment_{MAM_TREATMENT_STATE}_sq_lns_{SQLNS_STATE}_x_factor_{X_FACTOR_STATE}_diarrhea_{DIARRHEA_STATE}'
 WASTING_TRANSITION_COUNT_COLUMN_TEMPLATE = '{WASTING_TRANSITION}_event_count_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_sam_treatment_{SAM_TREATMENT_STATE}_mam_treatment_{MAM_TREATMENT_STATE}_sq_lns_{SQLNS_STATE}_x_factor_{X_FACTOR_STATE}_diarrhea_{DIARRHEA_STATE}'
 STUNTING_STATE_PERSON_TIME_COLUMN_TEMPLATE = '{STUNTING_STATE}_person_time_in_{YEAR}_among_{SEX}_in_age_group_{AGE_GROUP}_sq_lns_{SQLNS_STATE}'
@@ -94,8 +94,8 @@ TEMPLATE_FIELD_MAP = {
     'AGE_GROUP': AGE_GROUPS,
     'CAUSE_OF_DEATH': CAUSES_OF_DEATH,
     'CAUSE_OF_DISABILITY': CAUSES_OF_DISABILITY,
-    'NON_DIARRHEAL_DISEASE_STATE': [d for d in models.DISEASE_STATES if 'diarrheal_diseases' not in d],
-    'NON_DIARRHEAL_DISEASE_TRANSITION': [d for d in models.DISEASE_TRANSITIONS if 'diarrheal_diseases' not in d],
+    'DISEASE_STATE_EXCL_DIARRHEA': [d for d in models.DISEASE_STATES if 'diarrheal_diseases' not in d],
+    'DISEASE_TRANSITION_EXCL_DIARRHEA': [d for d in models.DISEASE_TRANSITIONS if 'diarrheal_diseases' not in d],
     'WASTING_STATE': models.WASTING.STATES,
     'WASTING_TRANSITION': models.WASTING.TRANSITIONS,
     'STUNTING_STATE': STUNTING_STATES,
