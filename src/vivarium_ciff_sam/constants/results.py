@@ -89,7 +89,7 @@ TEMPLATE_FIELD_MAP = {
     'AGE_GROUP': AGE_GROUPS,
     'CAUSE_OF_DEATH': CAUSES_OF_DEATH,
     'CAUSE_OF_DISABILITY': CAUSES_OF_DISABILITY,
-    'NON_DIARRHEA_DISEASE_STATE': [d for d in models.DISEASE_STATES if d!='diarrheal_diseases'],
+    'NON_DIARRHEA_DISEASE_STATE': [d for d in models.DISEASE_STATES if 'diarrheal_diseases' not in d],
     'NON_DIARRHEA_DISEASE_TRANSITION': [d for d in models.DISEASE_TRANSITIONS if 'diarrheal_diseases' not in d],
     'WASTING_STATE': models.WASTING.STATES,
     'WASTING_TRANSITION': models.WASTING.TRANSITIONS,
