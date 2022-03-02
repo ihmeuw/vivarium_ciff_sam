@@ -114,9 +114,9 @@ configuration:
 
     intervention:
         scenario: 'baseline'
-
-    child_wasting:
-        mild_child_wasting_untreated_recovery_time: 30
+#
+#    child_wasting:
+#        mild_child_wasting_untreated_recovery_time: 30
 
     x_factor:
         exposure: 0.5
