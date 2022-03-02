@@ -5,7 +5,8 @@ branches:
   - intervention:
       scenario: [
         'baseline',
-        'wasting_treatment',
+        'sam_treatment',
+        'mam_treatment',
         'sqlns',
         'lbwsg_interventions',
         'zinc_supplementation',

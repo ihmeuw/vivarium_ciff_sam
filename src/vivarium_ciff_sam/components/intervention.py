@@ -117,9 +117,12 @@ class WastingTreatmentScaleUp(LinearScaleUp):
     #################
 
     def _get_is_intervention_scenario(self, builder: Builder) -> bool:
+        scenario = scenarios.INTERVENTION_SCENARIOS[builder.configuration.intervention.scenario]
+        is_sam_scale_up = self.treatment.name == data_keys.SAM_TREATMENT.name
+
         return (
-            scenarios.INTERVENTION_SCENARIOS[builder.configuration.intervention.scenario]
-            .has_alternative_wasting_treatment
+            (is_sam_scale_up and scenario.has_alternative_sam_treatment)
+            or (not is_sam_scale_up and scenario.has_alternative_mam_treatment)
         )
 
     ##################
