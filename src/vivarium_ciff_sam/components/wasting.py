@@ -4,14 +4,14 @@ import numpy as np
 import pandas as pd
 from vivarium.framework.engine import Builder
 from vivarium.framework.lookup import LookupTable
-from vivarium_public_health.risks import Risk, RiskEffect as RiskEffect_
+from vivarium_public_health.risks import Risk
 from vivarium_public_health.risks.data_transformations import (
-    get_distribution_type,
     get_exposure_post_processor
 )
 from vivarium_public_health.disease import DiseaseModel, DiseaseState, SusceptibleState
 from vivarium_public_health.utilities import EntityString
 
+from vivarium_ciff_sam.components.risk import RiskEffect, apply_birth_weight_effect
 from vivarium_ciff_sam.constants import data_keys, data_values, metadata, models, scenarios
 from vivarium_ciff_sam.constants.data_keys import WASTING
 from vivarium_ciff_sam.utilities import get_random_variable
@@ -42,6 +42,7 @@ class RiskModel(DiseaseModel):
     def __init__(self, risk, **kwargs):
         super().__init__(risk, **kwargs)
         self.configuration_defaults = self._get_configuration_defaults()
+        self.birth_weight_effect_pipeline_name = 'birth_weight_shift_on_mild_wasting.effect_size'
 
     def _get_configuration_defaults(self) -> Dict[str, Dict]:
         return {
@@ -74,6 +75,8 @@ class RiskModel(DiseaseModel):
             parameter_columns=['age', 'year'],
         )
 
+        self.birth_weight_effect = builder.value.get_value(self.birth_weight_effect_pipeline_name)
+
         builder.value.register_value_modifier(
             'cause_specific_mortality_rate',
             self.adjust_cause_specific_mortality_rate,
@@ -88,6 +91,7 @@ class RiskModel(DiseaseModel):
             self.on_initialize_simulants,
             creates_columns=[self.state_column, f'initial_{self.state_column}_propensity'],
             requires_columns=['age', 'sex'],
+            requires_values=[self.birth_weight_effect_pipeline_name],
             requires_streams=[f'{self.state_column}_initial_states'],
         )
 
@@ -127,6 +131,35 @@ class RiskModel(DiseaseModel):
             self.population_view.subview([self.state_column]).get(index).squeeze(axis=1)
         )
         return wasting_state.apply(models.get_risk_category)
+
+    ##################
+    # Helper methods #
+    ##################
+
+    def get_state_weights(self, pop_index, prevalence_type):
+        states = [
+            s for s in self.states
+            if hasattr(s, f'{prevalence_type}') and getattr(s, f'{prevalence_type}') is not None
+        ]
+
+        if not states:
+            return states, None
+
+        state_names = [s.state_id for s in states] + [self.initial_state]
+
+        weights = (
+            pd.concat([getattr(s, f'{prevalence_type}')(pop_index) for s in states], axis=1)
+            .reset_index(drop=True)
+        )
+
+        cat3_increase = self.birth_weight_effect(pop_index).reset_index(drop=True)
+        weights = apply_birth_weight_effect(weights, cat3_increase)
+        weights[data_keys.WASTING.CAT4] = 1 - weights.sum(axis=1)
+
+        weights = np.array(weights)
+        weights_bins = np.cumsum(weights, axis=1)
+
+        return state_names, weights_bins
 
 
 # noinspection PyPep8Naming
@@ -227,58 +260,6 @@ def ChildWasting() -> RiskModel:
         get_data_functions={'cause_specific_mortality_rate': lambda *_: 0},
         states=[severe, moderate, mild, tmrel]
     )
-
-
-class RiskEffect(RiskEffect_):
-
-    # noinspection PyAttributeOutsideInit
-    def setup(self, builder: Builder) -> None:
-        self.exposure_distribution_type = self._get_distribution_type(builder)
-        self.exposure = self._get_risk_exposure(builder)
-        self.relative_risk = self._get_relative_risk_source(builder)
-        self.population_attributable_fraction = self._get_population_attributable_fraction_source(
-            builder
-        )
-        self.target_modifier = self._get_target_modifier(builder)
-
-        self._register_target_modifier(builder)
-        self._register_paf_modifier(builder)
-
-    def _get_distribution_type(self, builder: Builder) -> str:
-        return get_distribution_type(builder, self.risk)
-
-    def _get_risk_exposure(self, builder: Builder) -> Callable[[pd.Index], pd.Series]:
-        return builder.value.get_value(f'{self.risk.name}.exposure')
-
-    def _get_target_modifier(self, builder: Builder) -> Callable[[pd.Index, pd.Series], pd.Series]:
-        if self.exposure_distribution_type in ['normal', 'lognormal', 'ensemble']:
-            tmred = builder.data.load(f"{self.risk}.tmred")
-            tmrel = 0.5 * (tmred["min"] + tmred["max"])
-            scale = builder.data.load(f"{self.risk}.relative_risk_scalar")
-
-            def adjust_target(index: pd.Index, target: pd.Series) -> pd.Series:
-                rr = self.relative_risk(index)
-                exposure = self.exposure(index)
-                relative_risk = np.maximum(rr.values ** ((exposure - tmrel) / scale), 1)
-                return target * relative_risk
-        else:
-            index_columns = ['index', self.risk.name]
-
-            def adjust_target(index: pd.Index, target: pd.Series) -> pd.Series:
-                rr = self.relative_risk(index)
-                exposure = self.exposure(index).reset_index()
-                exposure.columns = index_columns
-                exposure = exposure.set_index(index_columns)
-
-                relative_risk = rr.stack().reset_index()
-                relative_risk.columns = index_columns + ['value']
-                relative_risk = relative_risk.set_index(index_columns)
-
-                effect = relative_risk.loc[exposure.index, 'value'].droplevel(self.risk.name)
-                affected_rates = target * effect
-                return affected_rates
-
-        return adjust_target
 
 
 class DiarrheaRiskEffect(RiskEffect):

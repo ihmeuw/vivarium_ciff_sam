@@ -105,6 +105,11 @@ class __LBWSG(NamedTuple):
     TMREL_GESTATIONAL_AGE_INTERVAL: pd.Interval = pd.Interval(38.0, 42.0)
     TMREL_BIRTH_WEIGHT_INTERVAL: pd.Interval = pd.Interval(3500.0, 4500.0)
 
+    STUNTING_EFFECT_PER_GRAM: Tuple[str, stats.norm] = (
+        'stunting_effect_per_gram', stats.norm(loc=1e-04, scale=3e-05)
+    )
+    WASTING_EFFECT_PER_GRAM: float = 5.75e-05
+
 
 LBWSG = __LBWSG()
 

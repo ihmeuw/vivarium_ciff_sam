@@ -23,6 +23,7 @@ from vivarium_ciff_sam.components.risk import (
     BEPSupplementation,
     MaternalSupplementation,
     BirthWeightIntervention,
+    BirthWeightShiftEffect,
     MaternalSupplementationType,
     PreventativeZincSupplementation,
     RiskWithTracked

@@ -59,6 +59,8 @@ components:
             - AdditiveRiskEffect('risk_factor.insecticide_treated_nets', 'risk_factor.low_birth_weight.birth_exposure')
             - BirthweightInterventionScaleUp('risk_factor.insecticide_treated_nets')
 
+            - BirthWeightShiftEffect()
+
             - XFactorExposure()
             - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
             - XFactorEffect('risk_factor.moderate_acute_malnutrition_to_severe_acute_malnutrition.transition_rate')
