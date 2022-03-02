@@ -450,14 +450,14 @@ def get_mild_wasting_remission_probability(
         builder: Builder, index: pd.Index, mild_child_wasting_ux_recovery_time: float
 ) -> pd.Series:
     draw = builder.configuration.input_data.input_draw_number
-    r4_under_12mo = get_random_variable(draw, *data_values.WASTING.R4_UNDER_4YR)
-    r4_under_4yr = get_random_variable(draw, *data_values.WASTING.R4_UNDER_12MO)
+    r4_over_12mo = get_random_variable(draw, *data_values.WASTING.R4_OVER_12MO)
+    r4_under_12mo = get_random_variable(draw, *data_values.WASTING.R4_UNDER_12MO)
 
     r4 = pd.Series(index=index, name='mild_wasting_remission')
-    r4[index.get_level_values('age_end') <= 4.0] = r4_under_4yr
+    r4[index.get_level_values('age_end') <= 5.0] = r4_over_12mo
     r4[index.get_level_values('age_end') <= 1.0] = r4_under_12mo
 
-    _reset_underage_transitions(r4) #TODO: what does this do?
+    _reset_underage_transitions(r4)
     return 1 - np.exp(-r4)
 
 

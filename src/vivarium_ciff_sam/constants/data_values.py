@@ -103,8 +103,8 @@ class __Wasting(NamedTuple):
         )
     )
 
-    R4_UNDER_4YR: Tuple = (
-        'r4_under_4yr', get_truncnorm_from_sd(
+    R4_OVER_12MO: Tuple = (
+        'r4_over_12mo', get_truncnorm_from_sd(
             mean=0.005043, sd=0.002428
         )
     )
