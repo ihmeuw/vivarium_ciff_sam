@@ -346,6 +346,8 @@ class DiseaseObserver(DiseaseObserver_):
             stratify_by_wasting_treatment: str = 'False',
             stratify_by_x_factor: str = 'False',
             stratify_by_diarrhea: str = 'False',
+            stratify_by_maternal_supplementation: str = 'False',
+            stratify_by_insecticide_treated_nets: str = 'False'
     ):
         super().__init__(disease)
         self.stratifier = ResultsStratifier(
@@ -356,7 +358,9 @@ class DiseaseObserver(DiseaseObserver_):
             by_x_factor=stratify_by_x_factor,
             by_diarrhea=stratify_by_diarrhea,
             by_therapeutic_zinc=stratify_by_therapeutic_zinc,
-            by_preventative_zinc=stratify_by_preventative_zinc
+            by_preventative_zinc=stratify_by_preventative_zinc,
+            by_maternal_supplementation=stratify_by_maternal_supplementation,
+            by_insecticide_treated_nets=stratify_by_insecticide_treated_nets,
         )
 
     @property
@@ -375,9 +379,17 @@ class DiseaseObserver(DiseaseObserver_):
             for state in self.states:
                 # noinspection PyTypeChecker
                 state_person_time_this_step = utilities.get_state_person_time(
-                    pop_in_group, self.config, self.disease, state, self.clock().year, event.step_size, self.age_bins
+                    pop_in_group,
+                    self.config,
+                    self.disease,
+                    state,
+                    self.clock().year,
+                    event.step_size,
+                    self.age_bins
                 )
-                state_person_time_this_step = self.stratifier.update_labels(state_person_time_this_step, labels)
+                state_person_time_this_step = self.stratifier.update_labels(
+                    state_person_time_this_step, labels
+                )
                 self.person_time.update(state_person_time_this_step)
 
         # This enables tracking of transitions between states
@@ -391,9 +403,12 @@ class DiseaseObserver(DiseaseObserver_):
             for transition in self.transitions:
                 transition = TransitionString(transition)
                 # noinspection PyTypeChecker
-                transition_counts_this_step = utilities.get_transition_count(pop_in_group, self.config, self.disease,
-                                                                             transition, event.time, self.age_bins)
-                transition_counts_this_step = self.stratifier.update_labels(transition_counts_this_step, labels)
+                transition_counts_this_step = utilities.get_transition_count(
+                    pop_in_group, self.config, self.disease, transition, event.time, self.age_bins
+                )
+                transition_counts_this_step = self.stratifier.update_labels(
+                    transition_counts_this_step, labels
+                )
                 self.counts.update(transition_counts_this_step)
 
     def __repr__(self) -> str:
@@ -410,26 +425,48 @@ class DiseaseObserver(DiseaseObserver_):
 
 class CategoricalRiskObserver(CategoricalRiskObserver_):
 
-    def __init__(self, risk: str, stratify_by_sq_lns: str = 'False',):
+    def __init__(
+            self,
+            risk: str,
+            stratify_by_sq_lns: str = 'False',
+            stratify_by_maternal_supplementation: str = 'False',
+            stratify_by_insecticide_treated_nets: str = 'False',
+    ):
         super().__init__(risk)
-        self.stratifier = ResultsStratifier(self.name, by_sqlns=stratify_by_sq_lns)
+        self.stratifier = ResultsStratifier(
+            self.name,
+            by_sqlns=stratify_by_sq_lns,
+            by_maternal_supplementation=stratify_by_maternal_supplementation,
+            by_insecticide_treated_nets=stratify_by_insecticide_treated_nets,
+        )
 
     @property
     def sub_components(self) -> List[ResultsStratifier]:
         return [self.stratifier]
 
     def on_time_step_prepare(self, event: Event):
-        pop = pd.concat([self.population_view.get(event.index), pd.Series(self.exposure(event.index), name=self.risk)],
-                        axis=1)
+        columns = [
+            self.population_view.get(event.index),
+            pd.Series(self.exposure(event.index), name=self.risk)
+        ]
+        pop = pd.concat(columns, axis=1)
         # Ignoring the edge case where the step spans a new year.
         # Accrue all counts and time to the current year.
         for labels, pop_in_group in self.stratifier.group(pop):
             for category in self.categories:
                 # noinspection PyTypeChecker
                 state_person_time_this_step = utilities.get_state_person_time(
-                    pop_in_group, self.config, self.risk, category, self.clock().year, event.step_size, self.age_bins
+                    pop_in_group,
+                    self.config,
+                    self.risk,
+                    category,
+                    self.clock().year,
+                    event.step_size,
+                    self.age_bins
                 )
-                state_person_time_this_step = self.stratifier.update_labels(state_person_time_this_step, labels)
+                state_person_time_this_step = self.stratifier.update_labels(
+                    state_person_time_this_step, labels
+                )
                 self.person_time.update(state_person_time_this_step)
 
 
