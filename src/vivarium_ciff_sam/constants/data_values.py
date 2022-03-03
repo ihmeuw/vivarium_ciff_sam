@@ -18,7 +18,7 @@ from vivarium_ciff_sam.utilities import (
 
 # diarrhea duration in days
 DIARRHEA_DURATION: Tuple = (
-    'diarrheal_diseases_duration', get_norm_from_quantiles(mean=4.3, lower=4.2, upper=4.4)
+    'diarrheal_diseases_duration', get_norm_from_quantiles(mean=4.04485, lower=3.94472, upper=4.144975)
 )
 
 # measles duration in days
@@ -88,7 +88,7 @@ class __Wasting(NamedTuple):
     MAM_TX_RECOVERY_TIME_UNDER_6MO: float = 13.3
 
     DIARRHEA_PREVALENCE_RATIO: pd.Series = pd.Series(
-        [1.095396, 1.085606, 1.051678],
+        [1.060416, 1.061946, 1.044849],
         index=pd.Index(['cat1', 'cat2', 'cat3'], name='wasting'),
         name='value'
     )
