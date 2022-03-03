@@ -43,8 +43,6 @@ def make_measure_data(data):
             has_wasting_treatment_stratification=True,
             has_sqlns_stratification=True,
             has_x_factor_stratification=True,
-            has_maternal_supplementation_stratification=True,
-            has_itn_stratification=True,
             has_diarrhea_stratification=True,
         ),
         wasting_transition_count=get_transition_count_measure_data(
@@ -54,8 +52,6 @@ def make_measure_data(data):
             has_wasting_treatment_stratification=True,
             has_sqlns_stratification=True,
             has_x_factor_stratification=True,
-            has_maternal_supplementation_stratification=True,
-            has_itn_stratification=True,
             has_diarrhea_stratification=True,
         ),
         stunting_state_person_time=get_state_person_time_measure_data(
@@ -63,8 +59,6 @@ def make_measure_data(data):
             'stunting_state_person_time',
             has_wasting_stratification=False,
             has_sqlns_stratification=True,
-            has_maternal_supplementation_stratification=True,
-            has_itn_stratification=True,
         ),
         births=get_measure_data(
             data,
