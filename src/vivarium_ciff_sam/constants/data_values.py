@@ -78,19 +78,34 @@ class __Wasting(NamedTuple):
     )
 
     # Untreated time to recovery in days
-    MAM_UX_RECOVERY_TIME: float = 63.0
+    MAM_UX_RECOVERY_TIME_OVER_6MO: float = 147.0
     DEFAULT_MILD_WASTING_UX_RECOVERY_TIME: float = 1_000.0
 
     # Treated time to recovery in days
-    SAM_TX_RECOVERY_TIME_OVER_6MO: float = 48.3
-    SAM_TX_RECOVERY_TIME_UNDER_6MO: float = 13.3
-    MAM_TX_RECOVERY_TIME_OVER_6MO: float = 41.3
+    SAM_TX_RECOVERY_TIME_OVER_6MO: float = 62.3 # 48.3 + 14
+    MAM_TX_RECOVERY_TIME_OVER_6MO: Tuple = (
+        'mam_tx_recovery_time_over_6mo', get_norm_from_quantiles(
+            mean=55.3, lower=48.4, upper=63.0
+        )
+    )
     MAM_TX_RECOVERY_TIME_UNDER_6MO: float = 13.3
 
     DIARRHEA_PREVALENCE_RATIO: pd.Series = pd.Series(
         [1.060416, 1.061946, 1.044849],
         index=pd.Index(['cat1', 'cat2', 'cat3'], name='wasting'),
         name='value'
+    )
+
+    R4_UNDER_12MO: Tuple = (
+        'r4_under_12mo', get_truncnorm_from_sd(
+            mean=0.006140, sd=0.003015,
+        )
+    )
+
+    R4_OVER_12MO: Tuple = (
+        'r4_over_12mo', get_truncnorm_from_sd(
+            mean=0.005043, sd=0.002428
+        )
     )
 
 
@@ -210,7 +225,7 @@ class __InsecticideTreatedNets(NamedTuple):
 
     BIRTH_WEIGHT_SHIFT: Tuple = (
         'insecticide_treated_nets_effect_on_birth_weight',
-        get_norm_from_quantiles(mean=33, lower=5, upper=62, quantiles=(0.05, 0.95))
+        get_norm_from_quantiles(mean=33, lower=5, upper=62)
     )
 
     PROP_MALARIOUS: float = 0.6
@@ -234,12 +249,12 @@ class __ZincSupplementation(NamedTuple):
 
     PREVENTATIVE_TX_EFFICACY: Tuple[str, stats.truncnorm] = (
         'preventative_zinc_treatment_efficacy',
-        get_lognorm_from_quantiles(median=0.89, lower=0.82, upper=0.97, quantiles=(0.05, 0.95))
+        get_lognorm_from_quantiles(median=0.89, lower=0.82, upper=0.97)
     )
 
     DIARRHEA_DURATION_SHIFT_HOURS: Tuple[str, stats.norm] = (
         'diarrhea_duration_shift',
-        get_norm_from_quantiles(mean=-11.46, lower=-19.72, upper=-3.19, quantiles=(0.05, 0.95))
+        get_norm_from_quantiles(mean=-11.46, lower=-19.72, upper=-3.19)
     )
 
 

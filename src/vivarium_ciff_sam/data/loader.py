@@ -597,10 +597,14 @@ def load_mam_treatment_rr(key: str, location: str) -> pd.DataFrame:
     mam_tx_efficacy, mam_tx_efficacy_tmrel = utilities.get_treatment_efficacy(demography, data_keys.WASTING.CAT2)
     index = mam_tx_efficacy.index
 
-    mam_ux_duration = data_values.WASTING.MAM_UX_RECOVERY_TIME
+    mam_ux_duration = data_values.WASTING.MAM_UX_RECOVERY_TIME_OVER_6MO
     mam_tx_duration = pd.Series(index=index)
     mam_tx_duration[index.get_level_values('age_start') < 0.5] = data_values.WASTING.MAM_TX_RECOVERY_TIME_UNDER_6MO
-    mam_tx_duration[0.5 <= index.get_level_values('age_start')] = data_values.WASTING.MAM_TX_RECOVERY_TIME_OVER_6MO
+    mam_tx_duration[0.5 <= index.get_level_values('age_start')] = (
+        get_random_variable_draws(
+            mam_tx_duration[0.5 <= index.get_level_values('age_start')].index,
+            *data_values.WASTING.MAM_TX_RECOVERY_TIME_OVER_6MO)
+    )
     mam_tx_duration = (
         pd.DataFrame({f'draw_{i}': 1 for i in range(0, 1000)}, index=index)
         .multiply(mam_tx_duration, axis='index')
