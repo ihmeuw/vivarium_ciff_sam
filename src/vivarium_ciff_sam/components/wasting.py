@@ -400,12 +400,9 @@ def load_mild_wasting_incidence_rate(cause: str, builder: Builder) -> pd.DataFra
     exposures = load_child_wasting_exposures(builder)
     adjustment = load_acmr_adjustment(builder)
     mortality_probs = load_daily_mortality_probabilities(builder)
-    mild_wasting_ux_recovery_time = (
-        builder.configuration.child_wasting.mild_child_wasting_untreated_recovery_time
-    )
 
     daily_probability = get_daily_mild_incidence_probability(
-        builder, exposures, adjustment, mortality_probs, mild_wasting_ux_recovery_time
+        builder, exposures, adjustment, mortality_probs
     )
     incidence_rate = _convert_daily_probability_to_annual_rate(daily_probability)
     return incidence_rate.reset_index()
@@ -417,11 +414,10 @@ def get_daily_mild_incidence_probability(
         exposures: pd.DataFrame,
         adjustment: pd.Series,
         mortality_probs: pd.DataFrame,
-        mild_wasting_ux_recovery_time: float
 ) -> pd.Series:
     adj_exposures = adjust_exposure(exposures, adjustment)
     mild_remission_prob = get_mild_wasting_remission_probability(
-        builder, adj_exposures[WASTING.CAT3].index, mild_wasting_ux_recovery_time
+        builder, adj_exposures[WASTING.CAT3].index
     )
 
     # i3: ap0*f4/ap4 + ap3*r4/ap4 - d4
@@ -437,18 +433,12 @@ def get_daily_mild_incidence_probability(
 # noinspection PyUnusedLocal
 def load_mild_wasting_remission_rate(cause: str, builder: Builder) -> pd.DataFrame:
     index = _get_index(builder)
-    mild_wasting_ux_recovery_time = (
-        builder.configuration.child_wasting.mild_child_wasting_untreated_recovery_time
-    )
-
-    daily_probability = get_mild_wasting_remission_probability(builder, index, mild_wasting_ux_recovery_time)
+    daily_probability = get_mild_wasting_remission_probability(builder, index)
     incidence_rate = _convert_daily_probability_to_annual_rate(daily_probability)
     return incidence_rate.reset_index()
 
 
-def get_mild_wasting_remission_probability(
-        builder: Builder, index: pd.Index, mild_child_wasting_ux_recovery_time: float
-) -> pd.Series:
+def get_mild_wasting_remission_probability(builder: Builder, index: pd.Index) -> pd.Series:
     draw = builder.configuration.input_data.input_draw_number
     r4_over_12mo = get_random_variable(draw, *data_values.WASTING.R4_OVER_12MO)
     r4_under_12mo = get_random_variable(draw, *data_values.WASTING.R4_UNDER_12MO)
@@ -688,12 +678,8 @@ def load_sam_treated_remission_rate(builder: Builder, *args) -> float:
 def get_daily_sam_treated_remission_probability(
         index: pd.Index, sam_tx_coverage: pd.Series, sam_tx_efficacy: float
 ) -> float:
-    sam_tx_recovery_time = pd.Series(index=index, name='sam_remission')
-    sam_tx_recovery_time[index.get_level_values('age_start') < 0.5] = (
-        data_values.WASTING.SAM_TX_RECOVERY_TIME_UNDER_6MO
-    )
-    sam_tx_recovery_time[0.5 <= index.get_level_values('age_start')] = (
-        data_values.WASTING.SAM_TX_RECOVERY_TIME_OVER_6MO
+    sam_tx_recovery_time = pd.Series(
+        data_values.WASTING.SAM_TX_RECOVERY_TIME_OVER_6MO, index=index, name='sam_remission'
     )
 
     # t1: tx_coverage * sam_tx_efficacy * (1/sam_tx_recovery_time)

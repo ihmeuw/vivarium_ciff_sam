@@ -83,8 +83,7 @@ class __Wasting(NamedTuple):
 
     # Treated time to recovery in days
     SAM_TX_RECOVERY_TIME_OVER_6MO: float = 62.3 # 48.3 + 14
-    SAM_TX_RECOVERY_TIME_UNDER_6MO: float = 13.3
-    MAM_TX_RECOVERY_TIME_OVER_6MO: Tuple = ( #TODO: make sure this is now being used correctly
+    MAM_TX_RECOVERY_TIME_OVER_6MO: Tuple = (
         'mam_tx_recovery_time_over_6mo', get_norm_from_quantiles(
             mean=55.3, lower=48.4, upper=63.0
         )
