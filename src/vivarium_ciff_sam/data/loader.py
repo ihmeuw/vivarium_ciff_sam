@@ -25,7 +25,6 @@ from vivarium.framework.artifact import EntityKey
 from vivarium_gbd_access import constants as gbd_constants
 from vivarium_inputs import interface
 
-import vivarium_ciff_sam.constants.metadata
 from vivarium_ciff_sam.components import LBWSGSubRisk, LowBirthWeight, ShortGestation
 from vivarium_ciff_sam.constants import data_keys, data_values, metadata, paths
 from vivarium_ciff_sam.data import utilities
@@ -261,7 +260,7 @@ def load_duration(key: str, location: str) -> pd.DataFrame:
     demography = get_data(data_keys.POPULATION.DEMOGRAPHY, location)
     duration_draws = (
             get_random_variable_draws(metadata.ARTIFACT_COLUMNS, *distribution)
-            / vivarium_ciff_sam.constants.metadata.YEAR_DURATION
+            / metadata.YEAR_DURATION
     )
 
     enn_duration = pd.DataFrame(

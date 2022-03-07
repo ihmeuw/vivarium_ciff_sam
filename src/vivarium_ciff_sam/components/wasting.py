@@ -1007,7 +1007,12 @@ def get_diarrhea_incidence(builder: Builder, wasting_no_diarrhea_exposure: pd.Se
 
 
 def get_diarrhea_remission(builder: Builder, wasting_diarrhea_exposure: pd.Series) -> pd.Series:
-    remission_rate = get_data_series(builder.data.load(data_keys.DIARRHEA.REMISSION_RATE))
+    diarrhea_duration = get_random_variable(
+        builder.configuration.input_data.input_draw_number,
+        *data_values.WASTING.DIARRHEA_DURATION_VICIOUS_CYCLE
+    ) / metadata.YEAR_DURATION
+
+    remission_rate = 1 / diarrhea_duration
     diarrhea_remission = remission_rate * wasting_diarrhea_exposure
     return diarrhea_remission
 
