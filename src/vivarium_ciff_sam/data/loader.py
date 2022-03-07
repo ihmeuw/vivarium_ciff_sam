@@ -6,7 +6,8 @@ of artifact creation. The value of this interface shows up when more
 complicated data needs are part of the project. See the BEP project
 for an example.
 
-`BEP <https://github.com/ihmeuw/vivarium_gates_bep/blob/master/src/vivarium_gates_bep/data/loader.py>`_
+`BEP
+ <https://github.com/ihmeuw/vivarium_gates_bep/blob/master/src/vivarium_gates_bep/data/loader.py>`_
 
 .. admonition::
 
@@ -176,14 +177,14 @@ def get_data(lookup_key: str, location: str) -> pd.DataFrame:
 
         data_keys.PREVENTATIVE_ZINC.DISTRIBUTION: load_intervention_distribution,
         data_keys.PREVENTATIVE_ZINC.CATEGORIES: load_intervention_categories,
-        data_keys.PREVENTATIVE_ZINC.EXPOSURE: load_dichotomous_treatment_exposure,
-        data_keys.PREVENTATIVE_ZINC.RELATIVE_RISK: load_treatment_rr,
+        data_keys.PREVENTATIVE_ZINC.EXPOSURE: load_zinc_exposure,
+        data_keys.PREVENTATIVE_ZINC.RELATIVE_RISK: load_preventative_zinc_rr,
         data_keys.PREVENTATIVE_ZINC.PAF: load_paf,
 
         data_keys.THERAPEUTIC_ZINC.DISTRIBUTION: load_intervention_distribution,
         data_keys.THERAPEUTIC_ZINC.CATEGORIES: load_intervention_categories,
-        data_keys.THERAPEUTIC_ZINC.EXPOSURE: load_dichotomous_treatment_exposure,
-        data_keys.THERAPEUTIC_ZINC.RELATIVE_RISK: load_treatment_rr,
+        data_keys.THERAPEUTIC_ZINC.EXPOSURE: load_zinc_exposure,
+        data_keys.THERAPEUTIC_ZINC.RELATIVE_RISK: load_therapeutic_zinc_rr,
         data_keys.THERAPEUTIC_ZINC.PAF: load_paf,
     }
     return mapping[lookup_key](lookup_key, location)
@@ -392,61 +393,44 @@ def load_gbd_2020_rr(key: str, location: str) -> pd.DataFrame:
     return data
 
 
-def load_treatment_rr(key: str, location: str) -> pd.DataFrame:
-    try:
-        distribution = {
-            data_keys.PREVENTATIVE_ZINC.RELATIVE_RISK: data_values.PREVENTATIVE_ZINC.PREVENTATIVE_TX_EFFICACY,
-            data_keys.THERAPEUTIC_ZINC.RELATIVE_RISK: None,
-        }[key]
-        affected_entity = {
-            data_keys.PREVENTATIVE_ZINC.RELATIVE_RISK: data_keys.PREVENTATIVE_ZINC.AFFECTED_ENTITY,
-            data_keys.THERAPEUTIC_ZINC.RELATIVE_RISK: data_keys.THERAPEUTIC_ZINC.AFFECTED_ENTITY,
-        }[key]
-        affected_measure = {
-            data_keys.PREVENTATIVE_ZINC.RELATIVE_RISK: data_keys.PREVENTATIVE_ZINC.AFFECTED_MEASURE,
-            data_keys.THERAPEUTIC_ZINC.RELATIVE_RISK: data_keys.THERAPEUTIC_ZINC.AFFECTED_MEASURE,
-        }[key]
-    except KeyError:
+def load_preventative_zinc_rr(key: str, location: str) -> pd.DataFrame:
+    if key != data_keys.PREVENTATIVE_ZINC.RELATIVE_RISK:
         raise ValueError(f'Unrecognized key {key}')
+
     index = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
-    if key == data_keys.THERAPEUTIC_ZINC.RELATIVE_RISK:
-        cat2_rr = calculate_therapeutic_zinc_distribution(key)
-    else:
-        cat2_rr = get_random_variable_draws(
-            metadata.ARTIFACT_COLUMNS, *distribution
-        )
+    distribution = data_values.PREVENTATIVE_ZINC.PREVENTATIVE_TX_EFFICACY
 
-    exposed = pd.DataFrame([cat2_rr], index=index)
-    exposed['parameter'] = 'cat2'
-    unexposed = pd.DataFrame([pd.Series(1.0, index=metadata.ARTIFACT_COLUMNS)], index=index)
-    unexposed['parameter'] = 'cat1'
-
-    rr = pd.concat([exposed, unexposed])
-    rr['affected_entity'] = affected_entity
-    rr['affected_measure'] = affected_measure
-
-    rr = (
-        rr.set_index(['affected_entity', 'affected_measure', 'parameter'], append=True).sort_index()
+    exposed_rr = pd.DataFrame(
+        [get_random_variable_draws(metadata.ARTIFACT_COLUMNS, *distribution)], index=index
     )
 
-    return rr
+    return convert_to_dichotomous_rr(
+        exposed_rr,
+        data_keys.PREVENTATIVE_ZINC.AFFECTED_ENTITY,
+        data_keys.PREVENTATIVE_ZINC.AFFECTED_MEASURE
+    )
 
 
-def calculate_therapeutic_zinc_distribution(key: str) -> pd.Series:
+def load_therapeutic_zinc_rr(key: str, location: str) -> pd.Series:
     if key != data_keys.THERAPEUTIC_ZINC.RELATIVE_RISK:
         raise ValueError(f'Unrecognized key {key}')
 
-    diarrhea_duration_shift_years = get_random_variable_draws(
-        metadata.ARTIFACT_COLUMNS, *data_values.THERAPEUTIC_ZINC.DIARRHEA_DURATION_SHIFT_HOURS
-    ) / (metadata.DAY_DURATION * metadata.YEAR_DURATION)
-
-    diarrhea_duration_years = get_random_variable_draws(metadata.ARTIFACT_COLUMNS, *data_values.DIARRHEA_DURATION) / (
-            metadata.YEAR_DURATION
+    idx = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
+    diarrhea_duration_shift_years = pd.DataFrame(
+        [get_random_variable_draws(
+            metadata.ARTIFACT_COLUMNS, *data_values.THERAPEUTIC_ZINC.DIARRHEA_DURATION_SHIFT_HOURS
+        ) / (metadata.DAY_DURATION * metadata.YEAR_DURATION)],
+        index=idx
     )
 
-    baseline_coverage = get_random_variable_draws(
-        metadata.ARTIFACT_COLUMNS, *data_values.THERAPEUTIC_ZINC.BASELINE_THERAPEUTIC_COVERAGE
+    diarrhea_duration_years = pd.DataFrame(
+        [get_random_variable_draws(
+            metadata.ARTIFACT_COLUMNS, *data_values.DIARRHEA_DURATION
+        ) / metadata.YEAR_DURATION],
+        index=idx
     )
+
+    baseline_coverage = get_data(data_keys.THERAPEUTIC_ZINC.EXPOSURE, location)
     duration_uncovered = diarrhea_duration_years - (
             diarrhea_duration_shift_years * baseline_coverage
     )
@@ -455,7 +439,32 @@ def calculate_therapeutic_zinc_distribution(key: str) -> pd.Series:
     remission_rate_uncovered = 1 / duration_uncovered
     remission_rate_covered = 1 / duration_covered
 
-    rr = remission_rate_covered / remission_rate_uncovered
+    exposed_rr = remission_rate_covered / remission_rate_uncovered
+
+    return convert_to_dichotomous_rr(
+        exposed_rr,
+        data_keys.PREVENTATIVE_ZINC.AFFECTED_ENTITY,
+        data_keys.PREVENTATIVE_ZINC.AFFECTED_MEASURE
+    )
+
+
+def convert_to_dichotomous_rr(
+        exposed_rr: pd.DataFrame, affected_entity: str, affected_measure: str
+) -> pd.DataFrame:
+    exposed_rr['parameter'] = 'cat2'
+    unexposed_rr = pd.DataFrame(
+        [pd.Series(1.0, index=metadata.ARTIFACT_COLUMNS)], index=exposed_rr.index
+    )
+    unexposed_rr['parameter'] = 'cat1'
+
+    rr = pd.concat([exposed_rr, unexposed_rr])
+    rr['affected_entity'] = affected_entity
+    rr['affected_measure'] = affected_measure
+
+    rr = (
+        rr.set_index(['affected_entity', 'affected_measure', 'parameter'], append=True)
+        .sort_index()
+    )
     return rr
 
 
@@ -779,6 +788,21 @@ def load_maternal_malnutrition_categories(key: str, location: str) -> Dict[str, 
     }
 
 
+def load_zinc_exposure(key: str, location: str) -> pd.DataFrame:
+    try:
+        distribution_data = {
+            data_keys.PREVENTATIVE_ZINC.EXPOSURE:
+                data_values.PREVENTATIVE_ZINC.BASELINE_PREVENTATIVE_COVERAGE,
+            data_keys.THERAPEUTIC_ZINC.EXPOSURE:
+                data_values.THERAPEUTIC_ZINC.BASELINE_THERAPEUTIC_COVERAGE,
+        }[key]
+    except KeyError:
+        raise ValueError(f'Unrecognized key {key}')
+    return load_dichotomous_exposure(
+        location, distribution_data, is_risk=False, has_under_6mo_exposure=False
+    )
+
+
 def load_dichotomous_risk_exposure(key: str, location: str, **kwargs) -> pd.DataFrame:
     try:
         distribution_data = {
@@ -793,11 +817,12 @@ def load_dichotomous_treatment_exposure(key: str, location: str, **kwargs) -> pd
     try:
         distribution_data = {
             data_keys.INSECTICIDE_TX_NETS.EXPOSURE: data_values.INSECTICIDE_TX_NETS.EXPOSURE,
-            data_keys.IFA_SUPPLEMENTATION.EXPOSURE: data_values.MATERNAL_SUPPLEMENTATION.BASELINE_IFA_COVERAGE,
-            data_keys.MMN_SUPPLEMENTATION.EXPOSURE: data_values.MATERNAL_SUPPLEMENTATION.BASELINE_MMN_COVERAGE,
-            data_keys.BEP_SUPPLEMENTATION.EXPOSURE: data_values.MATERNAL_SUPPLEMENTATION.BASELINE_BEP_COVERAGE,
-            data_keys.PREVENTATIVE_ZINC.EXPOSURE: data_values.PREVENTATIVE_ZINC.BASELINE_PREVENTATIVE_COVERAGE,
-            data_keys.THERAPEUTIC_ZINC.EXPOSURE: data_values.THERAPEUTIC_ZINC.BASELINE_THERAPEUTIC_COVERAGE,
+            data_keys.IFA_SUPPLEMENTATION.EXPOSURE:
+                data_values.MATERNAL_SUPPLEMENTATION.BASELINE_IFA_COVERAGE,
+            data_keys.MMN_SUPPLEMENTATION.EXPOSURE:
+                data_values.MATERNAL_SUPPLEMENTATION.BASELINE_MMN_COVERAGE,
+            data_keys.BEP_SUPPLEMENTATION.EXPOSURE:
+                data_values.MATERNAL_SUPPLEMENTATION.BASELINE_BEP_COVERAGE,
         }[key]
     except KeyError:
         raise ValueError(f'Unrecognized key {key}')
@@ -815,7 +840,11 @@ def load_insecticide_treated_nets_exposure(key: str, location: str) -> pd.DataFr
 
 
 def load_dichotomous_exposure(
-        location: str, distribution_data: Union[float, Tuple], is_risk: bool, coverage: float = 1.0,
+        location: str,
+        distribution_data: Union[float, Tuple],
+        is_risk: bool,
+        coverage: float = 1.0,
+        has_under_6mo_exposure: bool = True,
 ) -> pd.DataFrame:
     index = get_data(data_keys.POPULATION.DEMOGRAPHY, location).index
     if type(distribution_data) == float:
@@ -824,6 +853,8 @@ def load_dichotomous_exposure(
         base_exposure = get_random_variable_draws(metadata.ARTIFACT_COLUMNS, *distribution_data)
 
     exposed = pd.DataFrame([base_exposure * coverage], index=index)
+    if not has_under_6mo_exposure:
+        exposed.loc[exposed.index.get_level_values('age_end') <= 0.5] = 0.0
     unexposed = 1 - exposed
 
     exposed['parameter'] = 'cat1' if is_risk else 'cat2'
