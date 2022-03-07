@@ -5,11 +5,11 @@ branches:
   - intervention:
       scenario: [
         'baseline',
-        'sam_treatment',
-        'mam_treatment',
-        'sqlns',
-        'lbwsg_interventions',
-        'zinc_supplementation',
+#        'sam_treatment',
+#        'mam_treatment',
+#        'sqlns',
+#        'lbwsg_interventions',
+#        'zinc_supplementation',
       ]
     sam_k: [
       'alternative',
