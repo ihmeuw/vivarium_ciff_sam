@@ -429,7 +429,11 @@ def load_therapeutic_zinc_rr(key: str, location: str) -> pd.Series:
         index=idx
     )
 
-    baseline_coverage = get_data(data_keys.THERAPEUTIC_ZINC.EXPOSURE, location)
+    baseline_coverage = (
+        get_data(data_keys.THERAPEUTIC_ZINC.EXPOSURE, location)
+        .query(f'parameter == "cat2"')
+        .droplevel('parameter')
+    )
     duration_uncovered = diarrhea_duration_years - (
             diarrhea_duration_shift_years * baseline_coverage
     )
