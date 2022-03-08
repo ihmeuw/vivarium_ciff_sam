@@ -61,9 +61,9 @@ components:
 
             - BirthWeightShiftEffect()
 
-            - XFactorExposure()
-            - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
-            - XFactorEffect('risk_factor.moderate_acute_malnutrition_to_severe_acute_malnutrition.transition_rate')
+#            - XFactorExposure()
+#            - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
+#            - XFactorEffect('risk_factor.moderate_acute_malnutrition_to_severe_acute_malnutrition.transition_rate')
 
             - WastingTreatment('risk_factor.severe_acute_malnutrition_treatment')
             - WastingTreatment('risk_factor.moderate_acute_malnutrition_treatment')
@@ -82,7 +82,7 @@ components:
             - DiseaseObserver('diarrheal_diseases', 'wasting', 'therapeutic_zinc', 'preventative_zinc')
             - DiseaseObserver('measles', 'wasting')
             - DiseaseObserver('lower_respiratory_infections', 'wasting')
-            - DiseaseObserver('child_wasting', 'False', 'False', 'False', 'sq_lns', 'wasting_treatment', 'x_factor','diarrhea')
+            - DiseaseObserver('child_wasting', 'False', 'False', 'False', 'sq_lns', 'wasting_treatment', 'False','diarrhea')
             - CategoricalRiskObserver('child_stunting', 'sq_lns')
             - BirthObserver('maternal_malnutrition', 'maternal_supplementation', 'insecticide_treated_nets')
 
