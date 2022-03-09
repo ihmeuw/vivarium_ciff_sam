@@ -100,7 +100,7 @@ configuration:
         random_seed: 0
     time:
         start:
-            year: 2021
+            year: 2024
             month: 7
             day: 1
         end:
@@ -115,7 +115,7 @@ configuration:
         exit_age: 5
 
     intervention:
-        scenario: 'baseline'
+        scenario: 'zinc_supplementation'
 
     x_factor:
         exposure: 0.5

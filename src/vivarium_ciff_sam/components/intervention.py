@@ -10,6 +10,17 @@ from vivarium_public_health.treatment import LinearScaleUp
 
 from vivarium_ciff_sam.constants import data_keys, data_values, scenarios
 
+SCALE_UP_START = {
+    "year": data_values.SCALE_UP_START_DT.year,
+    "month": data_values.SCALE_UP_START_DT.month,
+    "day": data_values.SCALE_UP_START_DT.day,
+}
+SCALE_UP_END = {
+    "year": data_values.SCALE_UP_END_DT.year,
+    "month": data_values.SCALE_UP_END_DT.month,
+    "day": data_values.SCALE_UP_END_DT.day,
+}
+
 
 class SQLNSInterventionScaleUp(LinearScaleUp):
 
@@ -21,21 +32,13 @@ class SQLNSInterventionScaleUp(LinearScaleUp):
     def _get_configuration_defaults(self) -> Dict[str, Dict]:
         return {
             f"{self.treatment.name}_scale_up": {
-                "start": {
-                    "date": {
-                        "year": data_values.SCALE_UP_START_DT.year,
-                        "month": data_values.SCALE_UP_START_DT.month,
-                        "day": data_values.SCALE_UP_START_DT.day,
-                    },
-                    "value": data_values.SQ_LNS.COVERAGE_BASELINE,
+                "date": {
+                    "start": SCALE_UP_START,
+                    "end": SCALE_UP_END
                 },
-                "end": {
-                    "date": {
-                        "year": data_values.SCALE_UP_END_DT.year,
-                        "month": data_values.SCALE_UP_END_DT.month,
-                        "day": data_values.SCALE_UP_END_DT.day,
-                    },
-                    "value": data_values.SQ_LNS.COVERAGE_RAMP_UP,
+                "value": {
+                    "start": data_values.SQ_LNS.COVERAGE_BASELINE,
+                    "end": data_values.SQ_LNS.COVERAGE_RAMP_UP
                 }
             }
         }
@@ -93,21 +96,13 @@ class WastingTreatmentScaleUp(LinearScaleUp):
     def _get_configuration_defaults(self) -> Dict[str, Dict]:
         return {
             f"{self.treatment.name}_scale_up": {
-                "start": {
-                    "date": {
-                        "year": data_values.SCALE_UP_START_DT.year,
-                        "month": data_values.SCALE_UP_START_DT.month,
-                        "day": data_values.SCALE_UP_START_DT.day,
-                    },
-                    "value": 'data',
+                "date": {
+                    "start": SCALE_UP_START,
+                    "end": SCALE_UP_END
                 },
-                "end": {
-                    "date": {
-                        "year": data_values.SCALE_UP_END_DT.year,
-                        "month": data_values.SCALE_UP_END_DT.month,
-                        "day": data_values.SCALE_UP_END_DT.day,
-                    },
-                    "value": data_values.WASTING.ALTERNATIVE_TX_COVERAGE,
+                "value": {
+                    "start": "data",
+                    "end": data_values.WASTING.ALTERNATIVE_TX_COVERAGE
                 }
             }
         }
@@ -168,21 +163,13 @@ class BirthweightInterventionScaleUp(LinearScaleUp):
     def _get_configuration_defaults(self) -> Dict[str, Dict]:
         return {
             f"{self.treatment.name}_scale_up": {
-                "start": {
-                    "date": {
-                        "year": data_values.SCALE_UP_START_DT.year,
-                        "month": data_values.SCALE_UP_START_DT.month,
-                        "day": data_values.SCALE_UP_START_DT.day,
-                    },
-                    "value": 0.0,
+                "date": {
+                    "start": SCALE_UP_START,
+                    "end": SCALE_UP_END
                 },
-                "end": {
-                    "date": {
-                        "year": data_values.SCALE_UP_END_DT.year,
-                        "month": data_values.SCALE_UP_END_DT.month,
-                        "day": data_values.SCALE_UP_END_DT.day,
-                    },
-                    "value": data_values.MATERNAL_SUPPLEMENTATION.ALTERNATIVE_COVERAGE,
+                "value": {
+                    "start": 0.0,
+                    "end": data_values.MATERNAL_SUPPLEMENTATION.ALTERNATIVE_COVERAGE
                 }
             }
         }
@@ -235,21 +222,13 @@ class ZincTreatmentScaleUp(LinearScaleUp):
     def _get_configuration_defaults(self) -> Dict[str, Dict]:
         return {
             f"{self.treatment.name}_scale_up": {
-                "start": {
-                    "date": {
-                        "year": data_values.SCALE_UP_START_DT.year,
-                        "month": data_values.SCALE_UP_START_DT.month,
-                        "day": data_values.SCALE_UP_START_DT.day,
-                    },
-                    "value": 'data',
+                "date": {
+                    "start": SCALE_UP_START,
+                    "end": SCALE_UP_END
                 },
-                "end": {
-                    "date": {
-                        "year": data_values.SCALE_UP_END_DT.year,
-                        "month": data_values.SCALE_UP_END_DT.month,
-                        "day": data_values.SCALE_UP_END_DT.day,
-                    },
-                    "value": data_values.DEFAULT_ALTERNATIVE_COVERAGE,
+                "value": {
+                    "start": "data",
+                    "end": data_values.DEFAULT_ALTERNATIVE_COVERAGE
                 }
             }
         }
