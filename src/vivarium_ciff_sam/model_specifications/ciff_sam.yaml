@@ -2,6 +2,7 @@ components:
     vivarium_public_health:
         population:
             - BasePopulation()
+            - Mortality()
             - FertilityCrudeBirthRate()
         disease:
             - SIS('diarrheal_diseases')
@@ -28,8 +29,6 @@ components:
 
     vivarium_ciff_sam:
         components:
-            - Mortality()
-
             - ChildWasting()
             - DiarrheaRiskEffect('risk_factor.moderate_acute_malnutrition_to_severe_acute_malnutrition.transition_rate')
             - DiarrheaRiskEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
@@ -116,6 +115,18 @@ configuration:
 
     intervention:
         scenario: 'zinc_supplementation'
+
+    unmodeled_causes:
+        - 'upper_respiratory_infections'
+        - 'otitis_media'
+        - 'meningitis'
+        - 'encephalitis'
+        - 'neonatal_preterm_birth'
+        - 'neonatal_encephalopathy_due_to_birth_asphyxia_and_trauma'
+        - 'neonatal_sepsis_and_other_neonatal_infections'
+        - 'hemolytic_disease_and_other_neonatal_jaundice'
+        - 'other_neonatal_disorders'
+        - 'sudden_infant_death_syndrome'
 
     x_factor:
         exposure: 0.5
