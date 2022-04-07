@@ -18,17 +18,27 @@ components:
             - RiskEffect('risk_factor.child_stunting', 'cause.measles.incidence_rate')
             - RiskEffect('risk_factor.child_stunting', 'cause.lower_respiratory_infections.incidence_rate')
 
-            - RiskEffect('risk_factor.severe_acute_malnutrition_treatment', 'risk_factor.severe_acute_malnutrition_to_mild_child_wasting.transition_rate')
-            - RiskEffect('risk_factor.severe_acute_malnutrition_treatment', 'risk_factor.severe_acute_malnutrition_to_moderate_acute_malnutrition.transition_rate')
-
-            - RiskEffect('risk_factor.moderate_acute_malnutrition_treatment', 'risk_factor.moderate_acute_malnutrition_to_mild_child_wasting.transition_rate')
+#            - RiskEffect('risk_factor.severe_acute_malnutrition_treatment', 'risk_factor.severe_acute_malnutrition_to_mild_child_wasting.transition_rate')
+#            - RiskEffect('risk_factor.severe_acute_malnutrition_treatment', 'risk_factor.severe_acute_malnutrition_to_moderate_acute_malnutrition.transition_rate')
+#
+#            - RiskEffect('risk_factor.moderate_acute_malnutrition_treatment', 'risk_factor.moderate_acute_malnutrition_to_mild_child_wasting.transition_rate')
 
             - Risk('risk_factor.therapeutic_zinc')
             - RiskEffect('risk_factor.therapeutic_zinc', 'cause.diarrheal_diseases.remission_rate')
             - RiskEffect('risk_factor.preventative_zinc', 'cause.diarrheal_diseases.incidence_rate')
+        metrics:
+            - MortalityObserver()
+            - DisabilityObserver()
+            - CategoricalRiskObserver('child_stunting')
+            - DiseaseObserver('diarrheal_diseases')
+            - DiseaseObserver('measles')
+            - DiseaseObserver('lower_respiratory_infections')
+            - DiseaseObserver('child_wasting')
 
     vivarium_ciff_sam:
         components:
+            - ResultsStratifier()
+
             - ChildWasting()
             - DiarrheaRiskEffect('risk_factor.moderate_acute_malnutrition_to_severe_acute_malnutrition.transition_rate')
             - DiarrheaRiskEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
@@ -64,10 +74,10 @@ components:
 #            - XFactorEffect('risk_factor.mild_child_wasting_to_moderate_acute_malnutrition.transition_rate')
 #            - XFactorEffect('risk_factor.moderate_acute_malnutrition_to_severe_acute_malnutrition.transition_rate')
 
-            - WastingTreatment('risk_factor.severe_acute_malnutrition_treatment')
-            - WastingTreatment('risk_factor.moderate_acute_malnutrition_treatment')
-            - WastingTreatmentScaleUp('risk_factor.severe_acute_malnutrition_treatment')
-            - WastingTreatmentScaleUp('risk_factor.moderate_acute_malnutrition_treatment')
+#            - WastingTreatment('risk_factor.severe_acute_malnutrition_treatment')
+#            - WastingTreatment('risk_factor.moderate_acute_malnutrition_treatment')
+#            - WastingTreatmentScaleUp('risk_factor.severe_acute_malnutrition_treatment')
+#            - WastingTreatmentScaleUp('risk_factor.moderate_acute_malnutrition_treatment')
 
             - SQLNSTreatment()
             - SQLNSInterventionScaleUp()
@@ -76,19 +86,17 @@ components:
             - ZincTreatmentScaleUp('risk_factor.therapeutic_zinc')
             - ZincTreatmentScaleUp('risk_factor.preventative_zinc')
 
-            - DisabilityObserver('wasting')
-            - MortalityObserver('wasting')
-            - DiseaseObserver('diarrheal_diseases', 'wasting', 'therapeutic_zinc', 'preventative_zinc')
-            - DiseaseObserver('measles', 'wasting')
-            - DiseaseObserver('lower_respiratory_infections', 'wasting')
-            - DiseaseObserver('child_wasting', 'False', 'False', 'False', 'sq_lns', 'wasting_treatment', 'False','diarrhea')
-            - CategoricalRiskObserver('child_stunting', 'sq_lns')
-            - BirthObserver('maternal_malnutrition', 'maternal_supplementation', 'insecticide_treated_nets')
+#            - DisabilityObserver('wasting')
+#            - DiseaseObserver('diarrheal_diseases', 'wasting', 'therapeutic_zinc', 'preventative_zinc')
+#            - DiseaseObserver('measles', 'wasting')
+#            - DiseaseObserver('lower_respiratory_infections', 'wasting')
+#            - DiseaseObserver('child_wasting', 'False', 'False', 'False', 'sq_lns', 'wasting_treatment', 'False','diarrhea')
+#            - CategoricalRiskObserver('child_stunting', 'sq_lns')
+#            - BirthObserver('maternal_malnutrition', 'maternal_supplementation', 'insecticide_treated_nets')
 
 configuration:
     input_data:
         input_draw_number: 0
-        location: 'Ethiopia'
         artifact_path: '/ihme/costeffectiveness/artifacts/vivarium_ciff_sam/ethiopia.hdf'
     interpolation:
         order: 0
@@ -103,10 +111,10 @@ configuration:
             month: 7
             day: 1
         end:
-            year: 2026
-            month: 12
-            day: 31
-        step_size: 0.5 # Days
+            year: 2024
+            month: 7
+            day: 5
+        step_size: 3 # Days
     population:
         population_size: 5_000
         age_start: 0
@@ -148,36 +156,38 @@ configuration:
         end:
             value: 0.54     # 0.9 * 0.6
 
-    metrics:
+    observers:
+        default:
+            - 'sex'
+            - 'age'
+            - 'year'
         disability:
-            by_age: True
-            by_sex: True
-            by_year: True
+            include:
+                - 'wasting_state'
         mortality:
-            by_age: True
-            by_sex: True
-            by_year: True
-        diarrheal_diseases_observer:
-            by_age: True
-            by_sex: True
-            by_year: True
-        measles_observer:
-            by_age: True
-            by_sex: True
-            by_year: True
-        lower_respiratory_infections_observer:
-            by_age: True
-            by_sex: True
-            by_year: True
-        child_wasting_observer:
-            by_age: True
-            by_sex: True
-            by_year: True
+            include:
+                - 'wasting_state'
+        diarrheal_diseases:
+            include:
+                - 'wasting_state'
+                - 'therapeutic_zinc'
+                - 'preventative_zinc'
+        measles:
+            include:
+                - 'wasting_state'
+        lower_respiratory_infections:
+            include:
+                - 'wasting_state'
+        child_wasting:
+            include:
+                - 'sqlns'
+                - 'sam_treatment'
+                - 'mam_treatment'
+                - 'diarrhea'
         child_stunting:
-            by_age: True
-            by_sex: True
-            by_year: True
-        birth:
-            by_age: False
-            by_sex: True
-            by_year: True
+            include:
+                - 'sqlns'
+#        birth:
+#            by_age: False
+#            by_sex: True
+#            by_year: True

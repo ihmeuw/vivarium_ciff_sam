@@ -7,10 +7,11 @@ from vivarium_ciff_sam.components.intervention import (
 from vivarium_ciff_sam.components.mortality import Mortality
 from vivarium_ciff_sam.components.observers import (
     BirthObserver,
-    CategoricalRiskObserver,
-    DisabilityObserver,
-    DiseaseObserver,
-    MortalityObserver
+    # CategoricalRiskObserver,
+    # DisabilityObserver,
+    # DiseaseObserver,
+    # MortalityObserver,
+    ResultsStratifier,
 )
 from vivarium_ciff_sam.components.lbwsg import (
     LBWSGRiskEffect,

@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List, Tuple
 
 from vivarium_ciff_sam.constants import data_keys
@@ -23,6 +24,13 @@ class __SISModel:
             TransitionString(f'{self.SUSCEPTIBLE_STATE_NAME}_TO_{self.STATE_NAME}'),
             TransitionString(f'{self.STATE_NAME}_TO_{self.SUSCEPTIBLE_STATE_NAME}'),
         )
+
+
+class Wasting(Enum):
+    SUSCEPTIBLE = 'susceptible_to_child_wasting'
+    MILD = 'mild_child_wasting'
+    MAM = 'moderate_acute_malnutrition'
+    SAM = 'severe_acute_malnutrition'
 
 
 # noinspection PyPep8Naming
