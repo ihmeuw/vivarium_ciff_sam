@@ -2,6 +2,12 @@
 vivarium_ciff_sam
 ===============================
 
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.10443294.svg
+  :target: https://doi.org/10.5281/zenodo.10443294
+
+Cite as: 
+Rajan Mudambi, Nicole Young, Beatrix Haddock, James Collins, Alison Bowman, & Abraham Flaxman. (2023). ihmeuw/vivarium_ciff_sam: Archival release (v6.0). Zenodo. https://doi.org/10.5281/zenodo.10443294
+
 Research repository for the vivarium_ciff_sam project.
 
 .. contents::
